@@ -1,6 +1,6 @@
 # Contract Redlining Project
 
-## Background
+## Background \& Plan
 
 The user (you can call him David) intends to develop a comprehensive legal contract revision assistant tool. The tool will assist David, a lawyer, in reviewing and revising complex legal documents.  The tool should be general purpose - will review any contract type - but it has built in "skills" for certain contract types.  Since David is a real estate lawyer, it should have skills for:
 
@@ -29,32 +29,44 @@ David's latest thinking is that the tool should be less of a brute-force redlini
 
 Additionally, since he has found that gemini-3-flash has been great at generating the actual language, he wants to use that via his API.  This is also much more cost effective.
 
+
+
+**BELOW ARE OLD NOTES AND COMPACTED CONTEXT FROM PRIOR CONVERSATIONS WITH CLUADE AND WITH GEMINI.**  Relevant concepts should be imported, and scripts can be reused and adapted, but the plan described above should be the canonical plan for this project.  DO NOT implement any of the following, except to the extent that it furthers the foregoing plan.
+
+
+
+
+
+# PRIOR ATTEMPT CONVERSATION NOTES
+
+
+
 ## Architecture Overview
 
 This project implements a **4-phase contract redlining pipeline** to fix issues with single-pass or paragraph-by-paragraph approaches (mid-sentence cuts, wrong-party perspective, duplicate concepts, context blindness).
 
 ### The 4 Phases
 
-1. **Phase 1: Analysis \& Mapping** (`scripts/analyze\\\\\\\\\\\\\\\_documents.py`)
+1. **Phase 1: Analysis \& Mapping** (`scripts/analyze\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_documents.py`)
 
    * Extract defined terms with full definitions from both docs
    * Map section correspondence between target and template
    * Build comprehensive risk inventory
    * Generate document-specific judgment framework
 
-2. **Phase 2: Redline Planning** (`scripts/generate\\\\\\\\\\\\\\\_plan.py`)
+2. **Phase 2: Redline Planning** (`scripts/generate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_plan.py`)
 
    * Create reviewable plan per section
    * Categorize changes: preserve, add qualifiers, restructure, heavy revision
    * **PAUSE for user approval before Phase 3**
 
-3. **Phase 3: Section-by-Section Execution** (`scripts/redline\\\\\\\\\\\\\\\_section.py`)
+3. **Phase 3: Section-by-Section Execution** (`scripts/redline\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_section.py`)
 
    * Process each section with compacted context package
    * Track deferred modifications (cross-references, new definitions needed)
    * Flag external dependencies for Phase 4
 
-4. **Phase 4: Consistency Check \& Assembly** (`scripts/consistency\\\\\\\\\\\\\\\_check.py`)
+4. **Phase 4: Consistency Check \& Assembly** (`scripts/consistency\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_check.py`)
 
    * Process deferred modifications
    * Verify internal consistency (no duplicates, broken refs, conflicts)
@@ -64,18 +76,18 @@ This project implements a **4-phase contract redlining pipeline** to fix issues 
 
 |Script|Purpose|
 |-|-|
-|`scripts/parse\\\\\\\\\\\\\\\_docx.py`|Parse Word docs to structured JSON|
-|`scripts/rebuild\\\\\\\\\\\\\\\_docx.py`|Rebuild Word doc from revised JSON|
-|`scripts/full\\\\\\\\\\\\\\\_redline.py`|Legacy orchestrator (being refactored)|
+|`scripts/parse\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_docx.py`|Parse Word docs to structured JSON|
+|`scripts/rebuild\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_docx.py`|Rebuild Word doc from revised JSON|
+|`scripts/full\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_redline.py`|Legacy orchestrator (being refactored)|
 |`.claude/commands/redline.md`|Main slash command orchestrating pipeline|
 
 ### Examples Library
 
-Located at `.claude/redline\\\\\\\\\\\\\\\_examples/`:
+Located at `.claude/redline\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_examples/`:
 
-* `seed\\\\\\\\\\\\\\\_examples.json` - User-provided good/bad redline examples
-* `feedback\\\\\\\\\\\\\\\_log.json` - Corrections from past sessions
-* `learned\\\\\\\\\\\\\\\_patterns.json` - Extracted patterns for prompts
+* `seed\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_examples.json` - User-provided good/bad redline examples
+* `feedback\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_log.json` - Corrections from past sessions
+* `learned\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_patterns.json` - Extracted patterns for prompts
 
 ### User Preferences (Confirmed)
 
@@ -88,8 +100,8 @@ Located at `.claude/redline\\\\\\\\\\\\\\\_examples/`:
 Each redline produces:
 
 * `analysis.json` - Phase 1 document analysis
-* `redline\\\\\\\\\\\\\\\_plan.json` - Phase 2 change plan
-* `deferred\\\\\\\\\\\\\\\_modifications.json` - Phase 3 cross-section changes needed
+* `redline\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_plan.json` - Phase 2 change plan
+* `deferred\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_modifications.json` - Phase 3 cross-section changes needed
 * `revised.json` - Final structured content
 * `revised.docx` - Word document for Track Changes comparison
 * `manifest.md` - Hierarchical change log with rationale
@@ -131,11 +143,11 @@ Use the `/redline` slash command which orchestrates all phases.
 
 ### Parser Improvements Made (by user/linter)
 
-* `parse\\\\\\\\\\\\\\\_docx.py` enhanced with:
+* `parse\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_docx.py` enhanced with:
 
   * `SectionTracker` class for hierarchical section tracking
-  * `extract\\\\\\\\\\\\\\\_section\\\\\\\\\\\\\\\_number()` for various numbering formats
-  * `extract\\\\\\\\\\\\\\\_caption()` for section titles
+  * `extract\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_section\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_number()` for various numbering formats
+  * `extract\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_caption()` for section titles
   * Section hierarchy included in each paragraph's metadata
   * Better section reference generation for manifest
 
@@ -153,28 +165,28 @@ Use the `/redline` slash command which orchestrates all phases.
 
 ### Agent Prompts Updated (by user/linter)
 
-* `document\\\\\\\\\\\\\\\_mapper.md`: Enhanced flag categories (high/medium priority, missing protections)
-* `section\\\\\\\\\\\\\\\_redliner.md`: More aggressive at level 4-5, emphasis on importing preferred form language
+* `document\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_mapper.md`: Enhanced flag categories (high/medium priority, missing protections)
+* `section\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_redliner.md`: More aggressive at level 4-5, emphasis on importing preferred form language
 
 ### Files in Project
 
 ```
-Claude\\\\\\\\\\\\\\\_Redlining/
+Claude\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_Redlining/
 ├── .claude/commands/redline.md          # Main skill (4-phase pipeline)
 ├── scripts/
-│   ├── parse\\\\\\\\\\\\\\\_docx.py                    # Enhanced with section tracking
-│   ├── rebuild\\\\\\\\\\\\\\\_docx.py                  # Reconstruct .docx preserving formatting
-│   ├── generate\\\\\\\\\\\\\\\_manifest.py             # Create change log
-│   ├── analyze\\\\\\\\\\\\\\\_documents.py             # (needs creation for Phase 1)
-│   ├── generate\\\\\\\\\\\\\\\_plan.py                 # (needs creation for Phase 2)
-│   ├── redline\\\\\\\\\\\\\\\_section.py               # (needs creation for Phase 3)
-│   └── consistency\\\\\\\\\\\\\\\_check.py             # (needs creation for Phase 4)
+│   ├── parse\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_docx.py                    # Enhanced with section tracking
+│   ├── rebuild\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_docx.py                  # Reconstruct .docx preserving formatting
+│   ├── generate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_manifest.py             # Create change log
+│   ├── analyze\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_documents.py             # (needs creation for Phase 1)
+│   ├── generate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_plan.py                 # (needs creation for Phase 2)
+│   ├── redline\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_section.py               # (needs creation for Phase 3)
+│   └── consistency\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_check.py             # (needs creation for Phase 4)
 ├── agents/
-│   ├── document\\\\\\\\\\\\\\\_mapper.md               # Enhanced with PSA-specific flags
-│   ├── section\\\\\\\\\\\\\\\_redliner.md              # More aggressive redlining guidance
-│   ├── consistency\\\\\\\\\\\\\\\_checker.md           # Verify consistency
-│   └── output\\\\\\\\\\\\\\\_builder.md                # Compile outputs
-├── test\\\\\\\\\\\\\\\_output/                         # Parsed test documents
+│   ├── document\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_mapper.md               # Enhanced with PSA-specific flags
+│   ├── section\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_redliner.md              # More aggressive redlining guidance
+│   ├── consistency\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_checker.md           # Verify consistency
+│   └── output\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_builder.md                # Compile outputs
+├── test\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_output/                         # Parsed test documents
 ├── README.md
 └── CLAUDE.md                            # This file
 ```
@@ -205,12 +217,12 @@ Automated legal redlining engine for Purchase and Sale Agreements (PSA).
 
 ## Current Status
 
-* **Repo:** `Gemini\\\\\\\_Redlining` (Private GitHub).
+* **Repo:** `Gemini\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_Redlining` (Private GitHub).
 * **Workflow:** `redline.ps1` -> Parses DOCX -> RAG Retrieval -> AI Redline -> Rebuild DOCX.
 * **Tools Built:**
 
-  * `scripts/generate\\\\\\\_native\\\\\\\_redline.py`: Generates .docx with Track Changes (Requires .NET 8 SDK - Installed).
-  * `scripts/generate\\\\\\\_html\\\\\\\_redline.py`: Generates legal-style HTML inline diffs.
+  * `scripts/generate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_native\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_redline.py`: Generates .docx with Track Changes (Requires .NET 8 SDK - Installed).
+  * `scripts/generate\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_html\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_redline.py`: Generates legal-style HTML inline diffs.
 
 ## The "Think Like a Lawyer" Pivot
 
@@ -218,7 +230,7 @@ We shifted focus from "Aggressive Style Matching" to **"Substantive Risk Analysi
 
 ### Verified Strategy (Ready to Implement)
 
-We validated a new prompting strategy using `scripts/run\\\\\\\_thinking\\\\\\\_test\\\\\\\_survival.py`.
+We validated a new prompting strategy using `scripts/run\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_thinking\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_test\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_survival.py`.
 
 1. **Materiality Matrix:** The AI must evaluate risks based on **Magnitude** (severity) and **Likelihood**.
 2. **Market Awareness:** If a clause is "Market" and "Safe," return it **UNCHANGED** (Minimalism).
@@ -227,19 +239,19 @@ We validated a new prompting strategy using `scripts/run\\\\\\\_thinking\\\\\\\_
 
 ### Pending Actions (Next Session)
 
-The following changes are defined in `redliner\\\\\\\_update.md` but **NOT yet merged** into the main codebase:
+The following changes are defined in `redliner\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_update.md` but **NOT yet merged** into the main codebase:
 
-1. **Update `agents/section\\\\\\\_redliner.md`:**
+1. **Update `agents/section\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_redliner.md`:**
 
    * Add "Materiality vs. Likelihood" definitions.
    * Add "Minimalist Rule" (Return Original if Safe).
 
-2. **Update `scripts/semantic\\\\\\\_redline\\\\\\\_engine.py`:**
+2. **Update `scripts/semantic\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_redline\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_engine.py`:**
 
    * Inject the "Internal Triage" step into the prompt.
    * Suppress the triage output so only the final text is returned.
 
 ## Technical Fixes Applied
 
-* **Truncation:** Increased `max\\\\\\\_output\\\\\\\_tokens` to **4096** and added `fsync` to file writing to prevent mid-sentence cutoffs.
+* **Truncation:** Increased `max\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_output\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\_tokens` to **4096** and added `fsync` to file writing to prevent mid-sentence cutoffs.
 * **Visualization:** Integrated `diff-match-patch` for high-quality HTML redlines.
