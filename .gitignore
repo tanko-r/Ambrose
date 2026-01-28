@@ -1,0 +1,29 @@
+# Test outputs and runs
+test_output/
+*_redline_*/
+ASB_*/
+backup_*/
+
+# Documents
+*.docx
+*.doc
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# API keys
+api.txt
+*.key
+
+# OS
+.DS_Store
+Thumbs.db
