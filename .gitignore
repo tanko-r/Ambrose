@@ -22,7 +22,12 @@ venv/
 
 # API keys
 api.txt
+anthropic_api.txt
 *.key
+
+# Working directories
+output/
+Other Files/
 
 # OS
 .DS_Store

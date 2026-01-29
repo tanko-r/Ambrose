@@ -1,0 +1,65 @@
+{
+  "_schema_version": "1.0",
+  "_description": "Patterns extracted from user feedback. These are incorporated into prompts to improve future redlining.",
+
+  "patterns": [
+    {
+      "id": "pattern_001",
+      "category": "knowledge_qualifiers",
+      "rule": "Do not add knowledge qualifiers to representations about Seller's own organizational status, authority, or capacity to execute",
+      "examples": [
+        "duly organized",
+        "validly existing",
+        "good standing",
+        "full power and authority",
+        "duly authorized",
+        "enforceable"
+      ],
+      "source": "seed",
+      "confidence": "high",
+      "usage_count": 0
+    },
+    {
+      "id": "pattern_002",
+      "category": "preservation",
+      "rule": "Preserve standard notice provisions unless the notice periods are unreasonably short",
+      "examples": [
+        "Any notice shall be deemed given when delivered",
+        "Notice shall be sent to the following addresses"
+      ],
+      "source": "seed",
+      "confidence": "medium",
+      "usage_count": 0
+    },
+    {
+      "id": "pattern_003",
+      "category": "surgical_editing",
+      "rule": "When extending deadlines, change only the time period, not the surrounding sentence structure",
+      "examples": [
+        "within three (3) days → within five (5) business days",
+        "for a period of one (1) year → for a period of nine (9) months"
+      ],
+      "source": "seed",
+      "confidence": "high",
+      "usage_count": 0
+    }
+  ],
+
+  "pattern_clusters": {
+    "knowledge_qualifiers": {
+      "description": "Rules about when to add or not add knowledge qualifiers",
+      "patterns": ["pattern_001"]
+    },
+    "preservation": {
+      "description": "Rules about what language to preserve unchanged",
+      "patterns": ["pattern_002"]
+    },
+    "surgical_editing": {
+      "description": "Rules about making minimal, targeted changes",
+      "patterns": ["pattern_003"]
+    }
+  },
+
+  "last_updated": "2024-01-01T00:00:00Z",
+  "update_frequency": "After each redlining session with corrections"
+}
