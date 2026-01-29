@@ -170,7 +170,72 @@ Return a JSON array of risk objects. For each risk found:
 If a clause has multiple distinct risks, return multiple objects.
 If a clause has no significant risks for your client, return an empty array for that clause.
 
-Be thorough but precise. Focus on substance over form."""
+Be thorough but precise. Focus on substance over form.
+
+## CONCEPT MAP EXTRACTION
+
+As you analyze, extract document-wide provisions into these categories:
+
+**LIABILITY LIMITATIONS:**
+- Baskets (minimum thresholds before claims)
+- Caps (maximum liability limits)
+- Survival periods (how long claims can be made)
+- Deductibles
+
+**KNOWLEDGE STANDARDS:**
+- How "knowledge" is defined
+- Who the knowledge qualifier applies to
+
+**TERMINATION TRIGGERS:**
+- Events allowing termination
+- Events requiring termination
+- Automatic vs. elective termination
+
+**DEFAULT REMEDIES:**
+- Cure periods
+- Notice requirements
+- Automatic consequences vs. elective remedies
+
+**KEY DEFINED TERMS:**
+- Material Adverse Effect
+- Permitted Exceptions
+- Other terms affecting risk allocation
+
+For each provision found, note: the value, section reference, and any limitations.
+
+## RISK RELATIONSHIPS
+
+For each risk identified, also determine:
+
+**mitigated_by:** Provisions in the document that reduce this risk's severity.
+Example: A $50K basket mitigates an unqualified rep because small claims won't trigger liability.
+
+**amplified_by:** Provisions that increase exposure if this risk materializes.
+Example: Automatic termination on breach amplifies an unqualified rep because a foot-fault could end the deal.
+
+**triggers:** Obligations or consequences this risk activates.
+Example: A rep breach triggers indemnification obligations under Section 8.
+
+Include these in your JSON output as:
+{{
+  "risks": [...],
+  "concept_map": {{
+    "liability_limitations": {{}},
+    "knowledge_standards": {{}},
+    "termination_triggers": {{}},
+    "default_remedies": {{}},
+    "key_defined_terms": {{}}
+  }}
+}}
+
+Each risk should include:
+{{
+  "risk_id": "R-5.3-1",
+  "para_id": "para_23",
+  "mitigated_by": [{{"ref": "8.3:basket", "effect": "..."}}],
+  "amplified_by": [{{"ref": "10.4:auto_term", "effect": "..."}}],
+  "triggers": ["8.1:indem"]
+}}"""
 
 
 def build_document_map(all_paragraphs: List[Dict]) -> str:
