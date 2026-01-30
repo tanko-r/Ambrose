@@ -312,7 +312,7 @@ def analyze_clauses_with_claude(
     aggressiveness: int,
     defined_terms: List[str] = None,
     document_map: str = ""
-) -> List[Dict]:
+) -> Dict:
     """
     Use Claude Opus 4.5 to analyze clauses for risks.
 
@@ -325,7 +325,7 @@ def analyze_clauses_with_claude(
         document_map: Condensed map of all document paragraphs for cross-referencing
 
     Returns:
-        List of risk dicts with detailed analysis
+        Dict with 'risks' list and 'concept_map' dict
     """
     if not HAS_ANTHROPIC:
         raise RuntimeError("Anthropic SDK not installed. Run: pip install anthropic")
@@ -354,17 +354,40 @@ def analyze_clauses_with_claude(
         # Extract the text response
         response_text = response.content[0].text if response.content else ""
 
-        # Parse JSON from response
-        risks = parse_risk_response(response_text)
-        return risks
+        # Parse JSON from response - returns dict with 'risks' and 'concept_map'
+        return parse_risk_response(response_text)
 
     except anthropic.APIError as e:
         raise RuntimeError(f"Claude API error: {str(e)}")
 
 
-def parse_risk_response(response_text: str) -> List[Dict]:
-    """Parse the risk analysis response from Claude."""
+def parse_risk_response(response_text: str) -> Dict:
+    """
+    Parse the risk analysis response from Claude.
 
+    Returns a dict with structure:
+    {
+        'risks': [
+            {
+                'risk_id': str,
+                'para_id': str,
+                'type': str,
+                'severity': str,
+                'title': str,
+                'description': str,
+                'problematic_text': str,
+                'user_recommendation': str,
+                'model_instructions': str,
+                'related_para_ids': str,
+                'mitigated_by': List[Dict],  # [{"ref": "8.3:basket", "effect": "..."}]
+                'amplified_by': List[Dict],  # [{"ref": "10.4:auto_term", "effect": "..."}]
+                'triggers': List[str]        # ["8.1:indem"]
+            },
+            ...
+        ],
+        'concept_map': Dict  # the entire concept_map from response
+    }
+    """
     # Try to extract JSON from the response
     text = response_text.strip()
 
@@ -373,38 +396,52 @@ def parse_risk_response(response_text: str) -> List[Dict]:
     if json_match:
         text = json_match.group(1)
 
-    # Try to find JSON array
-    array_match = re.search(r'\[.*\]', text, re.DOTALL)
-    if array_match:
-        text = array_match.group(0)
+    # Initialize result structure
+    result = {
+        'risks': [],
+        'concept_map': {}
+    }
 
     try:
-        risks = json.loads(text)
-        if isinstance(risks, list):
-            # Validate and normalize each risk
-            normalized = []
-            for i, risk in enumerate(risks):
-                if isinstance(risk, dict) and 'para_id' in risk:
-                    normalized.append({
-                        'risk_id': f'R{i+1}',
-                        'para_id': risk.get('para_id', ''),
-                        'type': risk.get('risk_type', 'general'),
-                        'severity': risk.get('severity', 'medium'),
-                        'title': risk.get('title', 'Risk Identified'),
-                        'description': risk.get('description', ''),
-                        'problematic_text': risk.get('problematic_text', ''),
-                        'start_offset': risk.get('start_offset', 0),
-                        'end_offset': risk.get('end_offset', 0),
-                        'user_recommendation': risk.get('user_recommendation', ''),
-                        'model_instructions': risk.get('model_instructions', ''),
-                        'related_para_ids': risk.get('related_para_id', ''),
-                        'category': categorize_risk(risk.get('risk_type', ''))
-                    })
-            return normalized
+        parsed = json.loads(text)
+
+        # Handle new format: object with 'risks' and 'concept_map' keys
+        if isinstance(parsed, dict):
+            risks_list = parsed.get('risks', [])
+            result['concept_map'] = parsed.get('concept_map', {})
+        # Handle legacy format: direct array of risks
+        elif isinstance(parsed, list):
+            risks_list = parsed
+        else:
+            return result
+
+        # Validate and normalize each risk
+        for i, risk in enumerate(risks_list):
+            if isinstance(risk, dict) and 'para_id' in risk:
+                result['risks'].append({
+                    'risk_id': risk.get('risk_id', f'R{i+1}'),
+                    'para_id': risk.get('para_id', ''),
+                    'type': risk.get('risk_type', 'general'),
+                    'severity': risk.get('severity', 'medium'),
+                    'title': risk.get('title', 'Risk Identified'),
+                    'description': risk.get('description', ''),
+                    'problematic_text': risk.get('problematic_text', ''),
+                    'start_offset': risk.get('start_offset', 0),
+                    'end_offset': risk.get('end_offset', 0),
+                    'user_recommendation': risk.get('user_recommendation', ''),
+                    'model_instructions': risk.get('model_instructions', ''),
+                    'related_para_ids': risk.get('related_para_id', ''),
+                    'category': categorize_risk(risk.get('risk_type', '')),
+                    # NEW fields for risk relationships
+                    'mitigated_by': risk.get('mitigated_by', []),
+                    'amplified_by': risk.get('amplified_by', []),
+                    'triggers': risk.get('triggers', [])
+                })
+
     except json.JSONDecodeError:
         pass
 
-    return []
+    return result
 
 
 def categorize_risk(risk_type: str) -> str:
@@ -468,6 +505,7 @@ def analyze_document_with_llm(
 
     total_batches = (len(paragraphs) + batch_size - 1) // batch_size
     all_risks = []
+    aggregated_concept_map = {}  # Aggregate concept_map from all batches
 
     # Initialize progress
     if session_id:
@@ -513,7 +551,7 @@ def analyze_document_with_llm(
             })
 
         try:
-            batch_risks = analyze_clauses_with_claude(
+            batch_result = analyze_clauses_with_claude(
                 clauses=batch,
                 contract_type=contract_type,
                 representation=representation,
@@ -521,7 +559,15 @@ def analyze_document_with_llm(
                 defined_terms=defined_terms,
                 document_map=document_map
             )
-            all_risks.extend(batch_risks)
+            all_risks.extend(batch_result.get('risks', []))
+
+            # Merge concept_map from this batch (later batches may override earlier)
+            batch_concept_map = batch_result.get('concept_map', {})
+            for category, provisions in batch_concept_map.items():
+                if category not in aggregated_concept_map:
+                    aggregated_concept_map[category] = {}
+                if isinstance(provisions, dict):
+                    aggregated_concept_map[category].update(provisions)
 
             # Update progress after processing
             if session_id:
@@ -579,6 +625,7 @@ def analyze_document_with_llm(
         'aggressiveness': aggressiveness,
         'risk_inventory': all_risks,
         'risk_by_paragraph': risk_by_para,
+        'concept_map': aggregated_concept_map,  # Document-wide provisions by category
         'opportunities': [],  # Will be populated by separate analysis if needed
         'summary': {
             'total_risks': len(all_risks),

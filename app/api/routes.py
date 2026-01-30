@@ -261,14 +261,25 @@ def get_analysis(session_id):
     If analysis hasn't been performed yet, triggers analysis.
     Uses Claude Opus 4.5 for deep legal analysis.
     Returns comprehensive risk map with per-clause breakdown.
+
+    After analysis, builds and stores ConceptMap and RiskMap objects
+    in the session for use during revision generation.
     """
+    from app.models import ConceptMap, RiskMap
+
     session = get_session(session_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
     # Check if analysis already exists
     if session.get('analysis'):
-        return jsonify(session['analysis'])
+        # Include stored maps in response if they exist
+        response = dict(session['analysis'])
+        if session.get('concept_map'):
+            response['concept_map'] = session['concept_map']
+        if session.get('risk_map'):
+            response['risk_map'] = session['risk_map']
+        return jsonify(response)
 
     # Perform LLM-based analysis using Claude
     try:
@@ -286,12 +297,66 @@ def get_analysis(session_id):
         # Clear progress tracking
         clear_progress(session_id)
 
-        # Store analysis in session
+        # Build ConceptMap from analysis
+        concept_map = ConceptMap()
+        if 'concept_map' in analysis:
+            for category, provisions in analysis['concept_map'].items():
+                if isinstance(provisions, dict):
+                    for key, details in provisions.items():
+                        if isinstance(details, dict):
+                            concept_map.add_provision(
+                                category=category,
+                                key=key,
+                                value=details.get('value', ''),
+                                section=details.get('section', ''),
+                                **{k: v for k, v in details.items() if k not in ('value', 'section')}
+                            )
+                        else:
+                            # Handle case where details is a simple value
+                            concept_map.add_provision(
+                                category=category,
+                                key=key,
+                                value=str(details),
+                                section=''
+                            )
+
+        # Build RiskMap from analysis
+        risk_map = RiskMap()
+        for risk in analysis.get('risk_inventory', []):
+            rm_risk = risk_map.add_risk(
+                risk_id=risk.get('risk_id', ''),
+                clause=risk.get('section_ref', risk.get('para_id', '')),
+                para_id=risk.get('para_id', ''),
+                title=risk.get('title', ''),
+                description=risk.get('description', ''),
+                base_severity=risk.get('severity', 'medium')
+            )
+            # Add relationships
+            for m in risk.get('mitigated_by', []):
+                if isinstance(m, dict):
+                    rm_risk.add_mitigator(m.get('ref', ''), m.get('effect', ''))
+            for a in risk.get('amplified_by', []):
+                if isinstance(a, dict):
+                    rm_risk.add_amplifier(a.get('ref', ''), a.get('effect', ''))
+            for t in risk.get('triggers', []):
+                rm_risk.add_trigger(t)
+
+        # Recalculate effective severities based on relationships
+        risk_map.recalculate_all_severities()
+
+        # Store analysis and maps in session
         session['analysis'] = analysis
+        session['concept_map'] = concept_map.to_dict()
+        session['risk_map'] = risk_map.to_dict()
         session['status'] = 'analyzed'
         save_session(session_id, session)
 
-        return jsonify(analysis)
+        # Include maps in response
+        response = dict(analysis)
+        response['concept_map'] = concept_map.to_dict()
+        response['risk_map'] = risk_map.to_dict()
+
+        return jsonify(response)
     except Exception as e:
         from app.services.claude_service import clear_progress
         clear_progress(session_id)
@@ -458,7 +523,15 @@ def revise():
 
 @api_bp.route('/accept', methods=['POST'])
 def accept_revision():
-    """Accept a proposed revision."""
+    """
+    Accept a proposed revision.
+
+    Detects concept changes in the revision and updates the concept map
+    and risk map accordingly. Returns affected paragraph IDs that may
+    need re-analysis due to changed relationships.
+    """
+    from app.services.map_updater import detect_concept_changes, update_maps_on_revision
+
     data = request.get_json()
     session_id = data.get('session_id')
     para_id = data.get('para_id')
@@ -467,12 +540,44 @@ def accept_revision():
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
-    if para_id in session.get('revisions', {}):
-        session['revisions'][para_id]['accepted'] = True
-        save_session(session_id, session)
-        return jsonify({'status': 'accepted', 'para_id': para_id})
+    revision = session.get('revisions', {}).get(para_id)
+    if not revision:
+        return jsonify({'error': 'Revision not found'}), 404
 
-    return jsonify({'error': 'Revision not found'}), 404
+    # Detect and apply concept changes
+    original = revision.get('original', '')
+    revised = revision.get('revised', '')
+
+    changes = detect_concept_changes(original, revised)
+
+    affected_para_ids = []
+    if changes and session.get('concept_map') and session.get('risk_map'):
+        # Get paragraph info for section reference
+        parsed_doc = session.get('parsed_doc', {})
+        para = next((p for p in parsed_doc.get('content', []) if p.get('id') == para_id), None)
+        section_ref = para.get('section_ref', '') if para else ''
+
+        updated_cm, updated_rm, affected_para_ids = update_maps_on_revision(
+            session['concept_map'],
+            session['risk_map'],
+            changes,
+            para_id,
+            section_ref
+        )
+
+        session['concept_map'] = updated_cm
+        session['risk_map'] = updated_rm
+
+    # Mark as accepted
+    revision['accepted'] = True
+    save_session(session_id, session)
+
+    return jsonify({
+        'status': 'accepted',
+        'para_id': para_id,
+        'concept_changes': changes,
+        'affected_para_ids': affected_para_ids
+    })
 
 
 @api_bp.route('/reject', methods=['POST'])
