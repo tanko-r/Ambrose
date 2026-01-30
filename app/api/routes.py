@@ -490,7 +490,9 @@ def revise():
             deal_context=session.get('deal_context', ''),
             precedent_doc=session.get('parsed_precedent'),
             custom_instruction=custom_instruction,
-            related_clauses=related_clauses_context
+            related_clauses=related_clauses_context,
+            concept_map=session.get('concept_map'),
+            risk_map=session.get('risk_map')
         )
 
         # Store revision in session (including diff_html for persistence)

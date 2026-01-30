@@ -193,9 +193,49 @@ def build_revision_prompt(
     precedent_clause: Optional[str],
     custom_instruction: str,
     deal_context: str,
-    related_clauses: Optional[List[Dict]] = None
+    related_clauses: Optional[List[Dict]] = None,
+    concept_map: Optional[Dict] = None,
+    risk_map: Optional[Dict] = None
 ) -> str:
-    """Build the user prompt for a specific revision request."""
+    """
+    Build the user prompt for a specific revision request.
+
+    Args:
+        original_text: The clause text to revise
+        section_ref: Section reference (e.g., "5.3")
+        section_hierarchy: List of parent sections for context
+        risks: List of risks identified for this clause
+        precedent_clause: Optional precedent language to reference
+        custom_instruction: User's specific instruction for this revision
+        deal_context: Overall deal context
+        related_clauses: Optional related clauses for consistency
+        concept_map: Optional document-wide concept map with provisions
+        risk_map: Optional risk map with dependency relationships
+
+    Returns:
+        Formatted prompt string for Gemini
+    """
+    from app.models import ConceptMap, RiskMap
+
+    prompt_parts = []
+
+    # Document Context - Concept Map
+    if concept_map:
+        cm = ConceptMap.from_dict(concept_map)
+        concept_text = cm.to_prompt_format()
+        if concept_text.strip():
+            prompt_parts.append("## Document Context\n")
+            prompt_parts.append(concept_text)
+            prompt_parts.append("\n")
+
+    # Risk Context - Matrix showing relationships
+    if risk_map and risks:
+        rm = RiskMap.from_dict(risk_map)
+        risk_ids = [r.get('risk_id') for r in risks if r.get('risk_id')]
+        if risk_ids:
+            prompt_parts.append("## Risk Context\n")
+            prompt_parts.append(rm.to_matrix_format(risk_ids))
+            prompt_parts.append("\n\n")
 
     hierarchy_str = " > ".join([
         f"{h.get('number', '')} {h.get('caption', '')}"
@@ -206,7 +246,8 @@ def build_revision_prompt(
     if risks:
         risks_str = "\n\nIDENTIFIED RISKS:\n"
         for risk in risks:
-            risks_str += f"- {risk.get('type', 'unknown')}: {risk.get('description', '')}\n"
+            risk_type = risk.get('type') or risk.get('title', 'unknown')
+            risks_str += f"- {risk_type}: {risk.get('description', '')}\n"
 
     precedent_str = ""
     if precedent_clause:
@@ -242,7 +283,19 @@ def build_revision_prompt(
    - "revised_text": the modified text
    - "rationale": why this change is needed for consistency"""
 
-    return f"""TARGET SECTION: {section_ref}
+    # Build context instructions if we have concept/risk maps
+    context_instructions = ""
+    if concept_map or risk_map:
+        context_instructions = """
+Consider the Document Context above:
+- If a provision mitigates the risk (like a basket or cap), note this but still address remaining exposure
+- If a provision amplifies the risk (like automatic termination), prioritize addressing it
+- Reference specific provisions by section when relevant
+
+"""
+
+    # Combine all parts
+    prompt_parts.append(f"""TARGET SECTION: {section_ref}
 HIERARCHY: {hierarchy_str}
 
 TARGET CLAUSE:
@@ -250,7 +303,7 @@ TARGET CLAUSE:
 {precedent_str}{risks_str}{related_str}{context_str}{custom_str}
 
 TASK: Revise the TARGET CLAUSE to protect the client's interests. Apply surgical edits that maintain the original sentence structure while addressing the identified risks.
-
+{context_instructions}
 Internal Chain of Thought (before outputting):
 1. ANALYZE the risks in the target clause
 2. DETERMINE surgical changes to address each risk
@@ -264,7 +317,26 @@ Return your response as a JSON object with:
 - "rationale": explanation of changes
 - "thinking": (optional) your reasoning
 - "related_revisions": (optional) array of revisions to related clauses for consistency
-"""
+- "related_suggestions": (optional) array of suggestions for other clauses that should be revised for consistency
+
+If you identify that other clauses in the document should also be revised for consistency with your changes, include a "related_suggestions" array:
+{{
+  "revised_text": "...",
+  "rationale": "...",
+  "related_suggestions": [
+    {{
+      "section": "8.3",
+      "para_id": "para_45",
+      "suggestion": "Add carve-out for the materiality qualifier added here",
+      "priority": "recommended"
+    }}
+  ]
+}}
+
+Priority should be "recommended" (should do) or "optional" (nice to have).
+""")
+
+    return "".join(prompt_parts)
 
 
 def extract_revision_from_response(response_text: str, original_text: str) -> Dict[str, Any]:
@@ -322,12 +394,29 @@ def generate_revision(
     deal_context: str,
     precedent_doc: Optional[Dict] = None,
     custom_instruction: str = "",
-    related_clauses: Optional[List[Dict]] = None
+    related_clauses: Optional[List[Dict]] = None,
+    concept_map: Optional[Dict] = None,
+    risk_map: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """
     Generate a revision for a specific clause using Gemini.
 
-    Returns dict with revised_text, rationale, thinking, and diff_html.
+    Args:
+        original_text: The clause text to revise
+        section_ref: Section reference (e.g., "5.3")
+        section_hierarchy: List of parent sections for context
+        risks: List of risks identified for this clause
+        representation: Who the client represents (e.g., "Seller")
+        aggressiveness: Revision aggressiveness level (1-5)
+        deal_context: Overall deal context
+        precedent_doc: Optional precedent document for reference
+        custom_instruction: User's specific instruction for this revision
+        related_clauses: Optional related clauses for consistency
+        concept_map: Optional document-wide concept map with provisions
+        risk_map: Optional risk map with dependency relationships
+
+    Returns:
+        Dict with revised_text, rationale, thinking, diff_html, and related_suggestions.
     """
     from app.services.document_service import generate_inline_diff_html
 
@@ -370,7 +459,9 @@ def generate_revision(
         precedent_clause=precedent_clause,
         custom_instruction=custom_instruction,
         deal_context=deal_context,
-        related_clauses=related_clauses
+        related_clauses=related_clauses,
+        concept_map=concept_map,
+        risk_map=risk_map
     )
 
     # Configure generation
