@@ -166,6 +166,7 @@ def intake():
         'aggressiveness': aggressiveness,
         'include_exhibits': include_exhibits,
         'contract_type': contract_type,
+        'target_filename': target_file.filename,  # Store original filename
         'target_path': str(target_path),
         'precedent_path': str(precedent_path) if precedent_path else None,
         'parsed_doc': parsed_doc,
@@ -243,8 +244,12 @@ def get_document(session_id):
         else:
             return jsonify({'error': 'Document not found'}), 404
 
+    # Get filename from session or metadata
+    filename = session.get('target_filename') or parsed_doc.get('metadata', {}).get('filename') or 'Contract Document'
+
     return jsonify({
         'session_id': session_id,
+        'filename': filename,
         'content': parsed_doc.get('content', []),
         'sections': parsed_doc.get('sections', []),
         'exhibits': parsed_doc.get('exhibits', []),
@@ -890,3 +895,34 @@ def list_sessions():
             'representation': data.get('representation')
         })
     return jsonify({'sessions': session_list})
+
+
+@api_bp.route('/version', methods=['GET'])
+def get_version():
+    """Get git branch and commit info for display in header."""
+    import subprocess
+
+    try:
+        # Get current branch
+        branch = subprocess.check_output(
+            ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+            cwd=Path(__file__).parent.parent.parent,
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+
+        # Get short commit hash
+        commit = subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            cwd=Path(__file__).parent.parent.parent,
+            stderr=subprocess.DEVNULL
+        ).decode().strip()
+
+        return jsonify({
+            'branch': branch,
+            'commit': commit
+        })
+    except Exception:
+        return jsonify({
+            'branch': 'unknown',
+            'commit': 'unknown'
+        })

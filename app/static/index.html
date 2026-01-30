@@ -233,6 +233,7 @@
             <!-- Tabbed Interface -->
             <div class="sidebar-tabs">
                 <button class="sidebar-tab active" data-tab="risks" onclick="switchSidebarTab('risks')">Risks</button>
+                <button class="sidebar-tab" data-tab="related" onclick="switchSidebarTab('related')">Related</button>
                 <button class="sidebar-tab" data-tab="definitions" onclick="switchSidebarTab('definitions')">Definitions</button>
                 <button class="sidebar-tab" data-tab="flags" onclick="switchSidebarTab('flags')">Flags</button>
             </div>
@@ -245,6 +246,16 @@
                         <div class="empty-state">
                             <div class="empty-state-icon">&#128269;</div>
                             <p>Click on a clause in the document to see its analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Tab -->
+                <div class="sidebar-tab-pane" id="tab-related">
+                    <div class="related-clauses-content" id="related-clauses-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">&#128279;</div>
+                            <p>Related clauses will appear here when you select a clause.</p>
                         </div>
                     </div>
                 </div>

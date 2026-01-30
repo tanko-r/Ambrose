@@ -67,7 +67,9 @@ function switchSidebarTab(tabName) {
     });
 
     // Load tab-specific content if needed
-    if (tabName === 'definitions') {
+    if (tabName === 'related' && AppState.selectedParaId) {
+        renderRelatedClausesTab(AppState.selectedParaId);
+    } else if (tabName === 'definitions') {
         renderDefinitionsTab();
     } else if (tabName === 'flags' && AppState.selectedParaId) {
         renderFlagsTab(AppState.selectedParaId);
@@ -107,6 +109,61 @@ function renderFlagsTab(paraId) {
                     <button class="flag-remove-btn" onclick="removeFlag('${paraId}', ${idx})" title="Remove flag">&times;</button>
                 </div>
                 ${flag.note ? `<div class="flag-note">${escapeHtml(flag.note)}</div>` : ''}
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+
+// Render related clauses tab content
+function renderRelatedClausesTab(paraId) {
+    const container = document.getElementById('related-clauses-content');
+    if (!container) return;
+
+    const risks = AppState.analysis?.risk_by_paragraph?.[paraId] || [];
+
+    // Collect all related clause IDs from risks
+    const relatedIds = new Set();
+    risks.forEach(risk => {
+        if (risk.related_para_ids) {
+            risk.related_para_ids.split(',').forEach(id => {
+                const trimmed = id.trim();
+                if (trimmed && trimmed !== paraId) {
+                    relatedIds.add(trimmed);
+                }
+            });
+        }
+    });
+
+    if (relatedIds.size === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">&#128279;</div>
+                <p>No related clauses found for this clause.</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '<div class="related-clauses-list">';
+    relatedIds.forEach(relId => {
+        const info = getParaInfo(relId);
+        if (!info) return;
+
+        const revisionIndicator = info.isAccepted
+            ? '<span class="related-revised">&#10003; Revised</span>'
+            : (info.hasRevision ? '<span class="related-pending">&#9998; Pending</span>' : '');
+
+        html += `
+            <div class="related-clause-card" onclick="openClauseViewer('${relId}')">
+                <div class="related-clause-header">
+                    <span class="related-clause-ref">${escapeHtml(info.sectionRef)}</span>
+                    ${revisionIndicator}
+                </div>
+                ${info.caption ? `<div class="related-clause-caption">${escapeHtml(info.caption)}</div>` : ''}
+                <div class="related-clause-summary">${escapeHtml(info.summary)}</div>
             </div>
         `;
     });
@@ -213,6 +270,7 @@ function removeFlag(paraId, flagIndex) {
 
 // Export functions
 window.switchSidebarTab = switchSidebarTab;
+window.renderRelatedClausesTab = renderRelatedClausesTab;
 window.renderFlagsTab = renderFlagsTab;
 window.renderDefinitionsTab = renderDefinitionsTab;
 window.filterDefinitions = filterDefinitions;
