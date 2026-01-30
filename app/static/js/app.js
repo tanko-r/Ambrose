@@ -13,20 +13,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup bottom sheet for revisions
     setupBottomSheet();
 
-    // Setup related clauses selection panel
-    setupRelatedSelectionPanel();
-
     // Initialize navigation panel
     initNavigation();
 
     // Setup sidebar tabs
     setupSidebarTabs();
 
+    // Load and display version info
+    loadVersionInfo();
+
     // Show intake screen
     showIntake();
 
     console.log('Contract Review App initialized');
 });
+
+// Load git version info into header
+async function loadVersionInfo() {
+    try {
+        const response = await fetch('/api/version');
+        if (response.ok) {
+            const data = await response.json();
+            const versionEl = document.getElementById('header-version');
+            if (versionEl) {
+                versionEl.textContent = `${data.branch} @ ${data.commit}`;
+                versionEl.title = `Branch: ${data.branch}\nCommit: ${data.commit}`;
+            }
+        }
+    } catch (e) {
+        console.log('Could not load version info');
+    }
+}
 
 // Setup sidebar tab switching
 function setupSidebarTabs() {
@@ -50,65 +67,46 @@ function switchSidebarTab(tabName) {
     });
 
     // Load tab-specific content if needed
-    if (tabName === 'related' && AppState.selectedParaId) {
-        renderRelatedClausesTab(AppState.selectedParaId);
-    } else if (tabName === 'definitions') {
+    if (tabName === 'definitions') {
         renderDefinitionsTab();
-    } else if (tabName === 'history' && AppState.selectedParaId) {
-        renderHistoryTab(AppState.selectedParaId);
+    } else if (tabName === 'flags' && AppState.selectedParaId) {
+        renderFlagsTab(AppState.selectedParaId);
     }
 }
 
-// Render related clauses tab content
-function renderRelatedClausesTab(paraId) {
-    const container = document.getElementById('related-clauses-content');
+// Render flags tab content
+function renderFlagsTab(paraId) {
+    const container = document.getElementById('flags-content');
     if (!container) return;
 
-    const risks = AppState.analysis?.risk_by_paragraph?.[paraId] || [];
+    // Find flags for this clause
+    const flags = (AppState.flags || []).filter(f => f.para_id === paraId);
 
-    // Collect all related clause IDs
-    const relatedIds = new Set();
-    risks.forEach(risk => {
-        if (risk.related_para_ids) {
-            risk.related_para_ids.split(',').forEach(id => {
-                const trimmed = id.trim();
-                if (trimmed && trimmed !== paraId) {
-                    relatedIds.add(trimmed);
-                }
-            });
-        }
-    });
-
-    if (relatedIds.size === 0) {
+    if (flags.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">&#128279;</div>
-                <p>No related clauses found for this clause.</p>
+                <div class="empty-state-icon">&#128681;</div>
+                <p>No flags for this clause.</p>
+                <p class="empty-state-hint">Use the "Flag" button to flag this clause for review.</p>
             </div>
         `;
         return;
     }
 
-    let html = '<div class="related-clauses-list">';
-    relatedIds.forEach(relId => {
-        const info = getParaInfo(relId);
-        if (!info) return;
-
-        const revisionIndicator = info.isAccepted
-            ? '<span class="related-revised">&#10003; Revised</span>'
-            : (info.hasRevision ? '<span class="related-pending">&#9998; Pending</span>' : '');
+    let html = '<div class="flags-list">';
+    flags.forEach((flag, idx) => {
+        const typeIcon = flag.type === 'client' ? '&#128100;' : '&#9878;';
+        const typeLabel = flag.type === 'client' ? 'Client Review' : 'Attorney Review';
+        const typeClass = flag.type === 'client' ? 'flag-client' : 'flag-attorney';
 
         html += `
-            <div class="related-clause-card" onclick="openClauseViewer('${relId}')">
-                <div class="related-clause-header">
-                    <span class="related-clause-ref">${escapeHtml(info.sectionRef)}</span>
-                    ${revisionIndicator}
-                    <button class="split-view-btn" onclick="event.stopPropagation(); openSplitView('${paraId}', '${relId}')" title="Compare side-by-side">
-                        &#9707;
-                    </button>
+            <div class="flag-item ${typeClass}">
+                <div class="flag-item-header">
+                    <span class="flag-type-icon">${typeIcon}</span>
+                    <span class="flag-type-label">${typeLabel}</span>
+                    <button class="flag-remove-btn" onclick="removeFlag('${paraId}', ${idx})" title="Remove flag">&times;</button>
                 </div>
-                ${info.caption ? `<div class="related-clause-caption">${escapeHtml(info.caption)}</div>` : ''}
-                <div class="related-clause-summary">${escapeHtml(info.summary)}</div>
+                ${flag.note ? `<div class="flag-note">${escapeHtml(flag.note)}</div>` : ''}
             </div>
         `;
     });
@@ -189,45 +187,34 @@ function jumpToDefinition(paraId) {
     }
 }
 
-// Render history tab content
-function renderHistoryTab(paraId) {
-    const container = document.getElementById('history-content');
-    if (!container) return;
+// Remove a flag from a clause
+function removeFlag(paraId, flagIndex) {
+    if (!AppState.flags) return;
 
-    const revision = AppState.revisions[paraId];
-
-    if (!revision) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">&#128337;</div>
-                <p>No revision history for this clause.</p>
-            </div>
-        `;
-        return;
+    // Find and remove the flag
+    const flags = AppState.flags.filter(f => f.para_id === paraId);
+    if (flags[flagIndex]) {
+        const globalIdx = AppState.flags.indexOf(flags[flagIndex]);
+        if (globalIdx > -1) {
+            AppState.flags.splice(globalIdx, 1);
+        }
     }
 
-    const action = revision.accepted ? 'accepted' : 'pending';
-    const timestamp = revision.timestamp ? new Date(revision.timestamp).toLocaleString() : 'Unknown';
+    // Re-render the flags tab
+    renderFlagsTab(paraId);
 
-    let html = `
-        <div class="history-item">
-            <div class="history-item-header">
-                <span class="history-item-action ${action}">${action.toUpperCase()}</span>
-                <span class="history-item-time">${timestamp}</span>
-            </div>
-            <div class="history-item-text">
-                <strong>Rationale:</strong> ${escapeHtml(revision.rationale || 'No rationale provided')}
-            </div>
-        </div>
-    `;
+    // Update document display
+    if (typeof renderDocument === 'function') {
+        renderDocument();
+    }
 
-    container.innerHTML = html;
+    showToast('Flag removed', 'info');
 }
 
 // Export functions
 window.switchSidebarTab = switchSidebarTab;
-window.renderRelatedClausesTab = renderRelatedClausesTab;
+window.renderFlagsTab = renderFlagsTab;
 window.renderDefinitionsTab = renderDefinitionsTab;
 window.filterDefinitions = filterDefinitions;
 window.jumpToDefinition = jumpToDefinition;
-window.renderHistoryTab = renderHistoryTab;
+window.removeFlag = removeFlag;

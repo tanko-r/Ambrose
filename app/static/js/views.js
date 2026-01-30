@@ -10,9 +10,10 @@ function showIntake() {
     document.getElementById('btn-finalize').classList.add('hidden');
     document.getElementById('session-info').textContent = '';
 
-    // Reset nav toggle state
-    const navToggle = document.getElementById('nav-toggle');
-    if (navToggle) navToggle.classList.remove('active');
+    // Hide bottom bar
+    if (typeof hideBottomBar === 'function') {
+        hideBottomBar();
+    }
 }
 
 function showReviewView() {
@@ -21,15 +22,27 @@ function showReviewView() {
     document.getElementById('document-panel').classList.remove('hidden');
     document.getElementById('sidebar').classList.remove('hidden');
     document.getElementById('btn-finalize').classList.remove('hidden');
-    document.getElementById('session-info').textContent = `Session: ${AppState.sessionId.slice(0, 8)}...`;
+    // Show full session ID (clickable to copy)
+    document.getElementById('session-info').textContent = `Session: ${AppState.sessionId}`;
 
-    // Set nav toggle to active
-    const navToggle = document.getElementById('nav-toggle');
-    if (navToggle) navToggle.classList.add('active');
+    // Update header filename
+    const filenameEl = document.getElementById('header-filename');
+    if (filenameEl && AppState.document) {
+        const filename = AppState.document.filename || AppState.document.name || 'Untitled Document';
+        filenameEl.textContent = filename;
+    }
 
     // Update navigation panel
     if (typeof updateNavPanel === 'function') {
         updateNavPanel();
+    }
+
+    // Show and update bottom bar
+    if (typeof showBottomBar === 'function') {
+        showBottomBar();
+    }
+    if (typeof updateBottomBar === 'function') {
+        updateBottomBar();
     }
 }
 

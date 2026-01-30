@@ -4,23 +4,82 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contract Review - Collaborative Redlining</title>
+    <!-- Google Fonts - loaded via link tags for better performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-left">
-            <button class="nav-toggle" id="nav-toggle" title="Toggle navigation">
-                <span class="nav-toggle-icon">&#9776;</span>
-            </button>
+            <!-- App Menu (plain hamburger) -->
+            <div class="app-menu-container">
+                <button class="app-menu-btn hamburger-plain" id="app-menu-btn" title="Application menu">
+                    <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+                        <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="app-menu-dropdown" id="app-menu-dropdown">
+                    <button class="app-menu-item" onclick="handleAppMenuItem('new-project')">
+                        <span class="app-menu-item-icon">&#128193;</span>
+                        <span>New Project</span>
+                    </button>
+                    <button class="app-menu-item" onclick="handleAppMenuItem('document-library')">
+                        <span class="app-menu-item-icon">&#128218;</span>
+                        <span>Document Library</span>
+                    </button>
+                    <div class="app-menu-divider"></div>
+                    <button class="app-menu-item" onclick="handleAppMenuItem('settings')">
+                        <span class="app-menu-item-icon">&#9881;</span>
+                        <span>Settings</span>
+                    </button>
+                    <button class="app-menu-item" onclick="handleAppMenuItem('help')">
+                        <span class="app-menu-item-icon">&#10067;</span>
+                        <span>Help</span>
+                    </button>
+                </div>
+            </div>
             <h1>Contract Review</h1>
         </div>
+        <!-- Center: Document Filename -->
+        <div class="header-center">
+            <span class="header-filename" id="header-filename"></span>
+        </div>
         <div class="header-actions">
-            <span class="header-info" id="session-info"></span>
-            <button class="btn btn-secondary btn-sm" id="btn-new" onclick="showIntake()">New Session</button>
-            <button class="btn btn-success btn-sm hidden" id="btn-finalize" onclick="finalize()">Finalize</button>
+            <button class="btn btn-secondary btn-sm" id="btn-new" onclick="showIntake()">New Document</button>
+            <!-- User Menu -->
+            <div class="user-menu-container">
+                <button class="user-menu-btn" id="user-menu-btn" title="User menu">
+                    <svg class="user-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+                    </svg>
+                </button>
+                <div class="user-menu-dropdown" id="user-menu-dropdown">
+                    <button class="user-menu-item" onclick="handleUserMenuItem('profile')">
+                        <span class="user-menu-item-icon">&#128100;</span>
+                        <span>Profile</span>
+                    </button>
+                    <button class="user-menu-item" onclick="handleUserMenuItem('preferences')">
+                        <span class="user-menu-item-icon">&#9881;</span>
+                        <span>Preferences</span>
+                    </button>
+                    <div class="user-menu-divider"></div>
+                    <button class="user-menu-item" onclick="handleUserMenuItem('logout')">
+                        <span class="user-menu-item-icon">&#128682;</span>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </header>
+
+    <!-- Nav Panel Toggle (visible when collapsed) -->
+    <button class="nav-collapsed-toggle hidden" id="nav-collapsed-toggle" title="Show navigation panel" onclick="toggleNavPanel()">
+        <span>&#187;</span>
+    </button>
 
     <!-- Main Container - Three Panel Layout -->
     <div class="main-container">
@@ -110,6 +169,10 @@
 
         <!-- Navigation Panel (New) -->
         <nav class="nav-panel hidden" id="nav-panel">
+            <!-- Edge Toggle Button -->
+            <button class="nav-edge-toggle" id="nav-edge-toggle" title="Toggle navigation panel">
+                <span class="nav-edge-toggle-icon">&#171;</span>
+            </button>
             <div class="nav-header">
                 <h2 class="nav-title">Document Navigator</h2>
             </div>
@@ -133,58 +196,15 @@
                 </div>
             </div>
 
-            <!-- Progress Summary -->
-            <div class="nav-section">
-                <div class="nav-section-title">Progress</div>
-                <div class="nav-progress">
-                    <div class="nav-progress-row">
-                        <span class="nav-progress-label">Clauses Reviewed</span>
-                        <span class="nav-progress-value" id="nav-reviewed-count">0/0</span>
-                    </div>
-                    <div class="nav-progress-bar-container">
-                        <div class="nav-progress-bar" id="nav-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Risk Summary -->
-            <div class="nav-section">
-                <div class="nav-section-title">Risk Summary</div>
-                <div class="risk-summary">
-                    <div class="risk-summary-item severity-high">
-                        <span class="risk-summary-count" id="nav-high-risks">0</span>
-                        <span class="risk-summary-label">High</span>
-                    </div>
-                    <div class="risk-summary-item severity-medium">
-                        <span class="risk-summary-count" id="nav-medium-risks">0</span>
-                        <span class="risk-summary-label">Medium</span>
-                    </div>
-                    <div class="risk-summary-item severity-low">
-                        <span class="risk-summary-count" id="nav-low-risks">0</span>
-                        <span class="risk-summary-label">Low</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Document Outline -->
+            <!-- Document Outline with Search -->
             <div class="nav-section nav-outline-section">
-                <div class="nav-section-title">Document Outline</div>
+                <div class="nav-outline-search">
+                    <input type="text" class="nav-outline-search-input" id="nav-outline-search"
+                           placeholder="Search clauses..." oninput="filterOutline(this.value)">
+                </div>
                 <div class="nav-outline" id="nav-outline">
                     <!-- Section hierarchy rendered here -->
                     <div class="nav-outline-empty">Load a document to see outline</div>
-                </div>
-            </div>
-
-            <!-- Batch Actions -->
-            <div class="nav-section">
-                <div class="nav-section-title">Batch Actions</div>
-                <div class="batch-actions">
-                    <button class="btn btn-sm btn-outline" onclick="jumpToNextRisk()">
-                        Next Risk &#8594;
-                    </button>
-                    <button class="btn btn-sm btn-outline" onclick="jumpToNextUnreviewed()">
-                        Next Unreviewed &#8594;
-                    </button>
                 </div>
             </div>
         </nav>
@@ -204,14 +224,17 @@
                     <span class="sidebar-section-ref" id="sidebar-section-ref"></span>
                 </div>
                 <div class="sidebar-section-title" id="sidebar-section-title">Select a clause</div>
+                <div class="sidebar-precedent-ref" id="sidebar-precedent-ref">
+                    <span class="precedent-label">Precedent:</span>
+                    <span class="precedent-clause" id="precedent-clause-ref">None matched</span>
+                </div>
             </div>
 
             <!-- Tabbed Interface -->
             <div class="sidebar-tabs">
                 <button class="sidebar-tab active" data-tab="risks" onclick="switchSidebarTab('risks')">Risks</button>
-                <button class="sidebar-tab" data-tab="related" onclick="switchSidebarTab('related')">Related</button>
                 <button class="sidebar-tab" data-tab="definitions" onclick="switchSidebarTab('definitions')">Definitions</button>
-                <button class="sidebar-tab" data-tab="history" onclick="switchSidebarTab('history')">History</button>
+                <button class="sidebar-tab" data-tab="flags" onclick="switchSidebarTab('flags')">Flags</button>
             </div>
 
             <!-- Tab Content -->
@@ -222,16 +245,6 @@
                         <div class="empty-state">
                             <div class="empty-state-icon">&#128269;</div>
                             <p>Click on a clause in the document to see its analysis.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Related Tab -->
-                <div class="sidebar-tab-pane" id="tab-related">
-                    <div class="related-clauses-content" id="related-clauses-content">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">&#128279;</div>
-                            <p>Related clauses will appear here when you select a clause.</p>
                         </div>
                     </div>
                 </div>
@@ -251,26 +264,14 @@
                     </div>
                 </div>
 
-                <!-- History Tab -->
-                <div class="sidebar-tab-pane" id="tab-history">
-                    <div class="history-content" id="history-content">
+                <!-- Flags Tab -->
+                <div class="sidebar-tab-pane" id="tab-flags">
+                    <div class="flags-content" id="flags-content">
                         <div class="empty-state">
-                            <div class="empty-state-icon">&#128337;</div>
-                            <p>Revision history for this clause will appear here.</p>
+                            <div class="empty-state-icon">&#128681;</div>
+                            <p>Flags for this clause will appear here.</p>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Related Clauses Quick Selection -->
-            <div class="related-selection-panel" id="related-selection-panel" style="display: none;">
-                <div class="related-selection-header">
-                    <span class="related-selection-title">Include Related Clauses</span>
-                    <button class="related-selection-toggle" id="related-selection-toggle" title="Toggle selection">&#9660;</button>
-                </div>
-                <div class="related-selection-body" id="related-selection-body">
-                    <div class="related-selection-hint">Check clauses to include in the revision prompt for harmonization</div>
-                    <div class="related-selection-list" id="related-selection-list"></div>
                 </div>
             </div>
 
@@ -278,7 +279,7 @@
                 <div class="sidebar-footer-info" id="sidebar-footer-info"></div>
                 <div class="sidebar-footer-actions">
                     <button class="btn btn-primary" id="btn-generate-revision" disabled>Generate Revision</button>
-                    <button class="btn btn-warning" id="btn-flag-client">Flag for Client</button>
+                    <button class="btn btn-warning" id="btn-flag-client">Flag</button>
                 </div>
             </div>
         </aside>
@@ -292,7 +293,7 @@
                     <button class="flag-type-tab active" data-type="client" onclick="switchFlagType('client')">Client Review</button>
                     <button class="flag-type-tab" data-type="attorney" onclick="switchFlagType('attorney')">Attorney Review</button>
                 </div>
-                <h2>Flag for Client Review</h2>
+                <h2>Flag for Review</h2>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -302,8 +303,55 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeFlagModal()">Cancel</button>
-                <button class="btn btn-warning" onclick="submitFlag()">Flag for Client</button>
+                <button class="btn btn-warning" onclick="submitFlag()">Add Flag</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar hidden" id="bottom-bar">
+        <!-- Left: Progress & Risk Filters -->
+        <div class="bottom-bar-left">
+            <div class="bottom-bar-progress">
+                <span class="bottom-bar-progress-label">Reviewed:</span>
+                <span class="bottom-bar-progress-value" id="bottom-bar-reviewed">0/0</span>
+            </div>
+            <div class="bottom-bar-divider"></div>
+            <div class="bottom-bar-risk-filters">
+                <button class="risk-filter-btn severity-high" data-severity="high" onclick="toggleRiskFilter('high')">
+                    <span class="risk-filter-count" id="filter-high-count">0</span>
+                    <span class="risk-filter-label">HIGH</span>
+                </button>
+                <button class="risk-filter-btn severity-medium" data-severity="medium" onclick="toggleRiskFilter('medium')">
+                    <span class="risk-filter-count" id="filter-medium-count">0</span>
+                    <span class="risk-filter-label">MED</span>
+                </button>
+                <button class="risk-filter-btn severity-low" data-severity="low" onclick="toggleRiskFilter('low')">
+                    <span class="risk-filter-count" id="filter-low-count">0</span>
+                    <span class="risk-filter-label">LOW</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Navigation & Actions -->
+        <div class="bottom-bar-right">
+            <div class="skip-to-control">
+                <select class="skip-to-select" id="skip-to-select" onchange="setSkipMode(this.value)">
+                    <option value="risk">Next Risk</option>
+                    <option value="unreviewed">Next Unreviewed</option>
+                </select>
+            </div>
+            <div class="nav-arrows">
+                <button class="nav-arrow-btn" onclick="navigatePrev()" title="Previous">
+                    &#9664;
+                </button>
+                <button class="nav-arrow-btn" onclick="navigateNext()" title="Next">
+                    &#9654;
+                </button>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="finalizeRedline()">
+                Finalize
+            </button>
         </div>
     </div>
 
@@ -317,11 +365,43 @@
             <span class="sheet-title">Proposed Revision</span>
             <button class="sheet-close-btn" id="sheet-close">&times;</button>
         </div>
+        <!-- Tabbed content for revision sheet -->
+        <div class="revision-sheet-tabs">
+            <button class="revision-sheet-tab active" data-tab="revision" onclick="switchRevisionTab('revision')">Revision</button>
+            <button class="revision-sheet-tab" data-tab="details" onclick="switchRevisionTab('details')">Details</button>
+        </div>
         <div class="bottom-sheet-content" id="sheet-content">
-            <div class="revision-diff" id="revision-diff"></div>
-            <div class="revision-rationale" id="revision-rationale"></div>
+            <!-- Revision Tab -->
+            <div class="revision-tab-pane active" id="revision-tab-revision">
+                <div class="revision-diff" id="revision-diff"></div>
+                <div class="revision-rationale" id="revision-rationale"></div>
+            </div>
+            <!-- Details Tab (Prompt/Response) -->
+            <div class="revision-tab-pane" id="revision-tab-details">
+                <div class="revision-details-section">
+                    <div class="revision-details-header" onclick="toggleDetailsSection('prompt')">
+                        <span>Prompt Sent to Gemini</span>
+                        <span class="revision-details-toggle" id="toggle-prompt">&#9660;</span>
+                    </div>
+                    <div class="revision-details-content collapsed" id="details-prompt"></div>
+                </div>
+                <div class="revision-details-section">
+                    <div class="revision-details-header" onclick="toggleDetailsSection('response')">
+                        <span>Raw Response</span>
+                        <span class="revision-details-toggle" id="toggle-response">&#9660;</span>
+                    </div>
+                    <div class="revision-details-content collapsed" id="details-response"></div>
+                </div>
+                <div class="revision-details-section">
+                    <div class="revision-details-header" onclick="toggleDetailsSection('thinking')">
+                        <span>Model Thinking</span>
+                        <span class="revision-details-toggle" id="toggle-thinking">&#9660;</span>
+                    </div>
+                    <div class="revision-details-content collapsed" id="details-thinking"></div>
+                </div>
+            </div>
             <div class="revision-actions" id="revision-actions">
-                <button class="btn btn-success" id="btn-accept-revision">Accept</button>
+                <button class="btn btn-success" id="btn-accept-revision">Approve</button>
                 <button class="btn btn-secondary" id="btn-edit-revision">Edit</button>
                 <button class="btn btn-danger" id="btn-reject-revision">Reject</button>
             </div>
@@ -368,8 +448,10 @@
     <script src="/static/js/state.js"></script>
     <script src="/static/js/api.js"></script>
     <script src="/static/js/toast.js"></script>
+    <script src="/static/js/menu.js"></script>
     <script src="/static/js/views.js"></script>
     <script src="/static/js/navigation.js"></script>
+    <script src="/static/js/bottombar.js"></script>
     <script src="/static/js/analysis.js"></script>
     <script src="/static/js/sidebar.js"></script>
     <script src="/static/js/document.js"></script>

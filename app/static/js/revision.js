@@ -57,6 +57,9 @@ function showBottomSheet(paraId) {
     // Setup inline editing handlers
     setupInlineEditing(diffEl);
 
+    // Reset to revision tab when opening
+    switchRevisionTab('revision');
+
     // Show the sheet
     sheet.classList.add('show');
 }
@@ -920,6 +923,79 @@ async function finalize() {
     }
 }
 
+// ============ Revision Sheet Tab Functions ============
+
+// Switch between revision sheet tabs
+function switchRevisionTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.revision-sheet-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+
+    // Update tab panes
+    document.querySelectorAll('.revision-tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === `revision-tab-${tabName}`);
+    });
+
+    // If switching to details tab, populate the content
+    if (tabName === 'details' && bottomSheetParaId) {
+        populateDetailsTab(bottomSheetParaId);
+    }
+}
+
+// Populate the details tab with prompt/response info
+function populateDetailsTab(paraId) {
+    const revision = AppState.revisions[paraId];
+    if (!revision) return;
+
+    const promptEl = document.getElementById('details-prompt');
+    const responseEl = document.getElementById('details-response');
+    const thinkingEl = document.getElementById('details-thinking');
+
+    // Populate prompt (if available)
+    if (promptEl) {
+        if (revision.promptSent) {
+            promptEl.textContent = revision.promptSent;
+        } else {
+            promptEl.textContent = '(Prompt data not available. This may be from an earlier revision.)';
+        }
+    }
+
+    // Populate raw response
+    if (responseEl) {
+        if (revision.rawResponse) {
+            responseEl.textContent = revision.rawResponse;
+        } else if (revision.revised) {
+            responseEl.textContent = `Revised text:\n\n${revision.revised}`;
+        } else {
+            responseEl.textContent = '(Response data not available.)';
+        }
+    }
+
+    // Populate thinking/reasoning
+    if (thinkingEl) {
+        if (revision.thinking) {
+            thinkingEl.textContent = revision.thinking;
+        } else {
+            thinkingEl.textContent = '(Model thinking not available for this revision.)';
+        }
+    }
+}
+
+// Toggle details section expansion
+function toggleDetailsSection(section) {
+    const contentEl = document.getElementById(`details-${section}`);
+    const toggleEl = document.getElementById(`toggle-${section}`);
+
+    if (contentEl) {
+        contentEl.classList.toggle('collapsed');
+    }
+
+    if (toggleEl) {
+        toggleEl.textContent = contentEl.classList.contains('collapsed') ? '▼' : '▲';
+    }
+}
+
 // Export for use in other modules
 window.generateRevision = generateRevision;
 window.reviseForRisk = reviseForRisk;
@@ -934,3 +1010,6 @@ window.reopenRevision = reopenRevision;
 window.extractFinalText = extractFinalText;
 window.toggleRelatedForRegen = toggleRelatedForRegen;
 window.regenerateWithRelated = regenerateWithRelated;
+window.switchRevisionTab = switchRevisionTab;
+window.populateDetailsTab = populateDetailsTab;
+window.toggleDetailsSection = toggleDetailsSection;

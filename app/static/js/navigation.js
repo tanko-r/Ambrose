@@ -11,10 +11,7 @@ let navCollapsed = false;
 
 // Initialize navigation panel
 function initNavigation() {
-    const navToggle = document.getElementById('nav-toggle');
-    if (navToggle) {
-        navToggle.addEventListener('click', toggleNavPanel);
-    }
+    // Edge toggle is handled in menu.js via setupNavEdgeToggle()
 
     // Setup keyboard shortcut (Ctrl+B to toggle nav)
     document.addEventListener('keydown', (e) => {
@@ -28,18 +25,22 @@ function initNavigation() {
 // Toggle navigation panel visibility
 function toggleNavPanel() {
     const navPanel = document.getElementById('nav-panel');
-    const navToggle = document.getElementById('nav-toggle');
+    const edgeToggle = document.getElementById('nav-edge-toggle');
+    const collapsedToggle = document.getElementById('nav-collapsed-toggle');
+    const toggleIcon = edgeToggle?.querySelector('.nav-edge-toggle-icon');
 
     navCollapsed = !navCollapsed;
 
     if (navCollapsed) {
         navPanel.classList.add('collapsed');
-        navToggle.classList.remove('active');
         document.body.classList.add('nav-collapsed');
+        if (toggleIcon) toggleIcon.innerHTML = '&#187;'; // » chevron right
+        if (collapsedToggle) collapsedToggle.classList.remove('hidden');
     } else {
         navPanel.classList.remove('collapsed');
-        navToggle.classList.add('active');
         document.body.classList.remove('nav-collapsed');
+        if (toggleIcon) toggleIcon.innerHTML = '&#171;'; // « chevron left
+        if (collapsedToggle) collapsedToggle.classList.add('hidden');
     }
 }
 
@@ -87,37 +88,77 @@ function renderDocumentOutline() {
     container.innerHTML = html;
 }
 
-// Render linear outline
-function renderOutlineLinear(paragraphs) {
+// Render linear outline - compact, hierarchical style
+function renderOutlineLinear(paragraphs, filterText = '') {
     let html = '';
     const risks = AppState.analysis?.risk_by_paragraph || {};
+    const filter = filterText.toLowerCase().trim();
 
-    paragraphs.slice(0, 50).forEach(para => {
+    // Filter paragraphs if search is active
+    let filtered = paragraphs;
+    if (filter) {
+        filtered = paragraphs.filter(para => {
+            const text = (para.text || '').toLowerCase();
+            const ref = (para.section_ref || '').toLowerCase();
+            return text.includes(filter) || ref.includes(filter);
+        });
+    }
+
+    if (filtered.length === 0 && filter) {
+        return '<div class="nav-outline-no-results">No matching clauses</div>';
+    }
+
+    filtered.forEach(para => {
         const paraRisks = risks[para.id] || [];
         const hasRisk = paraRisks.length > 0;
         const isReviewed = AppState.revisions[para.id]?.accepted;
         const isSelected = AppState.selectedParaId === para.id;
 
+        // Determine severity for color coding
+        const severities = paraRisks.map(r => r.severity || 'medium');
+        let severityClass = '';
+        if (severities.includes('high')) severityClass = 'severity-high';
+        else if (severities.includes('medium')) severityClass = 'severity-medium';
+        else if (severities.includes('low') || severities.includes('info')) severityClass = 'severity-low';
+
+        // Determine hierarchy level from section ref
+        const sectionRef = para.section_ref || '';
+        const level = Math.min((sectionRef.match(/\./g) || []).length + 1, 4);
+
         const classes = ['nav-outline-item'];
-        if (hasRisk) classes.push('has-risk');
+        if (hasRisk) classes.push('has-risk', severityClass);
         if (isReviewed) classes.push('reviewed');
         if (isSelected) classes.push('active');
 
-        const textPreview = (para.text || '').substring(0, 40).trim();
+        // Shorter text preview for density
+        const textPreview = (para.text || '').substring(0, 35).trim();
 
         html += `
-            <div class="${classes.join(' ')}" onclick="jumpToParagraph('${para.id}')">
-                <span class="nav-outline-ref">${para.section_ref || para.id}</span>
-                <span class="nav-outline-text">${escapeHtml(textPreview)}...</span>
+            <div class="${classes.join(' ')}" data-level="${level}" onclick="jumpToParagraph('${para.id}')">
+                <span class="nav-outline-ref">${sectionRef || para.id.slice(0, 6)}</span>
+                <span class="nav-outline-text">${escapeHtml(textPreview)}${textPreview.length >= 35 ? '...' : ''}</span>
             </div>
         `;
     });
 
-    if (paragraphs.length > 50) {
-        html += `<div class="nav-outline-more">+${paragraphs.length - 50} more clauses</div>`;
+    return html;
+}
+
+// Filter outline based on search input
+function filterOutline(searchText) {
+    const container = document.getElementById('nav-outline');
+    if (!container) return;
+
+    const content = AppState.document?.content || [];
+    const paragraphs = content.filter(p => p.type === 'paragraph');
+
+    if (paragraphs.length === 0) {
+        container.innerHTML = '<div class="nav-outline-empty">Load a document to see outline</div>';
+        return;
     }
 
-    return html;
+    // Always use linear rendering for filtered results
+    container.innerHTML = renderOutlineLinear(paragraphs, searchText);
 }
 
 // Render outline grouped by risk severity
@@ -237,11 +278,11 @@ function renderOutlineByCategory(paragraphs) {
     return html;
 }
 
-// Jump to a specific paragraph
+// Jump to a specific paragraph with smooth scrolling
 function jumpToParagraph(paraId) {
     selectParagraph(paraId);
 
-    // Scroll document to paragraph
+    // Scroll document to paragraph smoothly
     const paraEl = document.querySelector(`.para-block[data-para-id="${paraId}"]`);
     if (paraEl) {
         paraEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -254,6 +295,8 @@ function jumpToParagraph(paraId) {
     const activeItem = document.querySelector(`.nav-outline-item[onclick*="${paraId}"]`);
     if (activeItem) {
         activeItem.classList.add('active');
+        // Also scroll the nav outline item into view
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 
@@ -386,6 +429,7 @@ window.initNavigation = initNavigation;
 window.toggleNavPanel = toggleNavPanel;
 window.setReviewMode = setReviewMode;
 window.renderDocumentOutline = renderDocumentOutline;
+window.filterOutline = filterOutline;
 window.jumpToParagraph = jumpToParagraph;
 window.jumpToNextRisk = jumpToNextRisk;
 window.jumpToNextUnreviewed = jumpToNextUnreviewed;

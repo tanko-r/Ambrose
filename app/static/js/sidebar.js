@@ -135,6 +135,7 @@ function jumpToProvision(ref) {
     const content = AppState.document?.content || [];
     const para = content.find(p => p.section_ref === ref || p.section_ref?.includes(ref));
     if (para) {
+        // jumpToParagraph already uses smooth scrolling
         jumpToParagraph(para.id);
     } else {
         showToast(`Could not find provision: ${ref}`, 'warning');
@@ -246,9 +247,6 @@ function renderSidebarContent(paraId, para) {
 
     document.getElementById('sidebar-content').innerHTML = html;
 
-    // Update related selection panel
-    updateRelatedSelectionPanel(paraId);
-
     // Update footer with current selection
     updateSidebarFooter(paraId);
 }
@@ -286,9 +284,22 @@ function updateStats() {
     const revisionCount = Object.values(AppState.revisions).filter(r => r.accepted).length;
     const flagCount = AppState.flags.length;
 
-    document.getElementById('stat-risks').textContent = riskCount;
-    document.getElementById('stat-revisions').textContent = revisionCount;
-    document.getElementById('stat-flags').textContent = flagCount;
+    // Update sidebar stats if they exist
+    const statRisks = document.getElementById('stat-risks');
+    const statRevisions = document.getElementById('stat-revisions');
+    const statFlags = document.getElementById('stat-flags');
+
+    if (statRisks) statRisks.textContent = riskCount;
+    if (statRevisions) statRevisions.textContent = revisionCount;
+    if (statFlags) statFlags.textContent = flagCount;
+
+    // Also update nav panel stats
+    if (typeof updateNavRiskSummary === 'function') {
+        updateNavRiskSummary();
+    }
+    if (typeof updateNavProgress === 'function') {
+        updateNavProgress();
+    }
 }
 
 // Setup event delegation for risk cards (call once on page load)
@@ -399,9 +410,8 @@ function setupFooterButtons() {
             const paraId = generateBtn.dataset.paraId;
             if (paraId) {
                 const selectedRiskIds = getSelectedRiskIds(paraId);
-                // Use the selected related clauses from the quick selection panel
-                const selectedRelated = getSelectedRelatedClauseIds();
-                generateRevisionForRisks(paraId, selectedRiskIds, selectedRelated);
+                // Related clauses are automatically included from the risks
+                generateRevisionForRisks(paraId, selectedRiskIds, []);
             }
         });
     }
@@ -535,9 +545,6 @@ function buildRelatedClausesHtml(relatedParaIds, currentParaId) {
                 <div class="related-clause-header">
                     <span class="related-clause-ref">${escapeHtml(info.sectionRef)}</span>
                     ${revisionIndicator}
-                    <button class="split-view-btn" onclick="event.stopPropagation(); openSplitView('${currentParaId}', '${id}')" title="Compare side-by-side">
-                        &#9707;
-                    </button>
                 </div>
                 ${info.caption ? `<div class="related-clause-caption">${escapeHtml(info.caption)}</div>` : ''}
                 <div class="related-clause-summary">${escapeHtml(info.summary)}</div>
@@ -1236,3 +1243,25 @@ window.getSelectedRelatedClauseIds = getSelectedRelatedClauseIds;
 window.buildSeverityBadge = buildSeverityBadge;
 window.buildRiskRelationshipsHtml = buildRiskRelationshipsHtml;
 window.jumpToProvision = jumpToProvision;
+window.comparePrecedent = comparePrecedent;
+window.addNote = addNote;
+
+// Compare Precedent (placeholder)
+function comparePrecedent() {
+    if (!AppState.selectedParaId) {
+        showToast('Select a clause first', 'warning');
+        return;
+    }
+    showToast('Compare Precedent - Implementation coming soon!', 'info');
+    // TODO: Show side-by-side comparison with precedent document
+}
+
+// Add Note (placeholder)
+function addNote() {
+    if (!AppState.selectedParaId) {
+        showToast('Select a clause first', 'warning');
+        return;
+    }
+    showToast('Add Note - Implementation coming soon!', 'info');
+    // TODO: Show note input modal, save to AppState.notes[paraId]
+}

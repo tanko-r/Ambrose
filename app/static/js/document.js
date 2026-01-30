@@ -215,10 +215,16 @@ function highlightProblematicText(paraId, problematicText, riskId = null) {
             '<span class="highlight-risk-active">' + escapeHtml(match) + '</span>' +
             escapeHtml(after);
 
-        // Scroll the highlight into view
+        // Scroll the highlight into view smoothly
         const highlightEl = textEl.querySelector('.highlight-risk-active');
         if (highlightEl) {
             highlightEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    } else {
+        // If we couldn't find the text, at least scroll to the paragraph
+        const paraEl = document.querySelector(`[data-para-id="${paraId}"]`);
+        if (paraEl) {
+            paraEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 }
