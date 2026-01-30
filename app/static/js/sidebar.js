@@ -63,6 +63,84 @@ function isRiskAddressed(paraId, riskId) {
     return revision?.accepted === true;
 }
 
+// Build severity badge with effective severity if different from base
+function buildSeverityBadge(risk) {
+    const riskMap = AppState.risk_map?.risks || {};
+    const riskData = riskMap[risk.risk_id];
+
+    if (riskData && riskData.effective_severity && riskData.effective_severity !== riskData.base_severity) {
+        const base = (riskData.base_severity || risk.severity).toUpperCase();
+        const effective = riskData.effective_severity.toUpperCase();
+        const isReduced = ['HIGH', 'MEDIUM', 'LOW'].indexOf(effective) > ['HIGH', 'MEDIUM', 'LOW'].indexOf(base);
+
+        return `
+            <span class="risk-effective-severity">
+                <span class="risk-severity-badge ${riskData.base_severity}">${base}</span>
+                <span class="severity-arrow">→</span>
+                <span class="risk-severity-badge ${riskData.effective_severity} severity-change ${isReduced ? 'reduced' : 'increased'}">${effective}</span>
+            </span>
+        `;
+    }
+
+    return `<span class="risk-severity-badge ${risk.severity}">${(risk.severity || 'medium').toUpperCase()}</span>`;
+}
+
+// Build risk relationships HTML (mitigators and amplifiers)
+function buildRiskRelationshipsHtml(risk) {
+    const riskMap = AppState.risk_map?.risks || {};
+    const riskData = riskMap[risk.risk_id];
+
+    if (!riskData) return '';
+
+    const mitigators = riskData.mitigated_by || [];
+    const amplifiers = riskData.amplified_by || [];
+
+    if (mitigators.length === 0 && amplifiers.length === 0) return '';
+
+    let html = '<div class="risk-relationships">';
+
+    if (mitigators.length > 0) {
+        html += '<div class="risk-relationship-row">';
+        html += '<span class="risk-relationship-type mitigator">Mitigated by:</span>';
+        html += '<span class="risk-relationship-refs">';
+        html += mitigators.map(m => {
+            const ref = m.ref || m;
+            const effect = m.effect ? ` (${m.effect})` : '';
+            return `<span class="risk-relationship-ref" onclick="jumpToProvision('${ref}')" title="${escapeHtml(effect)}">${escapeHtml(ref)}</span>`;
+        }).join(', ');
+        html += '</span>';
+        html += '</div>';
+    }
+
+    if (amplifiers.length > 0) {
+        html += '<div class="risk-relationship-row">';
+        html += '<span class="risk-relationship-type amplifier">Amplified by:</span>';
+        html += '<span class="risk-relationship-refs">';
+        html += amplifiers.map(a => {
+            const ref = a.ref || a;
+            const effect = a.effect ? ` (${a.effect})` : '';
+            return `<span class="risk-relationship-ref" onclick="jumpToProvision('${ref}')" title="${escapeHtml(effect)}">${escapeHtml(ref)}</span>`;
+        }).join(', ');
+        html += '</span>';
+        html += '</div>';
+    }
+
+    html += '</div>';
+    return html;
+}
+
+// Jump to a provision by section reference
+function jumpToProvision(ref) {
+    // Try to find a paragraph with this section reference
+    const content = AppState.document?.content || [];
+    const para = content.find(p => p.section_ref === ref || p.section_ref?.includes(ref));
+    if (para) {
+        jumpToParagraph(para.id);
+    } else {
+        showToast(`Could not find provision: ${ref}`, 'warning');
+    }
+}
+
 // Render sidebar content for selected paragraph
 function renderSidebarContent(paraId, para) {
     let html = '';
@@ -109,7 +187,7 @@ function renderSidebarContent(paraId, para) {
                                 <span class="risk-title">${risk.title || formatRiskType(risk.type)}</span>
                             </div>
                             <div class="risk-header-right">
-                                <span class="risk-severity-badge ${risk.severity}">${risk.severity.toUpperCase()}</span>
+                                ${buildSeverityBadge(risk)}
                                 <span class="risk-chevron">${isExpanded ? '&#9650;' : '&#9660;'}</span>
                             </div>
                         </div>
@@ -117,6 +195,7 @@ function renderSidebarContent(paraId, para) {
                     <div class="risk-body" style="display: ${isExpanded ? 'block' : 'none'}">
                         ${risk.user_recommendation ? `<div class="risk-recommendation">${escapeHtml(risk.user_recommendation)}</div>` : ''}
                         <div class="risk-description">${escapeHtml(risk.description)}</div>
+                        ${buildRiskRelationshipsHtml(risk)}
                         ${relatedClauses}
                     </div>
                 </div>
@@ -1154,3 +1233,6 @@ window.updateRelatedSelectionPanel = updateRelatedSelectionPanel;
 window.toggleRelatedClauseSelection = toggleRelatedClauseSelection;
 window.clearRelatedSelection = clearRelatedSelection;
 window.getSelectedRelatedClauseIds = getSelectedRelatedClauseIds;
+window.buildSeverityBadge = buildSeverityBadge;
+window.buildRiskRelationshipsHtml = buildRiskRelationshipsHtml;
+window.jumpToProvision = jumpToProvision;

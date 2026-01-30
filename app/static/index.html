@@ -9,7 +9,12 @@
 <body>
     <!-- Header -->
     <header class="header">
-        <h1>Contract Review</h1>
+        <div class="header-left">
+            <button class="nav-toggle" id="nav-toggle" title="Toggle navigation">
+                <span class="nav-toggle-icon">&#9776;</span>
+            </button>
+            <h1>Contract Review</h1>
+        </div>
         <div class="header-actions">
             <span class="header-info" id="session-info"></span>
             <button class="btn btn-secondary btn-sm" id="btn-new" onclick="showIntake()">New Session</button>
@@ -17,7 +22,7 @@
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Container - Three Panel Layout -->
     <div class="main-container">
         <!-- Intake Screen -->
         <div class="intake-screen" id="intake-screen">
@@ -103,6 +108,87 @@
             </div>
         </div>
 
+        <!-- Navigation Panel (New) -->
+        <nav class="nav-panel hidden" id="nav-panel">
+            <div class="nav-header">
+                <h2 class="nav-title">Document Navigator</h2>
+            </div>
+
+            <!-- Review Mode Selector -->
+            <div class="nav-section">
+                <div class="nav-section-title">Review Mode</div>
+                <div class="review-mode-selector">
+                    <button class="review-mode-btn active" data-mode="linear" onclick="setReviewMode('linear')">
+                        <span class="review-mode-icon">&#8597;</span>
+                        <span>Linear</span>
+                    </button>
+                    <button class="review-mode-btn" data-mode="by-risk" onclick="setReviewMode('by-risk')">
+                        <span class="review-mode-icon">&#9888;</span>
+                        <span>By Risk</span>
+                    </button>
+                    <button class="review-mode-btn" data-mode="by-category" onclick="setReviewMode('by-category')">
+                        <span class="review-mode-icon">&#9783;</span>
+                        <span>By Category</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Summary -->
+            <div class="nav-section">
+                <div class="nav-section-title">Progress</div>
+                <div class="nav-progress">
+                    <div class="nav-progress-row">
+                        <span class="nav-progress-label">Clauses Reviewed</span>
+                        <span class="nav-progress-value" id="nav-reviewed-count">0/0</span>
+                    </div>
+                    <div class="nav-progress-bar-container">
+                        <div class="nav-progress-bar" id="nav-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Summary -->
+            <div class="nav-section">
+                <div class="nav-section-title">Risk Summary</div>
+                <div class="risk-summary">
+                    <div class="risk-summary-item severity-high">
+                        <span class="risk-summary-count" id="nav-high-risks">0</span>
+                        <span class="risk-summary-label">High</span>
+                    </div>
+                    <div class="risk-summary-item severity-medium">
+                        <span class="risk-summary-count" id="nav-medium-risks">0</span>
+                        <span class="risk-summary-label">Medium</span>
+                    </div>
+                    <div class="risk-summary-item severity-low">
+                        <span class="risk-summary-count" id="nav-low-risks">0</span>
+                        <span class="risk-summary-label">Low</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Outline -->
+            <div class="nav-section nav-outline-section">
+                <div class="nav-section-title">Document Outline</div>
+                <div class="nav-outline" id="nav-outline">
+                    <!-- Section hierarchy rendered here -->
+                    <div class="nav-outline-empty">Load a document to see outline</div>
+                </div>
+            </div>
+
+            <!-- Batch Actions -->
+            <div class="nav-section">
+                <div class="nav-section-title">Batch Actions</div>
+                <div class="batch-actions">
+                    <button class="btn btn-sm btn-outline" onclick="jumpToNextRisk()">
+                        Next Risk &#8594;
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="jumpToNextUnreviewed()">
+                        Next Unreviewed &#8594;
+                    </button>
+                </div>
+            </div>
+        </nav>
+
         <!-- Document Panel -->
         <div class="document-panel hidden" id="document-panel">
             <div class="document-wrapper" id="document-content">
@@ -110,32 +196,69 @@
             </div>
         </div>
 
-        <!-- Sidebar -->
-        <div class="sidebar hidden" id="sidebar">
+        <!-- Sidebar (Clause Analysis) -->
+        <aside class="sidebar hidden" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-title" id="sidebar-section-title">Select a clause</div>
-                <div class="sidebar-subtitle" id="sidebar-section-ref"></div>
+                <div class="sidebar-title-row">
+                    <h2 class="sidebar-title">Clause Analysis</h2>
+                    <span class="sidebar-section-ref" id="sidebar-section-ref"></span>
+                </div>
+                <div class="sidebar-section-title" id="sidebar-section-title">Select a clause</div>
             </div>
 
-            <div class="stats-bar">
-                <div class="stat">
-                    <div class="stat-value" id="stat-risks">-</div>
-                    <div class="stat-label">Risks</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value" id="stat-revisions">-</div>
-                    <div class="stat-label">Revisions</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value" id="stat-flags">-</div>
-                    <div class="stat-label">Flags</div>
-                </div>
+            <!-- Tabbed Interface -->
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" data-tab="risks" onclick="switchSidebarTab('risks')">Risks</button>
+                <button class="sidebar-tab" data-tab="related" onclick="switchSidebarTab('related')">Related</button>
+                <button class="sidebar-tab" data-tab="definitions" onclick="switchSidebarTab('definitions')">Definitions</button>
+                <button class="sidebar-tab" data-tab="history" onclick="switchSidebarTab('history')">History</button>
             </div>
 
-            <div class="sidebar-content" id="sidebar-content">
-                <div class="empty-state">
-                    <div class="empty-state-icon">&#128269;</div>
-                    <p>Click on a clause in the document to see its analysis.</p>
+            <!-- Tab Content -->
+            <div class="sidebar-tab-content">
+                <!-- Risks Tab -->
+                <div class="sidebar-tab-pane active" id="tab-risks">
+                    <div class="sidebar-content" id="sidebar-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">&#128269;</div>
+                            <p>Click on a clause in the document to see its analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Tab -->
+                <div class="sidebar-tab-pane" id="tab-related">
+                    <div class="related-clauses-content" id="related-clauses-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">&#128279;</div>
+                            <p>Related clauses will appear here when you select a clause.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Definitions Tab -->
+                <div class="sidebar-tab-pane" id="tab-definitions">
+                    <div class="definitions-content" id="definitions-content">
+                        <div class="definitions-search">
+                            <input type="text" class="form-input" id="definition-search" placeholder="Search defined terms...">
+                        </div>
+                        <div class="definitions-list" id="definitions-list">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">&#128218;</div>
+                                <p>Defined terms will appear here after analysis.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="sidebar-tab-pane" id="tab-history">
+                    <div class="history-content" id="history-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">&#128337;</div>
+                            <p>Revision history for this clause will appear here.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -158,7 +281,7 @@
                     <button class="btn btn-warning" id="btn-flag-client">Flag for Client</button>
                 </div>
             </div>
-        </div>
+        </aside>
     </div>
 
     <!-- Flag Modal -->
@@ -246,6 +369,7 @@
     <script src="/static/js/api.js"></script>
     <script src="/static/js/toast.js"></script>
     <script src="/static/js/views.js"></script>
+    <script src="/static/js/navigation.js"></script>
     <script src="/static/js/analysis.js"></script>
     <script src="/static/js/sidebar.js"></script>
     <script src="/static/js/document.js"></script>

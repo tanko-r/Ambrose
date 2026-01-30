@@ -16,6 +16,11 @@ function renderDocument() {
 
     let html = '<div class="document-title">Contract Under Review</div>';
 
+    // Update navigation panel
+    if (typeof updateNavPanel === 'function') {
+        updateNavPanel();
+    }
+
     content.forEach(para => {
         const hasRisk = AppState.analysis?.risk_by_paragraph?.[para.id]?.length > 0;
         const revision = AppState.revisions[para.id];
@@ -148,6 +153,16 @@ async function selectParagraph(paraId) {
 
     // Build and render sidebar content
     renderSidebarContent(paraId, para);
+
+    // Update navigation outline active state
+    document.querySelectorAll('.nav-outline-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const navItem = document.querySelector(`.nav-outline-item[onclick*="${paraId}"]`);
+    if (navItem) {
+        navItem.classList.add('active');
+        navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
 // Highlighting state
