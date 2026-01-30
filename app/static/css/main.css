@@ -490,6 +490,180 @@ body:not(.nav-collapsed) .nav-collapsed-toggle {
     letter-spacing: 0.1em;
 }
 
+/* Nav Header Controls (light mode, compact mode) */
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-header-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.nav-control-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 4px;
+    padding: 0.375rem;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.nav-control-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.nav-control-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+/* Light Mode - Nav Panel */
+.nav-panel.light-mode {
+    background: var(--bg-subtle);
+    border-right: 1px solid var(--border);
+}
+
+.nav-panel.light-mode .nav-title,
+.nav-panel.light-mode .nav-section-title {
+    color: var(--text-muted);
+}
+
+.nav-panel.light-mode .nav-header {
+    border-bottom-color: var(--border);
+    background: var(--card);
+}
+
+.nav-panel.light-mode .nav-section {
+    border-bottom-color: var(--border);
+}
+
+.nav-panel.light-mode .nav-control-btn {
+    background: var(--border);
+    color: var(--text-muted);
+}
+
+.nav-panel.light-mode .nav-control-btn:hover {
+    background: var(--primary-light);
+    color: white;
+}
+
+.nav-panel.light-mode .review-mode-selector {
+    background: var(--bg);
+}
+
+.nav-panel.light-mode .review-mode-btn {
+    color: var(--text-muted);
+}
+
+.nav-panel.light-mode .review-mode-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.nav-panel.light-mode .nav-outline-search-input {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.nav-panel.light-mode .nav-outline-item {
+    color: var(--text);
+}
+
+.nav-panel.light-mode .nav-outline-item:hover {
+    background: rgba(30, 58, 95, 0.08);
+}
+
+.nav-panel.light-mode .nav-outline-item.active {
+    background: rgba(30, 58, 95, 0.12);
+    color: var(--primary);
+}
+
+/* Compact Mode - Nav Panel */
+.nav-panel.compact-mode .nav-outline-item {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+}
+
+.nav-panel.compact-mode .review-mode-selector {
+    display: none;
+}
+
+/* Hierarchical Category View - Expandable sections */
+.nav-category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background var(--transition-fast);
+}
+
+.nav-category-header:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-panel.light-mode .nav-category-header:hover {
+    background: rgba(30, 58, 95, 0.08);
+}
+
+.nav-category-caret {
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.5);
+    transition: transform var(--transition-fast);
+}
+
+.nav-panel.light-mode .nav-category-caret {
+    color: var(--text-muted);
+}
+
+.nav-category-header.collapsed .nav-category-caret {
+    transform: rotate(-90deg);
+}
+
+.nav-category-name {
+    flex: 1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-panel.light-mode .nav-category-name {
+    color: var(--text);
+}
+
+.nav-category-count {
+    font-size: 0.625rem;
+    color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 100px;
+}
+
+.nav-panel.light-mode .nav-category-count {
+    color: var(--text-light);
+    background: var(--border);
+}
+
+.nav-category-items {
+    margin-left: 1rem;
+    overflow: hidden;
+    max-height: 1000px;
+    transition: max-height 0.3s ease;
+}
+
+.nav-category-header.collapsed + .nav-category-items {
+    max-height: 0;
+}
+
 .nav-section {
     padding: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);

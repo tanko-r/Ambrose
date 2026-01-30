@@ -222,7 +222,7 @@ function renderOutlineByRisk(paragraphs) {
     return html;
 }
 
-// Render outline grouped by category/section
+// Render outline grouped by category/section with collapsible headers
 function renderOutlineByCategory(paragraphs) {
     // Group by top-level section
     const bySection = {};
@@ -244,13 +244,17 @@ function renderOutlineByCategory(paragraphs) {
         const paras = bySection[section];
         const riskCount = paras.filter(p => (risks[p.id] || []).length > 0).length;
 
-        html += `<div class="nav-outline-group">
-            <div class="nav-outline-group-header">
-                Section ${section}
-                ${riskCount > 0 ? `<span class="nav-outline-risk-badge">${riskCount}</span>` : ''}
-            </div>`;
+        // Collapsible category header with caret
+        html += `
+            <div class="nav-category-header" data-category="${section}" onclick="toggleCategory('${section}')">
+                <span class="nav-category-caret">&#9660;</span>
+                <span class="nav-category-name">Section ${section}</span>
+                <span class="nav-category-count">${paras.length}${riskCount > 0 ? ` · ${riskCount} risks` : ''}</span>
+            </div>
+            <div class="nav-category-items">`;
 
-        paras.slice(0, 5).forEach(para => {
+        // Show all paragraphs in this section
+        paras.forEach(para => {
             const hasRisk = (risks[para.id] || []).length > 0;
             const isReviewed = AppState.revisions[para.id]?.accepted;
             const isSelected = AppState.selectedParaId === para.id;
@@ -263,14 +267,10 @@ function renderOutlineByCategory(paragraphs) {
             html += `
                 <div class="${classes.join(' ')}" onclick="jumpToParagraph('${para.id}')">
                     <span class="nav-outline-ref">${para.section_ref || para.id}</span>
-                    <span class="nav-outline-text">${escapeHtml((para.text || '').substring(0, 25))}...</span>
+                    <span class="nav-outline-text">${escapeHtml((para.text || '').substring(0, 30))}...</span>
                 </div>
             `;
         });
-
-        if (paras.length > 5) {
-            html += `<div class="nav-outline-more">+${paras.length - 5} more</div>`;
-        }
 
         html += '</div>';
     });
@@ -446,6 +446,58 @@ function updateNavPanel() {
     updateNavRiskSummary();
 }
 
+// Toggle light mode for nav panel
+function toggleLightMode() {
+    const navPanel = document.getElementById('nav-panel');
+    const btn = document.getElementById('btn-light-mode');
+
+    navPanel.classList.toggle('light-mode');
+    btn.classList.toggle('active');
+
+    // Save preference
+    localStorage.setItem('nav-light-mode', navPanel.classList.contains('light-mode'));
+}
+
+// Toggle compact mode for nav panel
+function toggleCompactMode() {
+    const navPanel = document.getElementById('nav-panel');
+    const btn = document.getElementById('btn-compact-mode');
+
+    navPanel.classList.toggle('compact-mode');
+    btn.classList.toggle('active');
+
+    // Save preference
+    localStorage.setItem('nav-compact-mode', navPanel.classList.contains('compact-mode'));
+}
+
+// Toggle category collapse
+function toggleCategory(categoryId) {
+    const header = document.querySelector(`.nav-category-header[data-category="${categoryId}"]`);
+    if (header) {
+        header.classList.toggle('collapsed');
+    }
+}
+
+// Restore nav panel preferences
+function restoreNavPreferences() {
+    const navPanel = document.getElementById('nav-panel');
+    const lightBtn = document.getElementById('btn-light-mode');
+    const compactBtn = document.getElementById('btn-compact-mode');
+
+    if (localStorage.getItem('nav-light-mode') === 'true') {
+        navPanel.classList.add('light-mode');
+        if (lightBtn) lightBtn.classList.add('active');
+    }
+
+    if (localStorage.getItem('nav-compact-mode') === 'true') {
+        navPanel.classList.add('compact-mode');
+        if (compactBtn) compactBtn.classList.add('active');
+    }
+}
+
+// Call restore on init
+document.addEventListener('DOMContentLoaded', restoreNavPreferences);
+
 // Export functions
 window.initNavigation = initNavigation;
 window.toggleNavPanel = toggleNavPanel;
@@ -458,3 +510,6 @@ window.jumpToNextUnreviewed = jumpToNextUnreviewed;
 window.updateNavProgress = updateNavProgress;
 window.updateNavRiskSummary = updateNavRiskSummary;
 window.updateNavPanel = updateNavPanel;
+window.toggleLightMode = toggleLightMode;
+window.toggleCompactMode = toggleCompactMode;
+window.toggleCategory = toggleCategory;
