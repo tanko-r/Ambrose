@@ -278,14 +278,15 @@ function renderOutlineByCategory(paragraphs) {
     return html;
 }
 
-// Jump to a specific paragraph with smooth scrolling
+// Jump to a specific paragraph with smart scrolling
+// Only scrolls if the paragraph is not already visible in the middle third of the viewport
 function jumpToParagraph(paraId) {
     selectParagraph(paraId);
 
-    // Scroll document to paragraph smoothly
+    // Scroll document to paragraph if needed (smart scrolling)
     const paraEl = document.querySelector(`.para-block[data-para-id="${paraId}"]`);
     if (paraEl) {
-        paraEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        smartScrollToElement(paraEl);
     }
 
     // Update outline active state
@@ -297,6 +298,27 @@ function jumpToParagraph(paraId) {
         activeItem.classList.add('active');
         // Also scroll the nav outline item into view
         activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+// Smart scroll: only scroll if element is not in the middle third of viewport
+function smartScrollToElement(element) {
+    const rect = element.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    // Calculate the middle third boundaries
+    const topThird = viewportHeight / 3;
+    const bottomThird = viewportHeight * 2 / 3;
+
+    // Check if element is within the middle third
+    const elementTop = rect.top;
+    const elementBottom = rect.bottom;
+
+    // If the element is mostly visible in the middle third, don't scroll
+    const isInMiddleThird = elementTop >= topThird - 50 && elementBottom <= bottomThird + 50;
+
+    if (!isInMiddleThird) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 }
 

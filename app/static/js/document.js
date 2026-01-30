@@ -22,11 +22,17 @@ function renderDocument() {
     }
 
     content.forEach(para => {
-        const hasRisk = AppState.analysis?.risk_by_paragraph?.[para.id]?.length > 0;
+        const risks = AppState.analysis?.risk_by_paragraph?.[para.id] || [];
+        const hasRisk = risks.length > 0;
         const revision = AppState.revisions[para.id];
         const hasRevision = !!revision;
         const isAccepted = hasRevision && revision.accepted;
-        const isFlagged = AppState.flags.some(f => f.para_id === para.id);
+
+        // Get flags for this paragraph with their types
+        const paraFlags = (AppState.flags || []).filter(f => f.para_id === para.id);
+        const hasClientFlag = paraFlags.some(f => f.type === 'client');
+        const hasAttorneyFlag = paraFlags.some(f => f.type === 'attorney');
+        const isFlagged = paraFlags.length > 0;
 
         let classes = ['para-block'];
         if (hasRisk) classes.push('has-risk');
@@ -56,17 +62,25 @@ function renderDocument() {
             ? `data-rationale="${escapeAttr(revision.rationale)}"`
             : '';
 
+        // Build side tabs (colored edge indicators)
+        let sideTabs = '';
+        if (hasRisk) {
+            sideTabs += `<div class="side-tab side-tab-risk" title="${risks.length} risk(s)"></div>`;
+        }
+        if (hasClientFlag) {
+            sideTabs += '<div class="side-tab side-tab-client" title="Flagged for client review"></div>';
+        }
+        if (hasAttorneyFlag) {
+            sideTabs += '<div class="side-tab side-tab-attorney" title="Flagged for attorney review"></div>';
+        }
+
         html += `
             <div class="${classes.join(' ')}" data-para-id="${para.id}" ${rationaleAttr}
                  onclick="selectParagraph('${para.id}')"
                  ${isAccepted ? `onmouseenter="showRevisionTooltip(event, '${para.id}')" onmouseleave="hideRevisionTooltip()"` : ''}>
+                <div class="side-tabs">${sideTabs}</div>
                 ${para.section_ref ? `<div class="para-ref">${para.section_ref}</div>` : ''}
                 <div class="para-text ${isAccepted ? 'has-track-changes' : ''}">${displayContent}</div>
-                <div class="para-indicators">
-                    ${hasRisk ? '<div class="indicator risk" title="Has risks"></div>' : ''}
-                    ${hasRevision ? '<div class="indicator revision" title="Has revision"></div>' : ''}
-                    ${isFlagged ? '<div class="indicator flag" title="Flagged"></div>' : ''}
-                </div>
             </div>
         `;
     });
