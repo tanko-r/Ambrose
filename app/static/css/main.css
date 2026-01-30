@@ -586,6 +586,22 @@ body:not(.nav-collapsed) .nav-collapsed-toggle {
     color: var(--primary);
 }
 
+.nav-panel.light-mode .nav-outline-ref {
+    color: var(--text-muted);
+}
+
+.nav-panel.light-mode .nav-outline-text {
+    color: var(--text);
+}
+
+.nav-panel.light-mode .nav-outline-no-results {
+    color: var(--text-light);
+}
+
+.nav-panel.light-mode .nav-outline-empty {
+    color: var(--text-light);
+}
+
 /* Compact Mode - Nav Panel */
 .nav-panel.compact-mode .nav-outline-item {
     padding: 0.25rem 0.5rem;
@@ -1019,7 +1035,8 @@ body:not(.nav-collapsed) .nav-collapsed-toggle {
 .para-block {
     margin: 0.5rem 0;
     padding: 0.625rem 0.875rem;
-    padding-left: 1rem; /* Extra padding for side tabs */
+    padding-left: 1rem; /* Extra padding for left side tabs (risks) */
+    padding-right: 1rem; /* Extra padding for right side tabs (flags) */
     border-radius: 4px;
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -1094,7 +1111,6 @@ body:not(.nav-collapsed) .nav-collapsed-toggle {
 /* Side tabs - colored edge indicators */
 .side-tabs {
     position: absolute;
-    left: 0;
     top: 0;
     bottom: 0;
     display: flex;
@@ -1103,30 +1119,49 @@ body:not(.nav-collapsed) .nav-collapsed-toggle {
     padding: 4px 0;
 }
 
+/* Left side tabs (risks) */
+.side-tabs-left {
+    left: 0;
+}
+
+/* Right side tabs (flags) */
+.side-tabs-right {
+    right: 0;
+}
+
 .side-tab {
     width: 4px;
     flex: 1;
     min-height: 12px;
     max-height: 24px;
-    border-radius: 0 3px 3px 0;
     transition: width var(--transition-fast);
+}
+
+/* Left tabs rounded on right */
+.side-tabs-left .side-tab {
+    border-radius: 0 3px 3px 0;
+}
+
+/* Right tabs rounded on left */
+.side-tabs-right .side-tab {
+    border-radius: 3px 0 0 3px;
 }
 
 .para-block:hover .side-tab {
     width: 6px;
 }
 
-/* Risk tab - red */
+/* Risk tab - red (left side) */
 .side-tab-risk {
     background: var(--accent);
 }
 
-/* Client review flag - blue */
+/* Client review flag - blue (right side) */
 .side-tab-client {
     background: var(--info);
 }
 
-/* Attorney review flag - yellow/orange */
+/* Attorney review flag - yellow/orange (right side) */
 .side-tab-attorney {
     background: var(--warning);
 }

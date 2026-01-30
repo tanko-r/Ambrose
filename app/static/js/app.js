@@ -97,9 +97,9 @@ function renderFlagsTab(paraId) {
 
     let html = '<div class="flags-list">';
     flags.forEach((flag, idx) => {
-        const typeIcon = flag.type === 'client' ? '&#128100;' : '&#9878;';
-        const typeLabel = flag.type === 'client' ? 'Client Review' : 'Attorney Review';
-        const typeClass = flag.type === 'client' ? 'flag-client' : 'flag-attorney';
+        const typeIcon = flag.flag_type === 'client' ? '&#128100;' : '&#9878;';
+        const typeLabel = flag.flag_type === 'client' ? 'Client Review' : 'Attorney Review';
+        const typeClass = flag.flag_type === 'client' ? 'flag-client' : 'flag-attorney';
 
         html += `
             <div class="flag-item ${typeClass}">

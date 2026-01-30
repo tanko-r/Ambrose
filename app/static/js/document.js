@@ -30,8 +30,8 @@ function renderDocument() {
 
         // Get flags for this paragraph with their types
         const paraFlags = (AppState.flags || []).filter(f => f.para_id === para.id);
-        const hasClientFlag = paraFlags.some(f => f.type === 'client');
-        const hasAttorneyFlag = paraFlags.some(f => f.type === 'attorney');
+        const hasClientFlag = paraFlags.some(f => f.flag_type === 'client');
+        const hasAttorneyFlag = paraFlags.some(f => f.flag_type === 'attorney');
         const isFlagged = paraFlags.length > 0;
 
         let classes = ['para-block'];
@@ -62,23 +62,27 @@ function renderDocument() {
             ? `data-rationale="${escapeAttr(revision.rationale)}"`
             : '';
 
-        // Build side tabs (colored edge indicators)
-        let sideTabs = '';
+        // Build left side tabs (risks only)
+        let leftTabs = '';
         if (hasRisk) {
-            sideTabs += `<div class="side-tab side-tab-risk" title="${risks.length} risk(s)"></div>`;
+            leftTabs += `<div class="side-tab side-tab-risk" title="${risks.length} risk(s)"></div>`;
         }
+
+        // Build right side tabs (flags only)
+        let rightTabs = '';
         if (hasClientFlag) {
-            sideTabs += '<div class="side-tab side-tab-client" title="Flagged for client review"></div>';
+            rightTabs += '<div class="side-tab side-tab-client" title="Flagged for client review"></div>';
         }
         if (hasAttorneyFlag) {
-            sideTabs += '<div class="side-tab side-tab-attorney" title="Flagged for attorney review"></div>';
+            rightTabs += '<div class="side-tab side-tab-attorney" title="Flagged for attorney review"></div>';
         }
 
         html += `
             <div class="${classes.join(' ')}" data-para-id="${para.id}" ${rationaleAttr}
                  onclick="selectParagraph('${para.id}')"
                  ${isAccepted ? `onmouseenter="showRevisionTooltip(event, '${para.id}')" onmouseleave="hideRevisionTooltip()"` : ''}>
-                <div class="side-tabs">${sideTabs}</div>
+                <div class="side-tabs side-tabs-left">${leftTabs}</div>
+                <div class="side-tabs side-tabs-right">${rightTabs}</div>
                 ${para.section_ref ? `<div class="para-ref">${para.section_ref}</div>` : ''}
                 <div class="para-text ${isAccepted ? 'has-track-changes' : ''}">${displayContent}</div>
             </div>
