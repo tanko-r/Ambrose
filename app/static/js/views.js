@@ -3,12 +3,12 @@
  */
 
 function showIntake() {
-    document.getElementById('intake-screen').classList.remove('hidden');
-    document.getElementById('nav-panel').classList.add('hidden');
-    document.getElementById('document-panel').classList.add('hidden');
-    document.getElementById('sidebar').classList.add('hidden');
-    document.getElementById('btn-finalize').classList.add('hidden');
-    document.getElementById('session-info').textContent = '';
+    document.getElementById('intake-screen')?.classList.remove('hidden');
+    document.getElementById('nav-panel')?.classList.add('hidden');
+    document.getElementById('document-panel')?.classList.add('hidden');
+    document.getElementById('sidebar')?.classList.add('hidden');
+    const sessionInfo = document.getElementById('session-info');
+    if (sessionInfo) sessionInfo.textContent = '';
 
     // Hide bottom bar
     if (typeof hideBottomBar === 'function') {
@@ -17,13 +17,13 @@ function showIntake() {
 }
 
 function showReviewView() {
-    document.getElementById('intake-screen').classList.add('hidden');
-    document.getElementById('nav-panel').classList.remove('hidden');
-    document.getElementById('document-panel').classList.remove('hidden');
-    document.getElementById('sidebar').classList.remove('hidden');
-    document.getElementById('btn-finalize').classList.remove('hidden');
+    document.getElementById('intake-screen')?.classList.add('hidden');
+    document.getElementById('nav-panel')?.classList.remove('hidden');
+    document.getElementById('document-panel')?.classList.remove('hidden');
+    document.getElementById('sidebar')?.classList.remove('hidden');
     // Show full session ID (clickable to copy)
-    document.getElementById('session-info').textContent = `Session: ${AppState.sessionId}`;
+    const sessionInfo = document.getElementById('session-info');
+    if (sessionInfo) sessionInfo.textContent = `Session: ${AppState.sessionId}`;
 
     // Update header filename
     const filenameEl = document.getElementById('header-filename');
