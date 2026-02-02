@@ -982,32 +982,9 @@ def get_transmittal(session_id):
     if contract_name.endswith('.docx'):
         contract_name = contract_name[:-5]
 
-    # Collect accepted revisions with their section references
+    # Count accepted revisions for stats
     revisions = session.get('revisions', {})
-    parsed_doc = session.get('parsed_doc', {})
-    content = parsed_doc.get('content', [])
-
-    # Build a map of para_id to section_ref for quick lookup
-    para_to_section = {}
-    for item in content:
-        if item.get('type') == 'paragraph':
-            para_to_section[item.get('id')] = item.get('section_ref', '')
-
-    # Collect key revisions (accepted ones)
-    key_revisions = []
-    for para_id, revision_data in revisions.items():
-        if revision_data.get('accepted'):
-            section_ref = para_to_section.get(para_id, '')
-            rationale = revision_data.get('rationale', 'Revised for client protection')
-            # Create a brief description from the rationale
-            # Truncate long rationales to first sentence or 100 chars
-            brief = rationale.split('.')[0] if '.' in rationale else rationale
-            if len(brief) > 100:
-                brief = brief[:97] + '...'
-            key_revisions.append({
-                'section_ref': section_ref or 'N/A',
-                'description': brief
-            })
+    revision_count = sum(1 for r in revisions.values() if r.get('accepted'))
 
     # Collect client flags (flag_type == 'client')
     flags = session.get('flags', [])
@@ -1020,29 +997,17 @@ def get_transmittal(session_id):
     email_lines = []
     email_lines.append("Dear [Client],")
     email_lines.append("")
-    email_lines.append(f"I have completed my review of {contract_name}. Below is a summary of the key revisions made and items flagged for your review.")
+    email_lines.append(f"I have completed my review of {contract_name}. Please see the attached redlined document containing my proposed revisions.")
     email_lines.append("")
 
-    # Key Revisions section
-    email_lines.append("## Key Revisions")
-    if key_revisions:
-        for rev in key_revisions:
-            section = rev['section_ref'] if rev['section_ref'] else 'General'
-            email_lines.append(f"- [{section}]: {rev['description']}")
-    else:
-        email_lines.append("- No revisions were made during this review.")
-    email_lines.append("")
-
-    # Items for Your Review section
-    email_lines.append("## Items for Your Review")
+    # Items for Your Review section (only if there are flags)
     if client_flags:
+        email_lines.append("## Items for Your Review")
         for i, flag in enumerate(client_flags, 1):
             section = flag.get('section_ref', 'N/A')
             note = flag.get('note', 'Flagged for review')
             email_lines.append(f"{i}. [{section}]: {note}")
-    else:
-        email_lines.append("No items were flagged for your specific review.")
-    email_lines.append("")
+        email_lines.append("")
 
     email_lines.append("Please let me know if you have any questions.")
     email_lines.append("")
@@ -1055,7 +1020,7 @@ def get_transmittal(session_id):
     return jsonify({
         'subject': email_subject,
         'body': email_body,
-        'revision_count': len(key_revisions),
+        'revision_count': revision_count,
         'flag_count': len(client_flags)
     })
 
