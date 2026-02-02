@@ -2443,7 +2443,8 @@ ins.diff-ins {
     backdrop-filter: blur(2px);
 }
 
-.modal-overlay.show {
+.modal-overlay.show,
+.modal-overlay.active {
     opacity: 1;
     visibility: visible;
 }
@@ -4417,6 +4418,71 @@ body.nav-collapsed .bottom-bar {
 
 .btn-icon {
     font-size: 1rem;
+}
+
+/* ============================================
+   Transmittal Modal Styles (TRANS-01..TRANS-04)
+   ============================================ */
+
+.transmittal-modal {
+    max-width: 650px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.transmittal-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transmittal-modal .modal-header h2 {
+    margin: 0;
+}
+
+.transmittal-field {
+    margin-bottom: 1.25rem;
+}
+
+.transmittal-field:last-child {
+    margin-bottom: 0;
+}
+
+.transmittal-subject {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.transmittal-body {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text);
+    max-height: 45vh;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
+
+.transmittal-footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.transmittal-footer .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 /* ============================================

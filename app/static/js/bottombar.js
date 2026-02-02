@@ -343,7 +343,9 @@ async function downloadClean() {
 }
 
 // Generate Transmittal (TRANS-01..TRANS-04)
-// Fetches transmittal content from backend and opens email client
+// Fetches transmittal content from backend and shows modal with preview
+let transmittalData = null;
+
 async function generateTransmittal() {
     const sessionId = AppState.sessionId;
     if (!sessionId) {
@@ -360,26 +362,56 @@ async function generateTransmittal() {
             return;
         }
 
+        // Store data for copy/email functions
+        transmittalData = data;
+
         // Check if there's any content to send
         if (data.revision_count === 0 && data.flag_count === 0) {
             showToast('No revisions or flags to include in transmittal', 'info');
-            // Still allow opening email client with empty transmittal if user wants
         }
 
-        // Build mailto URL with encoded subject and body
-        // TRANS-04: Generate Transmittal opens default email client with content prefilled
-        const subject = encodeURIComponent(data.subject);
-        const body = encodeURIComponent(data.body);
-        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
-
-        // Open the mailto URL to launch default email client
-        window.location.href = mailtoUrl;
-
-        showToast(`Transmittal generated: ${data.revision_count} revisions, ${data.flag_count} flags`, 'success');
+        // Show modal with preview
+        showTransmittalModal(data);
     } catch (error) {
         console.error('Error generating transmittal:', error);
         showToast('Failed to generate transmittal', 'error');
     }
+}
+
+function showTransmittalModal(data) {
+    document.getElementById('transmittal-subject').textContent = data.subject;
+    document.getElementById('transmittal-body').textContent = data.body;
+    document.getElementById('transmittal-modal').classList.add('active');
+}
+
+function closeTransmittalModal() {
+    document.getElementById('transmittal-modal').classList.remove('active');
+}
+
+function copyTransmittalToClipboard() {
+    if (!transmittalData) return;
+
+    const text = `Subject: ${transmittalData.subject}\n\n${transmittalData.body}`;
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Copied to clipboard', 'success');
+    }).catch(() => {
+        showToast('Failed to copy', 'error');
+    });
+}
+
+function openTransmittalEmail() {
+    if (!transmittalData) return;
+
+    // Build mailto URL with encoded subject and body
+    const subject = encodeURIComponent(transmittalData.subject);
+    const body = encodeURIComponent(transmittalData.body);
+    const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+
+    // Open the mailto URL to launch default email client
+    window.location.href = mailtoUrl;
+
+    closeTransmittalModal();
+    showToast(`Opening email client`, 'success');
 }
 
 // Initialize on DOM ready
@@ -401,3 +433,7 @@ window.showFinalizeModal = showFinalizeModal;
 window.closeFinalizeModal = closeFinalizeModal;
 window.downloadTrackChanges = downloadTrackChanges;
 window.downloadClean = downloadClean;
+window.showTransmittalModal = showTransmittalModal;
+window.closeTransmittalModal = closeTransmittalModal;
+window.copyTransmittalToClipboard = copyTransmittalToClipboard;
+window.openTransmittalEmail = openTransmittalEmail;

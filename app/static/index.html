@@ -382,6 +382,37 @@
         </div>
     </div>
 
+    <!-- Transmittal Modal (TRANS-01..TRANS-04) -->
+    <div class="modal-overlay" id="transmittal-modal">
+        <div class="modal transmittal-modal">
+            <div class="modal-header">
+                <h2>Generate Transmittal Email</h2>
+                <button class="modal-close-btn" onclick="closeTransmittalModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transmittal-field">
+                    <label class="form-label">Subject:</label>
+                    <div class="transmittal-subject" id="transmittal-subject"></div>
+                </div>
+                <div class="transmittal-field">
+                    <label class="form-label">Body:</label>
+                    <div class="transmittal-body" id="transmittal-body"></div>
+                </div>
+            </div>
+            <div class="modal-footer transmittal-footer">
+                <button class="btn btn-secondary" onclick="copyTransmittalToClipboard()">
+                    <span class="btn-icon">&#128203;</span>
+                    Copy to Clipboard
+                </button>
+                <button class="btn btn-primary" onclick="openTransmittalEmail()">
+                    <span class="btn-icon">&#9993;</span>
+                    Create Email
+                </button>
+                <button class="btn btn-outline" onclick="closeTransmittalModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- New Project Confirmation Modal (NEW-01) -->
     <div class="modal-overlay" id="new-project-modal">
         <div class="modal">
