@@ -882,9 +882,109 @@ def implement_suggestion():
         return jsonify({'error': f'Implementation failed: {str(e)}'}), 500
 
 
+@api_bp.route('/transmittal/<session_id>', methods=['GET'])
+def get_transmittal(session_id):
+    """
+    Generate transmittal email content summarizing the review.
+
+    Returns formatted email subject and body with:
+    - High-level summary of key revisions made
+    - List of all client-flagged paragraphs with notes
+
+    TRANS-01: User can generate transmittal email summarizing the review
+    TRANS-02: Transmittal includes high-level summary of key revisions made
+    TRANS-03: Transmittal includes all paragraphs flagged for client review with notes
+    """
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    # Get contract name from session
+    contract_name = session.get('target_filename', 'Contract Document')
+    if contract_name.endswith('.docx'):
+        contract_name = contract_name[:-5]
+
+    # Collect accepted revisions with their section references
+    revisions = session.get('revisions', {})
+    parsed_doc = session.get('parsed_doc', {})
+    content = parsed_doc.get('content', [])
+
+    # Build a map of para_id to section_ref for quick lookup
+    para_to_section = {}
+    for item in content:
+        if item.get('type') == 'paragraph':
+            para_to_section[item.get('id')] = item.get('section_ref', '')
+
+    # Collect key revisions (accepted ones)
+    key_revisions = []
+    for para_id, revision_data in revisions.items():
+        if revision_data.get('accepted'):
+            section_ref = para_to_section.get(para_id, '')
+            rationale = revision_data.get('rationale', 'Revised for client protection')
+            # Create a brief description from the rationale
+            # Truncate long rationales to first sentence or 100 chars
+            brief = rationale.split('.')[0] if '.' in rationale else rationale
+            if len(brief) > 100:
+                brief = brief[:97] + '...'
+            key_revisions.append({
+                'section_ref': section_ref or 'N/A',
+                'description': brief
+            })
+
+    # Collect client flags (flag_type == 'client')
+    flags = session.get('flags', [])
+    client_flags = [f for f in flags if f.get('flag_type') == 'client']
+
+    # Sort flags by section reference for logical ordering
+    client_flags.sort(key=lambda f: f.get('section_ref', ''))
+
+    # Build the email body
+    email_lines = []
+    email_lines.append("Dear [Client],")
+    email_lines.append("")
+    email_lines.append(f"I have completed my review of {contract_name}. Below is a summary of the key revisions made and items flagged for your review.")
+    email_lines.append("")
+
+    # Key Revisions section
+    email_lines.append("## Key Revisions")
+    if key_revisions:
+        for rev in key_revisions:
+            section = rev['section_ref'] if rev['section_ref'] else 'General'
+            email_lines.append(f"- [{section}]: {rev['description']}")
+    else:
+        email_lines.append("- No revisions were made during this review.")
+    email_lines.append("")
+
+    # Items for Your Review section
+    email_lines.append("## Items for Your Review")
+    if client_flags:
+        for i, flag in enumerate(client_flags, 1):
+            section = flag.get('section_ref', 'N/A')
+            note = flag.get('note', 'Flagged for review')
+            email_lines.append(f"{i}. [{section}]: {note}")
+    else:
+        email_lines.append("No items were flagged for your specific review.")
+    email_lines.append("")
+
+    email_lines.append("Please let me know if you have any questions.")
+    email_lines.append("")
+    email_lines.append("Best regards,")
+    email_lines.append("[Attorney]")
+
+    email_body = "\n".join(email_lines)
+    email_subject = f"Redline Review: {contract_name}"
+
+    return jsonify({
+        'subject': email_subject,
+        'body': email_body,
+        'revision_count': len(key_revisions),
+        'flag_count': len(client_flags)
+    })
+
+
 @api_bp.route('/sessions', methods=['GET'])
 def list_sessions():
-    """List all active sessions."""
+    """List all active sessions (in-memory only)."""
     session_list = []
     for sid, data in sessions.items():
         session_list.append({
@@ -895,6 +995,165 @@ def list_sessions():
             'representation': data.get('representation')
         })
     return jsonify({'sessions': session_list})
+
+
+@api_bp.route('/sessions/saved', methods=['GET'])
+def list_saved_sessions():
+    """
+    List all saved sessions from disk (NEW-04).
+
+    Returns sessions sorted by last modified date (most recent first).
+    """
+    session_folder = current_app.config['SESSION_FOLDER']
+    saved_sessions = []
+
+    if session_folder.exists():
+        for session_file in session_folder.glob('*.json'):
+            try:
+                with open(session_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # Get file modification time
+                    mtime = session_file.stat().st_mtime
+                    saved_sessions.append({
+                        'session_id': data.get('session_id', session_file.stem),
+                        'created_at': data.get('created_at'),
+                        'last_modified': datetime.fromtimestamp(mtime).isoformat(),
+                        'status': data.get('status'),
+                        'contract_type': data.get('contract_type'),
+                        'representation': data.get('representation'),
+                        'target_filename': data.get('target_filename', 'Unknown'),
+                        'revisions_count': len(data.get('revisions', {})),
+                        'flags_count': len(data.get('flags', []))
+                    })
+            except (json.JSONDecodeError, IOError):
+                # Skip corrupted files
+                continue
+
+    # Sort by last modified (most recent first)
+    saved_sessions.sort(key=lambda x: x.get('last_modified', ''), reverse=True)
+
+    return jsonify({'sessions': saved_sessions})
+
+
+@api_bp.route('/session/<session_id>/save', methods=['POST'])
+def save_session_endpoint(session_id):
+    """
+    Save current session state to disk (NEW-02).
+
+    This persists the full session including document, analysis,
+    revisions, and flags for later retrieval.
+    """
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    try:
+        # Ensure session is fully saved to disk
+        save_session(session_id, session)
+
+        return jsonify({
+            'status': 'saved',
+            'session_id': session_id,
+            'message': 'Session saved successfully'
+        })
+    except Exception as e:
+        return jsonify({'error': f'Failed to save session: {str(e)}'}), 500
+
+
+@api_bp.route('/session/<session_id>', methods=['DELETE'])
+def discard_session(session_id):
+    """
+    Discard a session without saving (NEW-01).
+
+    Removes session from memory. If it was never saved to disk,
+    all progress is lost.
+    """
+    if session_id in sessions:
+        del sessions[session_id]
+        return jsonify({
+            'status': 'discarded',
+            'session_id': session_id,
+            'message': 'Session discarded'
+        })
+
+    return jsonify({'error': 'Session not found'}), 404
+
+
+@api_bp.route('/session/<session_id>/load', methods=['POST'])
+def load_saved_session(session_id):
+    """
+    Load a previously saved session from disk (NEW-04).
+
+    Restores session to memory for continued work.
+    """
+    session_folder = current_app.config['SESSION_FOLDER']
+    session_path = session_folder / f'{session_id}.json'
+
+    if not session_path.exists():
+        return jsonify({'error': 'Saved session not found'}), 404
+
+    try:
+        with open(session_path, 'r', encoding='utf-8') as f:
+            session_data = json.load(f)
+
+        # Restore parsed document if path exists
+        parsed_doc_path = session_data.get('parsed_doc_path')
+        if parsed_doc_path and Path(parsed_doc_path).exists():
+            with open(parsed_doc_path, 'r', encoding='utf-8') as f:
+                session_data['parsed_doc'] = json.load(f)
+
+        # Store in memory
+        sessions[session_id] = session_data
+
+        return jsonify({
+            'status': 'loaded',
+            'session_id': session_id,
+            'target_filename': session_data.get('target_filename', 'Unknown'),
+            'session_status': session_data.get('status'),
+            'revisions_count': len(session_data.get('revisions', {})),
+            'flags_count': len(session_data.get('flags', []))
+        })
+    except Exception as e:
+        return jsonify({'error': f'Failed to load session: {str(e)}'}), 500
+
+
+@api_bp.route('/session/<session_id>/info', methods=['GET'])
+def get_session_info(session_id):
+    """
+    Get basic session info for display in confirmation dialogs.
+
+    Returns summary info without full document/analysis data.
+    """
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    # Count accepted revisions
+    revisions = session.get('revisions', {})
+    accepted_count = sum(1 for r in revisions.values() if r.get('accepted'))
+    pending_count = len(revisions) - accepted_count
+
+    # Count flags by type
+    flags = session.get('flags', [])
+    client_flags = sum(1 for f in flags if f.get('flag_type') == 'client')
+    attorney_flags = len(flags) - client_flags
+
+    return jsonify({
+        'session_id': session_id,
+        'target_filename': session.get('target_filename', 'Unknown Document'),
+        'created_at': session.get('created_at'),
+        'status': session.get('status'),
+        'contract_type': session.get('contract_type'),
+        'representation': session.get('representation'),
+        'stats': {
+            'accepted_revisions': accepted_count,
+            'pending_revisions': pending_count,
+            'total_revisions': len(revisions),
+            'client_flags': client_flags,
+            'attorney_flags': attorney_flags,
+            'total_flags': len(flags)
+        }
+    })
 
 
 @api_bp.route('/version', methods=['GET'])

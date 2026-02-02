@@ -208,10 +208,44 @@ function finalizeRedline() {
     // TODO: Show modal to review flags, then export
 }
 
-// Generate Transmittal (placeholder)
-function generateTransmittal() {
-    showToast('Generate Transmittal - Implementation coming soon!', 'info');
-    // TODO: Show modal to review client flags, then generate email
+// Generate Transmittal (TRANS-01..TRANS-04)
+// Fetches transmittal content from backend and opens email client
+async function generateTransmittal() {
+    const sessionId = AppState.sessionId;
+    if (!sessionId) {
+        showToast('No active session', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/transmittal/${sessionId}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            showToast(data.error || 'Failed to generate transmittal', 'error');
+            return;
+        }
+
+        // Check if there's any content to send
+        if (data.revision_count === 0 && data.flag_count === 0) {
+            showToast('No revisions or flags to include in transmittal', 'info');
+            // Still allow opening email client with empty transmittal if user wants
+        }
+
+        // Build mailto URL with encoded subject and body
+        // TRANS-04: Generate Transmittal opens default email client with content prefilled
+        const subject = encodeURIComponent(data.subject);
+        const body = encodeURIComponent(data.body);
+        const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+
+        // Open the mailto URL to launch default email client
+        window.location.href = mailtoUrl;
+
+        showToast(`Transmittal generated: ${data.revision_count} revisions, ${data.flag_count} flags`, 'success');
+    } catch (error) {
+        console.error('Error generating transmittal:', error);
+        showToast('Failed to generate transmittal', 'error');
+    }
 }
 
 // Initialize on DOM ready
@@ -228,3 +262,4 @@ window.updateBottomBar = updateBottomBar;
 window.showBottomBar = showBottomBar;
 window.hideBottomBar = hideBottomBar;
 window.finalizeRedline = finalizeRedline;
+window.generateTransmittal = generateTransmittal;
