@@ -241,16 +241,29 @@ async function regenerateWithRelated(paraId) {
 function updateRevisionActions(accepted) {
     const actionsEl = document.getElementById('revision-actions');
 
+    const flagButtons = `
+        <div class="revision-flag-buttons">
+            <button class="btn btn-warning btn-sm" onclick="flagFromSheet('client')" title="Flag for Client Review">
+                &#9873; Client
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="flagFromSheet('attorney')" title="Flag for Attorney Review">
+                &#9998; Attorney
+            </button>
+        </div>
+    `;
+
     if (accepted) {
         actionsEl.innerHTML = `
             <span style="color: var(--success); font-weight: 500; margin-right: 1rem;">&#10003; Accepted</span>
             <button class="btn btn-secondary" id="btn-reopen-revision">Reopen</button>
+            ${flagButtons}
         `;
     } else {
         actionsEl.innerHTML = `
             <button class="btn btn-success" id="btn-accept-revision">Accept</button>
             <button class="btn btn-outline btn-sm" id="btn-reset-revision" style="display:none;">Reset</button>
             <button class="btn btn-danger" id="btn-reject-revision">Reject</button>
+            ${flagButtons}
         `;
     }
 }

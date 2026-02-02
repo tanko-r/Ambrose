@@ -198,6 +198,14 @@ function renderSidebarContent(paraId, para) {
                         <div class="risk-description">${escapeHtml(risk.description)}</div>
                         ${buildRiskRelationshipsHtml(risk)}
                         ${relatedClauses}
+                        <div class="risk-actions">
+                            <button class="btn btn-warning btn-xs" onclick="event.stopPropagation(); flagRisk('${paraId}', '${risk.risk_id}', 'client')" title="Flag for Client Review">
+                                &#9873; Flag for Client
+                            </button>
+                            <button class="btn btn-outline btn-xs" onclick="event.stopPropagation(); flagRisk('${paraId}', '${risk.risk_id}', 'attorney')" title="Flag for Attorney Review">
+                                &#9998; Flag for Attorney
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -1255,3 +1263,27 @@ function addNote() {
     showToast('Add Note - Implementation coming soon!', 'info');
     // TODO: Show note input modal, save to AppState.notes[paraId]
 }
+
+// Flag a specific risk from the risk pane
+function flagRisk(paraId, riskId, flagType) {
+    // Find the risk to get its title/description for the note
+    const risks = AppState.analysis?.risk_by_paragraph?.[paraId] || [];
+    const risk = risks.find(r => r.risk_id === riskId);
+
+    // Pre-fill the note with risk info
+    const riskTitle = risk?.title || risk?.type || 'Risk';
+    const noteText = `${riskTitle}: ${risk?.user_recommendation || risk?.description || ''}`;
+
+    // Open the flag modal
+    showFlagModal(paraId, flagType);
+
+    // Pre-fill the note field after a small delay (to ensure modal is rendered)
+    setTimeout(() => {
+        const noteInput = document.getElementById('flag-note');
+        if (noteInput && noteText) {
+            noteInput.value = noteText.substring(0, 500); // Limit length
+        }
+    }, 50);
+}
+
+window.flagRisk = flagRisk;
