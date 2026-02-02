@@ -612,3 +612,260 @@ def generate_final_output(session_id: str, original_path: str, parsed_doc: Dict,
         'accepted_revisions': len([r for r in revisions.values() if r.get('accepted')]),
         'flags_count': len(flags)
     }
+
+
+def generate_final_documents(session_id: str, original_path: str, parsed_doc: Dict,
+                             revisions: Dict, author_name: str = "Contract Review Tool") -> Dict[str, Any]:
+    """
+    Generate final Word documents for export.
+
+    Creates two documents:
+    1. Track changes document showing all accepted revisions with markup
+    2. Clean document with final text only (no markup)
+
+    Args:
+        session_id: Session identifier
+        original_path: Path to original .docx file
+        parsed_doc: Parsed document structure
+        revisions: Dict mapping para_id to revision data
+        author_name: Author name for track changes attribution
+
+    Returns:
+        Dict with paths to generated files and revision details
+    """
+    from lxml import etree
+    from docx.oxml.ns import nsmap
+    from copy import deepcopy
+
+    output_dir = Path(original_path).parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build lookup of accepted revisions
+    accepted_revisions = {}
+    revision_details = []
+
+    for para_id, revision in revisions.items():
+        if revision.get('accepted', False):
+            accepted_revisions[para_id] = revision
+            # Find section reference from parsed_doc
+            section_ref = None
+            para_text_preview = revision.get('original', '')[:100]
+            for item in parsed_doc.get('content', []):
+                if item.get('id') == para_id:
+                    section_ref = item.get('section_ref', '')
+                    para_text_preview = item.get('text', '')[:100]
+                    break
+
+            revision_details.append({
+                'para_id': para_id,
+                'section_ref': section_ref or para_id,
+                'original_preview': para_text_preview + ('...' if len(revision.get('original', '')) > 100 else ''),
+                'rationale': revision.get('rationale', 'No rationale provided')
+            })
+
+    # Generate track changes document using redlines
+    track_changes_path = output_dir / f'{session_id}_track_changes.docx'
+    clean_path = output_dir / f'{session_id}_clean.docx'
+
+    if HAS_REDLINES and accepted_revisions:
+        try:
+            # Create track changes document
+            _generate_track_changes_with_redlines(
+                original_path,
+                accepted_revisions,
+                track_changes_path,
+                author_name
+            )
+        except Exception as e:
+            # Fallback to simple rebuild if redlines fails
+            rebuild_document(original_path, revisions, track_changes_path)
+    else:
+        # Fallback to simple rebuild
+        rebuild_document(original_path, revisions, track_changes_path)
+
+    # Generate clean document (final text only)
+    rebuild_document(original_path, revisions, clean_path)
+
+    return {
+        'track_changes_path': str(track_changes_path),
+        'clean_path': str(clean_path),
+        'revision_count': len(accepted_revisions),
+        'revision_details': revision_details
+    }
+
+
+def _generate_track_changes_with_redlines(original_path: str, accepted_revisions: Dict,
+                                          output_path: str, author_name: str) -> None:
+    """
+    Generate a Word document with track changes using python-redlines.
+
+    This creates proper Word track changes that display correctly in Microsoft Word.
+    """
+    from redlines import Redlines
+
+    # Copy original document first
+    shutil.copy2(original_path, output_path)
+
+    # Open the document
+    doc = Document(str(output_path))
+
+    # Track paragraph index
+    para_id = 0
+
+    for block in iter_block_items(doc):
+        if isinstance(block, Paragraph):
+            para_id += 1
+            para_key = f"p_{para_id}"
+
+            if para_key in accepted_revisions:
+                revision = accepted_revisions[para_key]
+                original_text = revision.get('original', '')
+                revised_text = revision.get('revised', '')
+
+                if original_text != revised_text:
+                    # Use redlines to generate the diff
+                    redline = Redlines(original_text, revised_text)
+
+                    # Get the redline output as markdown-style text
+                    # We need to apply this as Word track changes
+                    _apply_track_changes_to_paragraph(block, original_text, revised_text, author_name)
+
+        elif isinstance(block, Table):
+            for row in block.rows:
+                for cell in row.cells:
+                    for para in cell.paragraphs:
+                        para_id += 1
+                        para_key = f"p_{para_id}"
+
+                        if para_key in accepted_revisions:
+                            revision = accepted_revisions[para_key]
+                            original_text = revision.get('original', '')
+                            revised_text = revision.get('revised', '')
+
+                            if original_text != revised_text:
+                                _apply_track_changes_to_paragraph(para, original_text, revised_text, author_name)
+
+    doc.save(str(output_path))
+
+
+def _apply_track_changes_to_paragraph(paragraph, original_text: str, revised_text: str, author_name: str) -> None:
+    """
+    Apply track changes to a single paragraph using Word's revision markup.
+
+    Creates proper <w:del> and <w:ins> elements for Word track changes.
+    """
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    from datetime import datetime
+    import diff_match_patch as dmp_module
+
+    # Use diff_match_patch to compute changes
+    dmp = dmp_module.diff_match_patch()
+    diffs = dmp.diff_main(original_text, revised_text)
+    dmp.diff_cleanupSemantic(diffs)
+
+    # Get first run's formatting if available
+    first_run_format = None
+    if paragraph.runs:
+        first_run = paragraph.runs[0]
+        first_run_format = {
+            'bold': first_run.bold,
+            'italic': first_run.italic,
+            'underline': first_run.underline,
+            'font_name': first_run.font.name,
+            'font_size': first_run.font.size,
+        }
+
+    # Clear existing paragraph content
+    p = paragraph._p
+    for child in list(p):
+        if child.tag == qn('w:r'):
+            p.remove(child)
+
+    # Current timestamp for revisions
+    rev_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Build new content with track changes
+    for op, text in diffs:
+        if op == 0:  # Equal - no change
+            run = OxmlElement('w:r')
+            rPr = OxmlElement('w:rPr')
+            _apply_run_formatting(rPr, first_run_format)
+            run.append(rPr)
+            t = OxmlElement('w:t')
+            t.set(qn('xml:space'), 'preserve')
+            t.text = text
+            run.append(t)
+            p.append(run)
+
+        elif op == -1:  # Deletion
+            del_elem = OxmlElement('w:del')
+            del_elem.set(qn('w:id'), str(hash(text) % 100000))
+            del_elem.set(qn('w:author'), author_name)
+            del_elem.set(qn('w:date'), rev_date)
+
+            run = OxmlElement('w:r')
+            rPr = OxmlElement('w:rPr')
+            _apply_run_formatting(rPr, first_run_format)
+            run.append(rPr)
+
+            delText = OxmlElement('w:delText')
+            delText.set(qn('xml:space'), 'preserve')
+            delText.text = text
+            run.append(delText)
+
+            del_elem.append(run)
+            p.append(del_elem)
+
+        elif op == 1:  # Insertion
+            ins_elem = OxmlElement('w:ins')
+            ins_elem.set(qn('w:id'), str(hash(text) % 100000))
+            ins_elem.set(qn('w:author'), author_name)
+            ins_elem.set(qn('w:date'), rev_date)
+
+            run = OxmlElement('w:r')
+            rPr = OxmlElement('w:rPr')
+            _apply_run_formatting(rPr, first_run_format)
+            run.append(rPr)
+
+            t = OxmlElement('w:t')
+            t.set(qn('xml:space'), 'preserve')
+            t.text = text
+            run.append(t)
+
+            ins_elem.append(run)
+            p.append(ins_elem)
+
+
+def _apply_run_formatting(rPr, format_dict):
+    """Apply formatting properties to a run properties element."""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    if not format_dict:
+        return
+
+    if format_dict.get('bold'):
+        b = OxmlElement('w:b')
+        rPr.append(b)
+
+    if format_dict.get('italic'):
+        i = OxmlElement('w:i')
+        rPr.append(i)
+
+    if format_dict.get('underline'):
+        u = OxmlElement('w:u')
+        u.set(qn('w:val'), 'single')
+        rPr.append(u)
+
+    if format_dict.get('font_name'):
+        rFonts = OxmlElement('w:rFonts')
+        rFonts.set(qn('w:ascii'), format_dict['font_name'])
+        rFonts.set(qn('w:hAnsi'), format_dict['font_name'])
+        rPr.append(rFonts)
+
+    if format_dict.get('font_size'):
+        sz = OxmlElement('w:sz')
+        # Font size in half-points
+        sz.set(qn('w:val'), str(int(format_dict['font_size'].pt * 2)))
+        rPr.append(sz)

@@ -765,20 +765,70 @@ def unflag_item():
 @api_bp.route('/finalize', methods=['POST'])
 def finalize():
     """
-    Generate final outputs.
+    Generate final Word documents for export.
+
+    Expects JSON:
+    {
+        "session_id": "...",
+        "author_name": "..."  // optional, defaults to "Contract Review Tool"
+    }
+
+    Returns:
+    - track_changes_path: Path to Word doc with track changes
+    - clean_path: Path to clean Word doc with final text
+    - revision_count: Number of accepted revisions
+    - revision_details: List of revision summaries for modal display
+    """
+    from app.services.document_service import generate_final_documents
+
+    data = request.get_json()
+    session_id = data.get('session_id')
+    author_name = data.get('author_name', 'Contract Review Tool')
+
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    # Check if there are any accepted revisions
+    revisions = session.get('revisions', {})
+    accepted_count = len([r for r in revisions.values() if r.get('accepted', False)])
+
+    if accepted_count == 0:
+        return jsonify({
+            'error': 'No accepted revisions to export',
+            'revision_count': 0
+        }), 400
+
+    try:
+        output = generate_final_documents(
+            session_id=session_id,
+            original_path=session.get('target_path'),
+            parsed_doc=session.get('parsed_doc'),
+            revisions=revisions,
+            author_name=author_name
+        )
+
+        session['status'] = 'finalized'
+        session['finalize_output'] = output
+        save_session(session_id, session)
+
+        return jsonify(output)
+    except Exception as e:
+        return jsonify({'error': f'Finalization failed: {str(e)}'}), 500
+
+
+@api_bp.route('/finalize/preview', methods=['POST'])
+def finalize_preview():
+    """
+    Get preview of accepted revisions for the finalize modal.
 
     Expects JSON:
     {
         "session_id": "..."
     }
 
-    Returns paths to:
-    - Word document with track changes
-    - Transmittal email text
-    - Change manifest
+    Returns list of accepted revisions with details for display.
     """
-    from app.services.document_service import generate_final_output
-
     data = request.get_json()
     session_id = data.get('session_id')
 
@@ -786,24 +836,38 @@ def finalize():
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
-    try:
-        output = generate_final_output(
-            session_id=session_id,
-            original_path=session.get('target_path'),
-            parsed_doc=session.get('parsed_doc'),
-            revisions=session.get('revisions', {}),
-            flags=session.get('flags', []),
-            representation=session.get('representation'),
-            deal_context=session.get('deal_context', '')
-        )
+    revisions = session.get('revisions', {})
+    parsed_doc = session.get('parsed_doc', {})
 
-        session['status'] = 'finalized'
-        session['output'] = output
-        save_session(session_id, session)
+    revision_details = []
+    for para_id, revision in revisions.items():
+        if revision.get('accepted', False):
+            # Find section reference from parsed_doc
+            section_ref = None
+            section_title = None
+            for item in parsed_doc.get('content', []):
+                if item.get('id') == para_id:
+                    section_ref = item.get('section_ref', '')
+                    # Get section title from hierarchy
+                    hierarchy = item.get('section_hierarchy', [])
+                    if hierarchy:
+                        section_title = hierarchy[-1].get('caption', '')
+                    break
 
-        return jsonify(output)
-    except Exception as e:
-        return jsonify({'error': f'Finalization failed: {str(e)}'}), 500
+            revision_details.append({
+                'para_id': para_id,
+                'section_ref': section_ref or para_id,
+                'section_title': section_title or '',
+                'original': revision.get('original', ''),
+                'revised': revision.get('revised', ''),
+                'rationale': revision.get('rationale', 'No rationale provided'),
+                'diff_html': revision.get('diff_html', '')
+            })
+
+    return jsonify({
+        'revision_count': len(revision_details),
+        'revisions': revision_details
+    })
 
 
 @api_bp.route('/download/<session_id>/<file_type>', methods=['GET'])
@@ -813,10 +877,21 @@ def download(session_id, file_type):
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
+    # Check both old and new output structures
     output = session.get('output', {})
+    finalize_output = session.get('finalize_output', {})
+
+    path = None
+    filename = None
 
     if file_type == 'docx':
         path = output.get('docx_path')
+    elif file_type == 'track_changes':
+        path = finalize_output.get('track_changes_path')
+        filename = f"{session_id}_track_changes.docx"
+    elif file_type == 'clean':
+        path = finalize_output.get('clean_path')
+        filename = f"{session_id}_clean.docx"
     elif file_type == 'transmittal':
         path = output.get('transmittal_path')
     elif file_type == 'manifest':
@@ -825,6 +900,8 @@ def download(session_id, file_type):
         return jsonify({'error': 'Unknown file type'}), 400
 
     if path and Path(path).exists():
+        if filename:
+            return send_file(path, as_attachment=True, download_name=filename)
         return send_file(path, as_attachment=True)
 
     return jsonify({'error': 'File not found'}), 404
@@ -1153,6 +1230,163 @@ def get_session_info(session_id):
             'attorney_flags': attorney_flags,
             'total_flags': len(flags)
         }
+    })
+
+
+@api_bp.route('/precedent/<session_id>', methods=['GET'])
+def get_precedent(session_id):
+    """
+    Get full precedent document content.
+
+    Returns the parsed precedent document with sections for display
+    in the precedent comparison panel.
+
+    PREC-01: User can open precedent document in separate panel
+    PREC-02: Precedent panel displays full document with navigation
+    """
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    parsed_precedent = session.get('parsed_precedent')
+    if not parsed_precedent:
+        return jsonify({'error': 'No precedent document available', 'has_precedent': False}), 404
+
+    # Get the original filename if available
+    precedent_path = session.get('precedent_path')
+    filename = Path(precedent_path).name if precedent_path else 'Precedent Document'
+
+    return jsonify({
+        'session_id': session_id,
+        'has_precedent': True,
+        'filename': filename,
+        'content': parsed_precedent.get('content', []),
+        'sections': parsed_precedent.get('sections', []),
+        'defined_terms': parsed_precedent.get('defined_terms', []),
+        'metadata': parsed_precedent.get('metadata', {})
+    })
+
+
+@api_bp.route('/precedent/<session_id>/related/<para_id>', methods=['GET'])
+def get_related_precedent_clauses(session_id, para_id):
+    """
+    Find clauses in the precedent document that relate to a specific paragraph
+    in the target document.
+
+    Uses section matching and keyword overlap to identify related clauses.
+    Returns matching clauses ranked by relevance.
+
+    PREC-03: System highlights clauses in precedent that relate to current paragraph
+    """
+    import re as regex_module
+
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    parsed_precedent = session.get('parsed_precedent')
+    if not parsed_precedent:
+        return jsonify({'error': 'No precedent document available', 'has_precedent': False}), 404
+
+    # Find the target paragraph
+    parsed_doc = session.get('parsed_doc')
+    if not parsed_doc:
+        return jsonify({'error': 'Document not found'}), 404
+
+    target_para = None
+    for item in parsed_doc.get('content', []):
+        if item.get('type') == 'paragraph' and item.get('id') == para_id:
+            target_para = item
+            break
+
+    if not target_para:
+        return jsonify({'error': 'Paragraph not found'}), 404
+
+    # Get target paragraph details
+    target_text = target_para.get('text', '').lower()
+    target_section_ref = target_para.get('section_ref', '')
+    target_hierarchy = target_para.get('section_hierarchy', [])
+
+    # Extract keywords from target paragraph (simple approach)
+    # Filter out common words and get significant terms
+    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+                  'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+                  'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+                  'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'this',
+                  'that', 'these', 'those', 'it', 'its', 'any', 'all', 'such', 'other',
+                  'each', 'no', 'not', 'only', 'same', 'than', 'into', 'upon', 'under',
+                  'between', 'through', 'during', 'before', 'after', 'above', 'below'}
+
+    words = regex_module.findall(r'\b[a-z]{3,}\b', target_text)
+    target_keywords = set(w for w in words if w not in stop_words)
+
+    # Score each precedent paragraph
+    related_clauses = []
+    for item in parsed_precedent.get('content', []):
+        if item.get('type') != 'paragraph':
+            continue
+
+        prec_text = item.get('text', '').lower()
+        prec_section_ref = item.get('section_ref', '')
+        prec_hierarchy = item.get('section_hierarchy', [])
+
+        # Skip empty paragraphs
+        if not prec_text.strip():
+            continue
+
+        # Calculate relevance score
+        score = 0
+
+        # 1. Section reference similarity (strong signal)
+        if target_section_ref and prec_section_ref:
+            # Check for matching section numbers
+            if target_section_ref == prec_section_ref:
+                score += 50
+            elif target_section_ref.split('.')[0] == prec_section_ref.split('.')[0]:
+                score += 20
+
+        # 2. Hierarchy caption similarity
+        if target_hierarchy and prec_hierarchy:
+            target_captions = {h.get('caption', '').lower() for h in target_hierarchy if h.get('caption')}
+            prec_captions = {h.get('caption', '').lower() for h in prec_hierarchy if h.get('caption')}
+            common_captions = target_captions & prec_captions
+            score += len(common_captions) * 15
+
+        # 3. Keyword overlap
+        prec_words = set(regex_module.findall(r'\b[a-z]{3,}\b', prec_text))
+        prec_keywords = prec_words - stop_words
+        if target_keywords and prec_keywords:
+            overlap = target_keywords & prec_keywords
+            overlap_ratio = len(overlap) / max(len(target_keywords), 1)
+            score += int(overlap_ratio * 30)
+
+        # 4. Check for defined terms overlap
+        target_terms = set(regex_module.findall(r'"([A-Z][^"]+)"', target_para.get('text', '')))
+        prec_terms = set(regex_module.findall(r'"([A-Z][^"]+)"', item.get('text', '')))
+        common_terms = target_terms & prec_terms
+        score += len(common_terms) * 10
+
+        # Only include if score meets threshold
+        if score >= 10:
+            related_clauses.append({
+                'id': item.get('id'),
+                'text': item.get('text', ''),
+                'section_ref': prec_section_ref,
+                'caption': item.get('caption'),
+                'hierarchy': prec_hierarchy,
+                'score': score
+            })
+
+    # Sort by score (descending) and limit results
+    related_clauses.sort(key=lambda x: x['score'], reverse=True)
+    top_related = related_clauses[:10]  # Return top 10 matches
+
+    return jsonify({
+        'session_id': session_id,
+        'para_id': para_id,
+        'target_section_ref': target_section_ref,
+        'related_clauses': top_related,
+        'total_matches': len(related_clauses)
     })
 
 

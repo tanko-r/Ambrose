@@ -202,10 +202,144 @@ function hideBottomBar() {
     if (bar) bar.classList.add('hidden');
 }
 
-// Finalize Redline (placeholder)
-function finalizeRedline() {
-    showToast('Finalize Redline - Implementation coming soon!', 'info');
-    // TODO: Show modal to review flags, then export
+// Finalize Redline - Show modal with accepted revisions (FIN-01..FIN-04)
+async function finalizeRedline() {
+    if (!AppState.sessionId) {
+        showToast('No active session', 'error');
+        return;
+    }
+
+    // Check if there are any accepted revisions
+    const acceptedCount = Object.values(AppState.revisions || {}).filter(r => r.accepted).length;
+    if (acceptedCount === 0) {
+        showToast('No accepted revisions to export. Approve some revisions first.', 'warning');
+        return;
+    }
+
+    try {
+        // Fetch revision preview from API
+        const response = await api('/finalize/preview', {
+            method: 'POST',
+            body: JSON.stringify({ session_id: AppState.sessionId })
+        });
+
+        // Show the finalize modal with revision data
+        showFinalizeModal(response);
+    } catch (error) {
+        showToast(`Failed to load revisions: ${error.message}`, 'error');
+    }
+}
+
+// Show the finalize modal (FIN-04)
+function showFinalizeModal(data) {
+    const modal = document.getElementById('finalize-modal');
+    const revisionsList = document.getElementById('finalize-revisions-list');
+    const revisionCount = document.getElementById('finalize-revision-count');
+
+    // Update count
+    revisionCount.textContent = data.revision_count;
+
+    // Build revisions list
+    if (data.revisions && data.revisions.length > 0) {
+        revisionsList.innerHTML = data.revisions.map((rev, index) => `
+            <div class="finalize-revision-item">
+                <div class="finalize-revision-header">
+                    <span class="finalize-revision-number">${index + 1}</span>
+                    <span class="finalize-revision-section">${rev.section_ref || 'N/A'}</span>
+                    ${rev.section_title ? `<span class="finalize-revision-title">${rev.section_title}</span>` : ''}
+                </div>
+                <div class="finalize-revision-rationale">${rev.rationale}</div>
+                <div class="finalize-revision-diff">
+                    ${rev.diff_html || generateSimpleDiff(rev.original, rev.revised)}
+                </div>
+            </div>
+        `).join('');
+    } else {
+        revisionsList.innerHTML = '<div class="empty-state">No accepted revisions found.</div>';
+    }
+
+    // Show modal
+    modal.classList.add('show');
+}
+
+// Generate simple diff HTML if diff_html not available
+function generateSimpleDiff(original, revised) {
+    // Truncate for display
+    const maxLen = 200;
+    const origTrunc = original.length > maxLen ? original.substring(0, maxLen) + '...' : original;
+    const revTrunc = revised.length > maxLen ? revised.substring(0, maxLen) + '...' : revised;
+
+    return `<div class="simple-diff">
+        <div class="diff-original"><del>${escapeHtml(origTrunc)}</del></div>
+        <div class="diff-arrow">&#8595;</div>
+        <div class="diff-revised"><ins>${escapeHtml(revTrunc)}</ins></div>
+    </div>`;
+}
+
+// Escape HTML entities
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Close finalize modal
+function closeFinalizeModal() {
+    document.getElementById('finalize-modal').classList.remove('show');
+}
+
+// Download track changes document (FIN-01, FIN-03)
+async function downloadTrackChanges() {
+    if (!AppState.sessionId) {
+        showToast('No active session', 'error');
+        return;
+    }
+
+    try {
+        showToast('Generating track changes document...', 'info');
+
+        // First, generate the documents
+        const response = await api('/finalize', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: AppState.sessionId,
+                author_name: 'Contract Review Tool'
+            })
+        });
+
+        // Then download the track changes version
+        window.location.href = `/api/download/${AppState.sessionId}/track_changes`;
+        showToast('Track changes document downloaded!', 'success');
+    } catch (error) {
+        showToast(`Download failed: ${error.message}`, 'error');
+    }
+}
+
+// Download clean document (FIN-02, FIN-03)
+async function downloadClean() {
+    if (!AppState.sessionId) {
+        showToast('No active session', 'error');
+        return;
+    }
+
+    try {
+        showToast('Generating clean document...', 'info');
+
+        // First, generate the documents
+        const response = await api('/finalize', {
+            method: 'POST',
+            body: JSON.stringify({
+                session_id: AppState.sessionId,
+                author_name: 'Contract Review Tool'
+            })
+        });
+
+        // Then download the clean version
+        window.location.href = `/api/download/${AppState.sessionId}/clean`;
+        showToast('Clean document downloaded!', 'success');
+    } catch (error) {
+        showToast(`Download failed: ${error.message}`, 'error');
+    }
 }
 
 // Generate Transmittal (TRANS-01..TRANS-04)
@@ -263,3 +397,7 @@ window.showBottomBar = showBottomBar;
 window.hideBottomBar = hideBottomBar;
 window.finalizeRedline = finalizeRedline;
 window.generateTransmittal = generateTransmittal;
+window.showFinalizeModal = showFinalizeModal;
+window.closeFinalizeModal = closeFinalizeModal;
+window.downloadTrackChanges = downloadTrackChanges;
+window.downloadClean = downloadClean;

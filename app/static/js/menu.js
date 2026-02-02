@@ -64,13 +64,18 @@ function closeAllMenus() {
     if (userBtn) userBtn.classList.remove('active');
 }
 
-// App menu item handlers (placeholder functionality)
+// App menu item handlers
 function handleAppMenuItem(action) {
     closeAllMenus();
 
     switch (action) {
         case 'new-project':
-            showToast('New Project - Coming soon!', 'info');
+            // NEW-01: Show confirmation modal if there's work to save
+            if (typeof showNewProjectModal === 'function') {
+                showNewProjectModal();
+            } else {
+                showToast('New Project - Module not loaded', 'error');
+            }
             break;
         case 'document-library':
             showToast('Document Library - Coming soon!', 'info');

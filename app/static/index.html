@@ -159,6 +159,17 @@
 
                     <button type="submit" class="btn btn-primary" style="width:100%">Start Review</button>
 
+                    <!-- Recent Projects Section (NEW-04) -->
+                    <div class="recent-projects-section" id="recent-projects-section">
+                        <div class="recent-projects-title">
+                            <span class="recent-projects-title-icon">&#128337;</span>
+                            <span>Recent Projects</span>
+                        </div>
+                        <div id="recent-projects-container">
+                            <p class="recent-projects-empty">Loading recent projects...</p>
+                        </div>
+                    </div>
+
                     <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center;">
                         <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.5rem;">Or load saved analysis for testing:</p>
                         <button type="button" class="btn btn-secondary" onclick="loadTestSession()" style="width:100%">Load Test Session</button>
@@ -327,6 +338,63 @@
         </div>
     </div>
 
+    <!-- Finalize Modal (FIN-01..FIN-04) -->
+    <div class="modal-overlay" id="finalize-modal">
+        <div class="modal finalize-modal">
+            <div class="modal-header">
+                <h2>Finalize Redline</h2>
+                <button class="modal-close-btn" onclick="closeFinalizeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="finalize-summary">
+                    <p>You have <strong id="finalize-revision-count">0</strong> accepted revisions ready for export.</p>
+                </div>
+                <div class="finalize-revisions-container">
+                    <h3>Review Accepted Revisions</h3>
+                    <div class="finalize-revisions-list" id="finalize-revisions-list">
+                        <!-- Revisions will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer finalize-footer">
+                <div class="finalize-download-buttons">
+                    <button class="btn btn-primary" onclick="downloadTrackChanges()">
+                        <span class="btn-icon">&#128196;</span>
+                        Download with Track Changes
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadClean()">
+                        <span class="btn-icon">&#128195;</span>
+                        Download Clean Version
+                    </button>
+                </div>
+                <button class="btn btn-outline" onclick="closeFinalizeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Confirmation Modal (NEW-01) -->
+    <div class="modal-overlay" id="new-project-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Start New Project?</h2>
+            </div>
+            <div class="modal-body">
+                <div class="new-project-info">
+                    <p class="new-project-warning">You have unsaved changes in:</p>
+                    <p class="new-project-document" id="new-project-document-name">Document Name</p>
+                    <div class="new-project-stats" id="new-project-stats">
+                        <!-- Stats populated dynamically -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer new-project-footer">
+                <button class="btn btn-success" id="btn-new-project-save" onclick="handleNewProjectSave()">Save</button>
+                <button class="btn btn-danger" id="btn-new-project-discard" onclick="handleNewProjectDiscard()">Discard</button>
+                <button class="btn btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bottom Bar -->
     <div class="bottom-bar hidden" id="bottom-bar">
         <!-- Left: Progress & Risk Filters -->
@@ -477,6 +545,7 @@
     <script src="/static/js/revision.js"></script>
     <script src="/static/js/flag.js"></script>
     <script src="/static/js/intake.js"></script>
+    <script src="/static/js/new-project.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
 </html>

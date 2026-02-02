@@ -2583,6 +2583,177 @@ ins.diff-ins {
     background: var(--bg-subtle);
 }
 
+/* New Project Modal (NEW-01) */
+.new-project-info {
+    text-align: center;
+}
+
+.new-project-warning {
+    font-size: 0.9375rem;
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.new-project-document {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1rem;
+}
+
+.new-project-stats-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+    background: var(--bg-subtle);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.new-project-stats-list li {
+    padding: 0.375rem 0;
+    font-size: 0.875rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.new-project-stats-list li::before {
+    content: "\2022";
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.new-project-no-changes {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.new-project-footer {
+    justify-content: center;
+}
+
+.new-project-footer .btn {
+    min-width: 100px;
+}
+
+/* Recent Projects Section (NEW-04) */
+.recent-projects-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.recent-projects-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.recent-projects-title-icon {
+    font-size: 1rem;
+}
+
+.recent-projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.recent-project-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.recent-project-item:hover {
+    background: var(--border);
+    border-color: var(--primary);
+}
+
+.recent-project-icon {
+    font-size: 1.25rem;
+    opacity: 0.7;
+}
+
+.recent-project-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.recent-project-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recent-project-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.recent-project-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.recent-project-stats {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.recent-project-status {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: var(--bg-subtle);
+    color: var(--text-light);
+}
+
+.recent-project-status.status-analyzed {
+    background: rgba(52, 168, 83, 0.15);
+    color: var(--success);
+}
+
+.recent-project-status.status-initialized {
+    background: rgba(66, 133, 244, 0.15);
+    color: var(--info);
+}
+
+.recent-project-status.status-finalized {
+    background: rgba(30, 58, 95, 0.15);
+    color: var(--primary);
+}
+
+.recent-projects-empty {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    text-align: center;
+    padding: 1rem;
+    font-style: italic;
+}
+
 /* Bottom Sheet */
 .bottom-sheet {
     position: fixed;
@@ -4023,4 +4194,533 @@ body.nav-collapsed .bottom-bar {
 ::selection {
     background: rgba(30, 58, 95, 0.15);
     color: var(--text);
+}
+
+/* Finalize Modal (FIN-01..FIN-04) */
+.finalize-modal {
+    max-width: 700px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.finalize-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.finalize-modal .modal-header h2 {
+    margin: 0;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+    color: var(--text);
+}
+
+.finalize-summary {
+    padding: 1rem;
+    background: var(--bg-subtle);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.finalize-summary p {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.finalize-summary strong {
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.finalize-revisions-container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.finalize-revisions-container h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 0.75rem 0;
+}
+
+.finalize-revisions-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 40vh;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-right: 0.5rem;
+}
+
+.finalize-revision-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.875rem 1rem;
+    transition: all var(--transition-fast);
+}
+
+.finalize-revision-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.finalize-revision-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.finalize-revision-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 50%;
+}
+
+.finalize-revision-section {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--text);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.finalize-revision-title {
+    font-size: 0.8125rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.finalize-revision-rationale {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    margin-bottom: 0.625rem;
+    line-height: 1.4;
+}
+
+.finalize-revision-diff {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.finalize-revision-diff .diff-ins,
+.finalize-revision-diff ins {
+    background-color: rgba(52, 168, 83, 0.2);
+    color: var(--success);
+    text-decoration: none;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.finalize-revision-diff .diff-del,
+.finalize-revision-diff del {
+    background-color: rgba(234, 67, 53, 0.2);
+    color: var(--danger);
+    text-decoration: line-through;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.simple-diff {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.simple-diff .diff-original {
+    color: var(--danger);
+}
+
+.simple-diff .diff-revised {
+    color: var(--success);
+}
+
+.simple-diff .diff-arrow {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    text-align: center;
+}
+
+.finalize-footer {
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.finalize-download-buttons {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.finalize-download-buttons .btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.finalize-footer .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-light);
+}
+
+.finalize-footer .btn-outline:hover {
+    background: var(--bg-subtle);
+    color: var(--text);
+}
+
+.btn-icon {
+    font-size: 1rem;
+}
+
+/* ============================================
+   Precedent Panel Styles
+   PREC-01: Panel opens from sidebar
+   PREC-02: Full document with navigation
+   PREC-03: Related clauses highlighted
+   PREC-04: Text can be copied
+   ============================================ */
+
+/* Precedent Panel - slides in from right */
+.precedent-panel {
+    position: fixed;
+    top: var(--header-height);
+    right: 0;
+    bottom: 52px; /* Account for bottom bar */
+    width: 55%;
+    max-width: 800px;
+    min-width: 400px;
+    background: var(--card);
+    border-left: 1px solid var(--border);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
+    z-index: 95;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform var(--transition-slow);
+}
+
+.precedent-panel.open {
+    transform: translateX(0);
+}
+
+/* Adjust main layout when precedent panel is open */
+body.precedent-panel-open .sidebar {
+    transform: translateX(100%);
+    pointer-events: none;
+}
+
+body.precedent-panel-open .bottom-bar {
+    right: 55%;
+}
+
+/* Panel Header */
+.precedent-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--card) 0%, var(--bg-subtle) 100%);
+    flex-shrink: 0;
+}
+
+.precedent-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.precedent-panel-icon {
+    font-size: 1.25rem;
+    opacity: 0.7;
+}
+
+.precedent-panel-filename {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.precedent-panel-close {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.precedent-panel-close:hover {
+    background: var(--bg-subtle);
+    color: var(--text);
+    border-color: var(--text-light);
+}
+
+/* Panel Body */
+.precedent-panel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Table of Contents */
+.precedent-panel-toc {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-subtle);
+    flex-shrink: 0;
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height var(--transition-base);
+}
+
+.precedent-toc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.precedent-toc-header:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.precedent-toc-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.precedent-toc-collapse {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+    transition: transform var(--transition-fast);
+}
+
+.precedent-toc-list {
+    padding: 0 0.75rem 0.75rem;
+    max-height: 140px;
+    overflow-y: auto;
+    transition: max-height var(--transition-base), padding var(--transition-base);
+}
+
+.precedent-toc-list.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+.precedent-toc-item {
+    padding: 0.375rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    transition: background var(--transition-fast);
+}
+
+.precedent-toc-item:hover {
+    background: rgba(30, 58, 95, 0.08);
+}
+
+/* Indent based on level */
+.precedent-toc-item[data-level="1"] { padding-left: 1.25rem; }
+.precedent-toc-item[data-level="2"] { padding-left: 2rem; }
+.precedent-toc-item[data-level="3"] { padding-left: 2.75rem; }
+
+.precedent-toc-ref {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    min-width: 40px;
+    flex-shrink: 0;
+}
+
+.precedent-toc-text {
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.precedent-toc-empty {
+    color: var(--text-light);
+    font-style: italic;
+    font-size: 0.8125rem;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+/* Panel Content */
+.precedent-panel-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    user-select: text; /* PREC-04: Enable text selection */
+}
+
+.precedent-para {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.precedent-para:hover {
+    background: rgba(30, 58, 95, 0.03);
+    border-color: var(--border);
+}
+
+/* PREC-03: Related clause highlighting */
+.precedent-para.precedent-related {
+    background: #fefce8;
+    border-color: #fef08a;
+    border-left: 4px solid #eab308;
+    box-shadow: 0 2px 8px rgba(234, 179, 8, 0.1);
+}
+
+.precedent-para.precedent-related:hover {
+    background: #fef9c3;
+    border-color: #fde047;
+}
+
+/* Flash animation for scroll to */
+.precedent-para.precedent-highlight-flash {
+    animation: precedent-flash 1.5s ease-out;
+}
+
+@keyframes precedent-flash {
+    0% { box-shadow: 0 0 0 4px rgba(30, 58, 95, 0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(30, 58, 95, 0); }
+}
+
+.precedent-para-ref {
+    display: block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.375rem;
+    letter-spacing: 0.02em;
+}
+
+.precedent-para-text {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+}
+
+.precedent-content-empty {
+    color: var(--text-light);
+    font-style: italic;
+    text-align: center;
+    padding: 2rem;
+}
+
+.precedent-table-placeholder {
+    padding: 1rem;
+    background: var(--bg-subtle);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    color: var(--text-light);
+    font-style: italic;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+/* Panel Footer */
+.precedent-panel-footer {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--bg-subtle) 0%, var(--card) 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.precedent-related-count {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .precedent-panel {
+        width: 60%;
+    }
+
+    body.precedent-panel-open .bottom-bar {
+        right: 60%;
+    }
+}
+
+@media (max-width: 900px) {
+    .precedent-panel {
+        width: 80%;
+        max-width: none;
+    }
+
+    body.precedent-panel-open .bottom-bar {
+        right: 80%;
+    }
 }

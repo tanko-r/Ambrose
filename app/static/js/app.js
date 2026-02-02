@@ -25,6 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show intake screen
     showIntake();
 
+    // Load recent projects (NEW-04)
+    if (typeof loadRecentProjects === 'function') {
+        loadRecentProjects();
+    }
+
     console.log('Contract Review App initialized');
 });
 
