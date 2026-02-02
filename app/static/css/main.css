@@ -4405,6 +4405,19 @@ body.nav-collapsed .bottom-bar {
     gap: 0.5rem;
 }
 
+.finalize-action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.finalize-action-buttons .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .finalize-footer .btn-outline {
     background: transparent;
     border: 1px solid var(--border);

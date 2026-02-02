@@ -377,7 +377,13 @@
                         Download Clean Version
                     </button>
                 </div>
-                <button class="btn btn-outline" onclick="closeFinalizeModal()">Cancel</button>
+                <div class="finalize-action-buttons">
+                    <button class="btn btn-outline" onclick="generateTransmittal()">
+                        <span class="btn-icon">&#9993;</span>
+                        Generate Transmittal
+                    </button>
+                    <button class="btn btn-outline" onclick="closeFinalizeModal()">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
@@ -477,9 +483,6 @@
                     &#9654;
                 </button>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="generateTransmittal()" title="Generate email summary for client">
-                &#9993; Transmittal
-            </button>
             <button class="btn btn-success btn-sm" onclick="finalizeRedline()">
                 Finalize
             </button>
