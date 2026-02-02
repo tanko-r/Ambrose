@@ -81,45 +81,144 @@ function switchSidebarTab(tabName) {
     }
 }
 
+// Track flag view mode: 'clause' (current clause only) or 'all' (all flags)
+let flagViewMode = 'clause';
+
+// Toggle flag view mode
+function toggleFlagViewMode() {
+    flagViewMode = flagViewMode === 'clause' ? 'all' : 'clause';
+    renderFlagsTab(AppState.selectedParaId);
+}
+
 // Render flags tab content
 function renderFlagsTab(paraId) {
     const container = document.getElementById('flags-content');
     if (!container) return;
 
-    // Find flags for this clause
+    const allFlags = AppState.flags || [];
+    const totalFlagCount = allFlags.length;
+
+    // Build toggle header
+    let html = `
+        <div class="flags-view-toggle">
+            <button class="flags-toggle-btn ${flagViewMode === 'clause' ? 'active' : ''}" onclick="setFlagViewMode('clause')">
+                This Clause
+            </button>
+            <button class="flags-toggle-btn ${flagViewMode === 'all' ? 'active' : ''}" onclick="setFlagViewMode('all')">
+                All Flags (${totalFlagCount})
+            </button>
+        </div>
+    `;
+
+    if (flagViewMode === 'all') {
+        // Show all flags grouped by clause
+        html += renderAllFlagsView();
+    } else {
+        // Show flags for current clause only
+        html += renderClauseFlagsView(paraId);
+    }
+
+    container.innerHTML = html;
+}
+
+// Set flag view mode explicitly
+function setFlagViewMode(mode) {
+    flagViewMode = mode;
+    renderFlagsTab(AppState.selectedParaId);
+}
+
+// Render flags for current clause only
+function renderClauseFlagsView(paraId) {
     const flags = (AppState.flags || []).filter(f => f.para_id === paraId);
 
     if (flags.length === 0) {
-        container.innerHTML = `
+        return `
             <div class="empty-state">
                 <div class="empty-state-icon">&#128681;</div>
                 <p>No flags for this clause.</p>
-                <p class="empty-state-hint">Use the "Flag" button to flag this clause for review.</p>
+                <p class="empty-state-hint">Use the flag buttons in the risk pane or revision sheet.</p>
             </div>
         `;
-        return;
     }
 
     let html = '<div class="flags-list">';
     flags.forEach((flag, idx) => {
-        const typeIcon = flag.flag_type === 'client' ? '&#128100;' : '&#9878;';
-        const typeLabel = flag.flag_type === 'client' ? 'Client Review' : 'Attorney Review';
-        const typeClass = flag.flag_type === 'client' ? 'flag-client' : 'flag-attorney';
+        html += renderFlagItem(flag, paraId, idx);
+    });
+    html += '</div>';
+    return html;
+}
 
-        html += `
-            <div class="flag-item ${typeClass}">
-                <div class="flag-item-header">
-                    <span class="flag-type-icon">${typeIcon}</span>
-                    <span class="flag-type-label">${typeLabel}</span>
-                    <button class="flag-remove-btn" onclick="removeFlag('${paraId}', ${idx})" title="Remove flag">&times;</button>
-                </div>
-                ${flag.note ? `<div class="flag-note">${escapeHtml(flag.note)}</div>` : ''}
+// Render all flags grouped by clause
+function renderAllFlagsView() {
+    const allFlags = AppState.flags || [];
+
+    if (allFlags.length === 0) {
+        return `
+            <div class="empty-state">
+                <div class="empty-state-icon">&#128681;</div>
+                <p>No flags in this document.</p>
             </div>
         `;
+    }
+
+    // Group flags by paragraph and sort by section reference
+    const flagsByPara = {};
+    allFlags.forEach(flag => {
+        if (!flagsByPara[flag.para_id]) {
+            flagsByPara[flag.para_id] = [];
+        }
+        flagsByPara[flag.para_id].push(flag);
+    });
+
+    // Sort paragraphs by section reference
+    const sortedParaIds = Object.keys(flagsByPara).sort((a, b) => {
+        const refA = flagsByPara[a][0]?.section_ref || '';
+        const refB = flagsByPara[b][0]?.section_ref || '';
+        return refA.localeCompare(refB, undefined, { numeric: true });
+    });
+
+    let html = '<div class="flags-all-list">';
+    sortedParaIds.forEach(paraId => {
+        const paraFlags = flagsByPara[paraId];
+        const sectionRef = paraFlags[0]?.section_ref || 'Unknown';
+
+        html += `
+            <div class="flags-clause-group">
+                <div class="flags-clause-header" onclick="jumpToParagraph('${paraId}')">
+                    <span class="flags-clause-ref">${escapeHtml(sectionRef)}</span>
+                    <span class="flags-clause-count">${paraFlags.length} flag${paraFlags.length > 1 ? 's' : ''}</span>
+                </div>
+                <div class="flags-clause-items">
+        `;
+
+        paraFlags.forEach((flag, idx) => {
+            html += renderFlagItem(flag, paraId, idx);
+        });
+
+        html += '</div></div>';
     });
     html += '</div>';
 
-    container.innerHTML = html;
+    return html;
+}
+
+// Render a single flag item
+function renderFlagItem(flag, paraId, idx) {
+    const typeIcon = flag.flag_type === 'client' ? '&#128100;' : '&#9878;';
+    const typeLabel = flag.flag_type === 'client' ? 'Client' : 'Attorney';
+    const typeClass = flag.flag_type === 'client' ? 'flag-client' : 'flag-attorney';
+
+    return `
+        <div class="flag-item ${typeClass}">
+            <div class="flag-item-header">
+                <span class="flag-type-icon">${typeIcon}</span>
+                <span class="flag-type-label">${typeLabel}</span>
+                <button class="flag-remove-btn" onclick="event.stopPropagation(); removeFlag('${paraId}', ${idx})" title="Remove flag">&times;</button>
+            </div>
+            ${flag.note ? `<div class="flag-note">${escapeHtml(flag.note)}</div>` : ''}
+        </div>
+    `;
 }
 
 // Render related clauses tab content
@@ -281,3 +380,5 @@ window.renderDefinitionsTab = renderDefinitionsTab;
 window.filterDefinitions = filterDefinitions;
 window.jumpToDefinition = jumpToDefinition;
 window.removeFlag = removeFlag;
+window.toggleFlagViewMode = toggleFlagViewMode;
+window.setFlagViewMode = setFlagViewMode;

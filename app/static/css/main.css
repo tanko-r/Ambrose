@@ -2593,6 +2593,94 @@ ins.diff-ins {
     margin-top: 0.5rem;
 }
 
+/* Flags View Toggle */
+.flags-view-toggle {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-subtle);
+}
+
+.flags-toggle-btn {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.flags-toggle-btn:hover {
+    background: var(--bg-subtle);
+    color: var(--text);
+}
+
+.flags-toggle-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* All Flags View */
+.flags-all-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+}
+
+.flags-clause-group {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--card);
+}
+
+.flags-clause-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.625rem 0.875rem;
+    background: var(--bg-subtle);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.flags-clause-header:hover {
+    background: var(--primary-light);
+}
+
+.flags-clause-ref {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--primary);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.flags-clause-count {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    background: var(--bg-subtle);
+    padding: 0.125rem 0.5rem;
+    border-radius: 10px;
+}
+
+.flags-clause-items {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flags-clause-items .flag-item {
+    margin: 0;
+}
+
 .modal-body {
     padding: 1.5rem;
 }
