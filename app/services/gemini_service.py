@@ -526,6 +526,12 @@ def generate_revision(
         diff_html = generate_inline_diff_html(original_text, result['revised_text'])
         result['diff_html'] = diff_html
 
+        # Include prompts for debugging/review
+        result['prompts'] = {
+            'system': system_prompt,
+            'user': user_prompt
+        }
+
         return result
 
     except Exception as e:

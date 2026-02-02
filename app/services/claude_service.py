@@ -355,7 +355,15 @@ def analyze_clauses_with_claude(
         response_text = response.content[0].text if response.content else ""
 
         # Parse JSON from response - returns dict with 'risks' and 'concept_map'
-        return parse_risk_response(response_text)
+        result = parse_risk_response(response_text)
+
+        # Include prompts in result for debugging/review
+        result['prompts'] = {
+            'system': system_prompt,
+            'user': user_prompt
+        }
+
+        return result
 
     except anthropic.APIError as e:
         raise RuntimeError(f"Claude API error: {str(e)}")
@@ -506,6 +514,7 @@ def analyze_document_with_llm(
     total_batches = (len(paragraphs) + batch_size - 1) // batch_size
     all_risks = []
     aggregated_concept_map = {}  # Aggregate concept_map from all batches
+    all_prompts = []  # Store all prompts for debugging/review
 
     # Initialize progress
     if session_id:
@@ -560,6 +569,15 @@ def analyze_document_with_llm(
                 document_map=document_map
             )
             all_risks.extend(batch_result.get('risks', []))
+
+            # Store prompts for this batch
+            if batch_result.get('prompts'):
+                all_prompts.append({
+                    'batch': batch_num,
+                    'clause_ids': [c['id'] for c in batch],
+                    'system': batch_result['prompts'].get('system', ''),
+                    'user': batch_result['prompts'].get('user', '')
+                })
 
             # Merge concept_map from this batch (later batches may override earlier)
             batch_concept_map = batch_result.get('concept_map', {})
@@ -627,6 +645,7 @@ def analyze_document_with_llm(
         'risk_by_paragraph': risk_by_para,
         'concept_map': aggregated_concept_map,  # Document-wide provisions by category
         'opportunities': [],  # Will be populated by separate analysis if needed
+        'prompts': all_prompts,  # All prompts used for debugging/review
         'summary': {
             'total_risks': len(all_risks),
             'high_severity': severity_counts['high'],

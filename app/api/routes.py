@@ -500,7 +500,7 @@ def revise():
             risk_map=session.get('risk_map')
         )
 
-        # Store revision in session (including diff_html for persistence)
+        # Store revision in session (including diff_html and prompts for persistence)
         if 'revisions' not in session:
             session['revisions'] = {}
         session['revisions'][para_id] = {
@@ -510,6 +510,7 @@ def revise():
             'thinking': revision.get('thinking'),
             'diff_html': revision.get('diff_html'),
             'related_revisions': revision.get('related_revisions', []),
+            'prompts': revision.get('prompts'),  # Store prompts for debugging/review
             'accepted': False,
             'timestamp': datetime.now().isoformat()
         }
