@@ -311,8 +311,18 @@
                     <button class="btn btn-primary" id="btn-generate-revision" disabled>Generate Revision</button>
                     <button class="btn btn-warning" id="btn-flag-client">Flag</button>
                 </div>
+                <div class="sidebar-footer-secondary">
+                    <button class="btn btn-secondary btn-sm" id="btn-compare-precedent" onclick="comparePrecedent()" title="Compare with precedent document">
+                        <span>&#128203;</span> Compare Precedent
+                    </button>
+                </div>
             </div>
         </aside>
+    </div>
+
+    <!-- Precedent Comparison Panel (PREC-01..PREC-04) -->
+    <div class="precedent-panel" id="precedent-panel">
+        <!-- Content rendered dynamically by precedent.js -->
     </div>
 
     <!-- Flag Modal -->
@@ -541,6 +551,7 @@
     <script src="/static/js/bottombar.js"></script>
     <script src="/static/js/analysis.js"></script>
     <script src="/static/js/sidebar.js"></script>
+    <script src="/static/js/precedent.js"></script>
     <script src="/static/js/document.js"></script>
     <script src="/static/js/revision.js"></script>
     <script src="/static/js/flag.js"></script>

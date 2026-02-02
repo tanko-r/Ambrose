@@ -1243,18 +1243,8 @@ window.getSelectedRelatedClauseIds = getSelectedRelatedClauseIds;
 window.buildSeverityBadge = buildSeverityBadge;
 window.buildRiskRelationshipsHtml = buildRiskRelationshipsHtml;
 window.jumpToProvision = jumpToProvision;
-window.comparePrecedent = comparePrecedent;
+// Note: comparePrecedent is now provided by precedent.js
 window.addNote = addNote;
-
-// Compare Precedent (placeholder)
-function comparePrecedent() {
-    if (!AppState.selectedParaId) {
-        showToast('Select a clause first', 'warning');
-        return;
-    }
-    showToast('Compare Precedent - Implementation coming soon!', 'info');
-    // TODO: Show side-by-side comparison with precedent document
-}
 
 // Add Note (placeholder)
 function addNote() {

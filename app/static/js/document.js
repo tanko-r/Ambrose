@@ -181,6 +181,11 @@ async function selectParagraph(paraId) {
         navItem.classList.add('active');
         navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+
+    // Update precedent panel related clauses if panel is open (PREC-03)
+    if (typeof updatePrecedentRelatedClauses === 'function') {
+        updatePrecedentRelatedClauses(paraId);
+    }
 }
 
 // Highlighting state
