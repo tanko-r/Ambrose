@@ -6,6 +6,11 @@
 async function loadDocument() {
     const result = await api(`/document/${AppState.sessionId}`);
     AppState.document = result;
+
+    // Load flags and revisions from session
+    AppState.flags = result.flags || [];
+    AppState.revisions = result.revisions || {};
+
     renderDocument();
 }
 

@@ -254,7 +254,9 @@ def get_document(session_id):
         'sections': parsed_doc.get('sections', []),
         'exhibits': parsed_doc.get('exhibits', []),
         'defined_terms': parsed_doc.get('defined_terms', []),
-        'metadata': parsed_doc.get('metadata', {})
+        'metadata': parsed_doc.get('metadata', {}),
+        'flags': session.get('flags', []),
+        'revisions': session.get('revisions', {})
     })
 
 
