@@ -76,7 +76,8 @@ function switchSidebarTab(tabName) {
         renderRelatedClausesTab(AppState.selectedParaId);
     } else if (tabName === 'definitions') {
         renderDefinitionsTab();
-    } else if (tabName === 'flags' && AppState.selectedParaId) {
+    } else if (tabName === 'flags') {
+        // Flags tab should always render (can view all flags even without selection)
         renderFlagsTab(AppState.selectedParaId);
     }
 }
@@ -129,14 +130,23 @@ function setFlagViewMode(mode) {
 
 // Render flags for current clause only
 function renderClauseFlagsView(paraId) {
+    // Handle no clause selected
+    if (!paraId) {
+        return `
+            <div class="empty-state empty-state-small">
+                <p>Select a clause to see its flags.</p>
+                <p class="empty-state-hint">Or switch to "All Flags" view above.</p>
+            </div>
+        `;
+    }
+
     const flags = (AppState.flags || []).filter(f => f.para_id === paraId);
 
     if (flags.length === 0) {
         return `
-            <div class="empty-state">
-                <div class="empty-state-icon">&#128681;</div>
+            <div class="empty-state empty-state-small">
                 <p>No flags for this clause.</p>
-                <p class="empty-state-hint">Use the flag buttons in the risk pane or revision sheet.</p>
+                <p class="empty-state-hint">Use flag buttons in risk pane or revision sheet.</p>
             </div>
         `;
     }
@@ -149,14 +159,35 @@ function renderClauseFlagsView(paraId) {
     return html;
 }
 
+// Get caption for a paragraph (use caption field or first sentence)
+function getParaCaption(paraId) {
+    const para = AppState.document?.content?.find(p => p.id === paraId);
+    if (!para) return '';
+
+    // Use explicit caption if available
+    if (para.caption) return para.caption;
+
+    // Otherwise extract first sentence or first ~60 chars
+    const text = para.text || '';
+    const firstSentenceMatch = text.match(/^[^.!?]+[.!?]/);
+    if (firstSentenceMatch && firstSentenceMatch[0].length < 100) {
+        return firstSentenceMatch[0].trim();
+    }
+
+    // Fallback to first 60 chars
+    if (text.length > 60) {
+        return text.substring(0, 57).trim() + '...';
+    }
+    return text.trim();
+}
+
 // Render all flags grouped by clause
 function renderAllFlagsView() {
     const allFlags = AppState.flags || [];
 
     if (allFlags.length === 0) {
         return `
-            <div class="empty-state">
-                <div class="empty-state-icon">&#128681;</div>
+            <div class="empty-state empty-state-small">
                 <p>No flags in this document.</p>
             </div>
         `;
@@ -181,26 +212,63 @@ function renderAllFlagsView() {
     let html = '<div class="flags-all-list">';
     sortedParaIds.forEach(paraId => {
         const paraFlags = flagsByPara[paraId];
-        const sectionRef = paraFlags[0]?.section_ref || 'Unknown';
+        const sectionRef = paraFlags[0]?.section_ref || 'N/A';
+        const caption = getParaCaption(paraId);
 
         html += `
-            <div class="flags-clause-group">
-                <div class="flags-clause-header" onclick="jumpToParagraph('${paraId}')">
+            <div class="flags-clause-row" onclick="jumpToParagraph('${paraId}')">
+                <div class="flags-clause-info">
                     <span class="flags-clause-ref">${escapeHtml(sectionRef)}</span>
-                    <span class="flags-clause-count">${paraFlags.length} flag${paraFlags.length > 1 ? 's' : ''}</span>
+                    ${caption ? `<span class="flags-clause-caption">${escapeHtml(caption)}</span>` : ''}
                 </div>
-                <div class="flags-clause-items">
+                <div class="flags-clause-badges">
         `;
 
         paraFlags.forEach((flag, idx) => {
-            html += renderFlagItem(flag, paraId, idx);
+            const typeClass = flag.flag_type === 'client' ? 'flag-badge-client' : 'flag-badge-attorney';
+            const typeIcon = flag.flag_type === 'client' ? '&#128100;' : '&#9878;';
+            html += `<span class="flag-badge ${typeClass}" title="${escapeHtml(flag.note || flag.flag_type)}">${typeIcon}</span>`;
         });
 
-        html += '</div></div>';
+        html += `
+                    <button class="flags-expand-btn" onclick="event.stopPropagation(); toggleFlagDetails('${paraId}')" title="Show details">&#9660;</button>
+                </div>
+            </div>
+            <div class="flags-clause-details" id="flag-details-${paraId}" style="display: none;">
+        `;
+
+        paraFlags.forEach((flag, idx) => {
+            html += renderFlagItemCompact(flag, paraId, idx);
+        });
+
+        html += '</div>';
     });
     html += '</div>';
 
     return html;
+}
+
+// Toggle flag details for a clause
+function toggleFlagDetails(paraId) {
+    const details = document.getElementById(`flag-details-${paraId}`);
+    if (details) {
+        const isHidden = details.style.display === 'none';
+        details.style.display = isHidden ? 'block' : 'none';
+    }
+}
+
+// Render a compact flag item for the all-flags view
+function renderFlagItemCompact(flag, paraId, idx) {
+    const typeLabel = flag.flag_type === 'client' ? 'Client' : 'Attorney';
+    const typeClass = flag.flag_type === 'client' ? 'flag-client' : 'flag-attorney';
+
+    return `
+        <div class="flag-item-compact ${typeClass}">
+            <span class="flag-compact-type">${typeLabel}</span>
+            ${flag.note ? `<span class="flag-compact-note">${escapeHtml(flag.note)}</span>` : '<span class="flag-compact-note flag-no-note">(no note)</span>'}
+            <button class="flag-remove-btn-sm" onclick="event.stopPropagation(); removeFlag('${paraId}', ${idx})" title="Remove">&times;</button>
+        </div>
+    `;
 }
 
 // Render a single flag item
@@ -382,3 +450,5 @@ window.jumpToDefinition = jumpToDefinition;
 window.removeFlag = removeFlag;
 window.toggleFlagViewMode = toggleFlagViewMode;
 window.setFlagViewMode = setFlagViewMode;
+window.toggleFlagDetails = toggleFlagDetails;
+window.getParaCaption = getParaCaption;

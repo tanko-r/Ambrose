@@ -2626,14 +2626,170 @@ ins.diff-ins {
     border-color: var(--primary);
 }
 
-/* All Flags View */
+/* All Flags View - Compact nav-style */
 .flags-all-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.75rem;
+    padding: 0.5rem;
 }
 
+.flags-clause-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.375rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+    gap: 0.5rem;
+}
+
+.flags-clause-row:hover {
+    background: var(--bg-subtle);
+}
+
+.flags-clause-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.flags-clause-ref {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--primary);
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    flex-shrink: 0;
+    min-width: 36px;
+}
+
+.flags-clause-caption {
+    font-size: 0.6875rem;
+    color: var(--text-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.flags-clause-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.flag-badge {
+    font-size: 0.625rem;
+    padding: 0.125rem;
+    border-radius: 3px;
+    line-height: 1;
+}
+
+.flag-badge-client {
+    background: rgba(192, 86, 33, 0.15);
+    color: var(--warning);
+}
+
+.flag-badge-attorney {
+    background: rgba(30, 58, 95, 0.15);
+    color: var(--info);
+}
+
+.flags-expand-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-size: 0.5rem;
+    cursor: pointer;
+    padding: 0.125rem;
+    opacity: 0.5;
+    transition: opacity var(--transition-fast);
+}
+
+.flags-expand-btn:hover {
+    opacity: 1;
+}
+
+.flags-clause-details {
+    padding: 0.25rem 0.5rem 0.5rem 2.5rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.flag-item-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    font-size: 0.6875rem;
+}
+
+.flag-item-compact.flag-client {
+    border-left: 2px solid var(--warning);
+    padding-left: 0.5rem;
+}
+
+.flag-item-compact.flag-attorney {
+    border-left: 2px solid var(--info);
+    padding-left: 0.5rem;
+}
+
+.flag-compact-type {
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-size: 0.5625rem;
+    flex-shrink: 0;
+}
+
+.flag-compact-note {
+    color: var(--text);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.flag-compact-note.flag-no-note {
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.flag-remove-btn-sm {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.5;
+}
+
+.flag-remove-btn-sm:hover {
+    color: var(--accent);
+    opacity: 1;
+}
+
+/* Empty state - smaller variant */
+.empty-state-small {
+    padding: 1rem;
+    text-align: center;
+}
+
+.empty-state-small .empty-state-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-small p {
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+/* Legacy - keep for clause-specific view */
 .flags-clause-group {
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -2653,13 +2809,6 @@ ins.diff-ins {
 
 .flags-clause-header:hover {
     background: var(--primary-light);
-}
-
-.flags-clause-ref {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--primary);
-    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
 }
 
 .flags-clause-count {
