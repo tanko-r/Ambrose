@@ -996,6 +996,16 @@ function toggleDetailsSection(section) {
     }
 }
 
+// Flag current paragraph from revision sheet
+function flagFromSheet(type) {
+    if (!bottomSheetParaId) {
+        showToast('No paragraph selected', 'error');
+        return;
+    }
+    // Open the flag modal with the current paragraph ID
+    showFlagModal(bottomSheetParaId, type);
+}
+
 // Export for use in other modules
 window.generateRevision = generateRevision;
 window.reviseForRisk = reviseForRisk;
@@ -1013,3 +1023,4 @@ window.regenerateWithRelated = regenerateWithRelated;
 window.switchRevisionTab = switchRevisionTab;
 window.populateDetailsTab = populateDetailsTab;
 window.toggleDetailsSection = toggleDetailsSection;
+window.flagFromSheet = flagFromSheet;

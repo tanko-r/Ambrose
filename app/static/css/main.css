@@ -3043,6 +3043,20 @@ body.nav-collapsed .bottom-sheet {
     gap: 0.5rem;
     justify-content: flex-end;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+.revision-flag-buttons {
+    display: flex;
+    gap: 0.375rem;
+    margin-left: auto;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border);
+}
+
+.revision-flag-buttons .btn {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
 }
 
 /* Revision indicator in sidebar */
