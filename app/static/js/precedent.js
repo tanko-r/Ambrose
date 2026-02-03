@@ -27,8 +27,15 @@ let precedentPanelState = {
     activeNavItem: null,
     correlationEditMode: false,
     userCorrelations: {},  // User-defined correlations (para_id -> precedent_id mappings)
-    sidebarWasVisible: false  // Track if sidebar was visible before precedent opened
+    sidebarWasVisible: false,  // Track if sidebar was visible before precedent opened
+    lockedParaId: null,  // Clause lock: locked paragraph ID
+    navigatorLightMode: false  // Navigator light/dark mode preference
 };
+
+// Load navigator light mode preference
+try {
+    precedentPanelState.navigatorLightMode = localStorage.getItem('precedent-nav-light-mode') === 'true';
+} catch (e) {}
 
 // IntersectionObserver for active section tracking
 let precedentScrollObserver = null;
@@ -113,31 +120,162 @@ function renderPrecedentPanel() {
     const doc = precedentPanelState.document;
     if (!doc) return;
 
-    // Render header
-    const headerEl = document.getElementById('precedent-header');
-    if (headerEl) {
-        headerEl.innerHTML = `
-            <div class="precedent-header-left">
-                <span class="precedent-header-icon">&#128203;</span>
-                <span class="precedent-header-filename">${escapeHtml(precedentPanelState.filename)}</span>
-            </div>
-            <button class="precedent-header-close" onclick="closePrecedentPanel()" title="Close panel">&times;</button>
-        `;
-    }
+    // Render title tags for both panes
+    renderPaneTitleTags();
 
-    // Build and render document content
-    const contentHtml = buildPrecedentContent(doc.content || []);
-    const contentEl = document.getElementById('precedent-content');
-    if (contentEl) {
-        contentEl.innerHTML = contentHtml;
-        // Setup copy functionality (PREC-04)
-        setupPrecedentCopyHandler();
-        // Setup scroll observer for active section tracking
-        setupPrecedentScrollObserver();
-    }
+    // Use HTML rendering for precedent
+    renderPrecedentAsHtml();
 
     // Build and render navigator
     renderPrecedentNavigator();
+
+    // Update status bar
+    updatePrecedentStatusBar();
+}
+
+/**
+ * Render precedent document as high-fidelity HTML
+ * Returns true if successful, false if fallback needed
+ */
+async function renderPrecedentAsHtml() {
+    const contentEl = document.getElementById('precedent-content');
+    if (!contentEl) return false;
+
+    // Show loading state
+    contentEl.innerHTML = `
+        <div class="document-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading precedent document...</p>
+        </div>
+    `;
+
+    try {
+        // Fetch high-fidelity HTML from backend
+        const response = await fetch(`/api/precedent/${AppState.sessionId}/html`);
+        if (!response.ok) {
+            throw new Error(`Failed to load precedent: ${response.status}`);
+        }
+
+        const html = await response.text();
+        contentEl.innerHTML = html;
+
+        // Setup click handlers for precedent paragraphs
+        setupPrecedentClickHandlers(contentEl);
+
+        // Apply related clause highlights
+        updatePrecedentHighlights();
+
+        // Setup copy functionality (PREC-04)
+        setupPrecedentCopyHandler();
+
+        // Setup scroll observer for active section tracking
+        setupPrecedentScrollObserver();
+
+        return true;
+    } catch (error) {
+        console.error('Precedent HTML rendering failed:', error);
+        // Fall back to existing text rendering
+        renderPrecedentAsText();
+        return false;
+    }
+}
+
+/**
+ * Fallback: Render precedent as plain text
+ */
+function renderPrecedentAsText() {
+    const contentEl = document.getElementById('precedent-content');
+    if (!contentEl) return;
+
+    const doc = precedentPanelState.document;
+    const contentHtml = buildPrecedentContent(doc?.content || []);
+    contentEl.innerHTML = contentHtml;
+
+    // Setup copy functionality (PREC-04)
+    setupPrecedentCopyHandler();
+    // Setup scroll observer for active section tracking
+    setupPrecedentScrollObserver();
+}
+
+/**
+ * Setup click handlers on paragraphs in HTML-rendered precedent
+ */
+function setupPrecedentClickHandlers(container) {
+    container.querySelectorAll('[data-para-id]').forEach(p => {
+        p.classList.add('precedent-paragraph');
+
+        p.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const paraId = p.dataset.paraId;
+
+            // Update navigator active item
+            updateActiveNavItem(paraId);
+
+            // Scroll to section (handles highlight flash)
+            scrollToPrecedentSection(paraId);
+        });
+    });
+}
+
+/**
+ * Update precedent highlights for related clauses in HTML mode
+ */
+function updatePrecedentHighlights() {
+    const container = document.getElementById('precedent-content');
+    if (!container) return;
+
+    // Clear existing highlights
+    container.querySelectorAll('.precedent-paragraph.related').forEach(el => {
+        el.classList.remove('related');
+    });
+
+    // Add highlights for related clauses
+    const relatedIds = precedentPanelState.relatedClauseIds || [];
+    relatedIds.forEach(id => {
+        const para = container.querySelector(`[data-para-id="${id}"]`);
+        if (para) {
+            para.classList.add('related');
+        }
+    });
+}
+
+/**
+ * Render title tags showing filenames in both panes
+ */
+function renderPaneTitleTags() {
+    // Target document title tag
+    const targetTag = document.getElementById('target-title-tag');
+    if (targetTag && AppState.document) {
+        const targetFilename = AppState.document.filename || 'Target Document';
+        targetTag.textContent = targetFilename;
+        targetTag.title = targetFilename;
+    }
+
+    // Precedent document title tag
+    const precedentTag = document.getElementById('precedent-title-tag');
+    if (precedentTag && precedentPanelState.filename) {
+        precedentTag.textContent = precedentPanelState.filename;
+        precedentTag.title = precedentPanelState.filename;
+    }
+}
+
+/**
+ * Update the precedent status bar with match info
+ */
+function updatePrecedentStatusBar() {
+    const statusBar = document.getElementById('precedent-status-bar');
+    if (!statusBar) return;
+
+    const matchCount = precedentPanelState.relatedClauseIds.length;
+    const currentPara = precedentPanelState.currentParaId;
+
+    if (matchCount > 0) {
+        statusBar.innerHTML = `<span>${matchCount} match${matchCount !== 1 ? 'es' : ''} for selected clause</span>`;
+    } else if (currentPara) {
+        statusBar.innerHTML = `<span>No matches found</span>`;
+    } else {
+        statusBar.innerHTML = `<span>Select a clause to find matches</span>`;
+    }
 }
 
 /**
@@ -190,18 +328,22 @@ function getScoreIndicator(score) {
 }
 
 /**
- * Render the precedent navigator (right side section list)
- * UAT FIX #2: Precedent has its own section navigator
- * UAT FIX #4: Shows match indicators with score-based coloring
+ * Render the precedent navigator (right side paragraph-level list)
+ * Updated: Paragraph-level navigation, search, light/dark mode
+ * Note: Drag/drop correlation editing has been removed (deprecated feature)
  */
 function renderPrecedentNavigator() {
     const navigatorEl = document.getElementById('precedent-navigator');
     if (!navigatorEl) return;
 
-    const sections = precedentPanelState.sections || [];
+    const doc = precedentPanelState.document;
+    const paragraphs = doc?.content?.filter(item => item.type === 'paragraph' && item.text?.trim()) || [];
     const relatedIds = precedentPanelState.relatedClauseIds || [];
     const relatedDetails = precedentPanelState.relatedClausesDetails || [];
-    const editMode = precedentPanelState.correlationEditMode;
+    const lightMode = precedentPanelState.navigatorLightMode || false;
+
+    // Apply light mode class
+    navigatorEl.classList.toggle('light-mode', lightMode);
 
     // Build a map of para_id to score for quick lookup
     const scoreMap = {};
@@ -211,53 +353,101 @@ function renderPrecedentNavigator() {
 
     let html = `
         <div class="precedent-nav-header">
-            <span>Sections</span>
-            <button class="precedent-edit-btn ${editMode ? 'active' : ''}"
-                    onclick="toggleCorrelationEditMode()"
-                    title="${editMode ? 'Exit edit mode' : 'Edit correlations (drag & drop)'}">
-                <span class="edit-icon">&#9998;</span>
-            </button>
+            <div class="precedent-nav-controls">
+                <button class="precedent-nav-mode-btn ${lightMode ? 'active' : ''}"
+                        onclick="togglePrecedentNavLightMode()"
+                        title="Toggle light/dark mode">
+                    <span>&#9728;</span>
+                </button>
+            </div>
         </div>
+        <div class="precedent-nav-search">
+            <input type="text" class="precedent-nav-search-input" id="precedent-nav-search"
+                   placeholder="Search precedent..." oninput="filterPrecedentNav(this.value)">
+        </div>
+        <div class="precedent-nav-items" id="precedent-nav-items">
     `;
 
-    if (sections.length === 0) {
-        html += '<div class="precedent-nav-empty">No sections found</div>';
+    if (paragraphs.length === 0) {
+        html += '<div class="precedent-nav-empty">No paragraphs found</div>';
     } else {
-        sections.forEach(section => {
-            const level = section.hierarchy?.length || 0;
-            const indent = Math.min(level, 3);
-            const isRelated = relatedIds.includes(section.para_id);
-            const score = scoreMap[section.para_id] || 0;
+        paragraphs.forEach(para => {
+            const isRelated = relatedIds.includes(para.id);
+            const score = scoreMap[para.id] || 0;
             const relatedClass = isRelated ? 'precedent-nav-related matched' : '';
-            const draggableAttr = editMode ? 'draggable="true"' : '';
+
+            // Get hierarchy level for indentation
+            const level = para.hierarchy?.length || 0;
+            const indent = Math.min(level, 3);
+
+            // Truncate text for display
+            const displayText = (para.text || '').substring(0, 60) + (para.text?.length > 60 ? '...' : '');
 
             html += `
-                <div class="precedent-nav-item ${relatedClass}"
+                <div class="precedent-nav-para ${relatedClass}"
                      data-level="${indent}"
-                     data-para-id="${section.para_id}"
+                     data-para-id="${para.id}"
+                     data-search-text="${escapeAttr((para.section_ref || '') + ' ' + (para.text || '').toLowerCase())}"
                      data-score="${score}"
-                     ${draggableAttr}
-                     onclick="scrollToPrecedentSection('${section.para_id}')"
-                     ${editMode ? `ondragstart="handleNavItemDragStart(event, '${section.para_id}')"` : ''}>
+                     onclick="scrollToPrecedentSection('${para.id}')">
                     ${isRelated ? getScoreIndicator(score) : ''}
-                    <span class="precedent-nav-ref">${escapeHtml(section.number || '')}</span>
-                    <span class="precedent-nav-text">${escapeHtml(section.title || '')}</span>
+                    ${para.section_ref ? `<span class="precedent-nav-ref">${escapeHtml(para.section_ref)}</span>` : ''}
+                    <span class="precedent-nav-para-text">${escapeHtml(displayText)}</span>
                 </div>
             `;
         });
     }
+
+    html += '</div>';
 
     // Add related count at bottom
     const relatedCount = relatedIds.length;
     if (relatedCount > 0) {
         html += `
             <div class="precedent-related-indicator">
-                ${relatedCount} related clause${relatedCount !== 1 ? 's' : ''}
+                ${relatedCount} match${relatedCount !== 1 ? 'es' : ''}
             </div>
         `;
     }
 
     navigatorEl.innerHTML = html;
+}
+
+/**
+ * Filter precedent navigator by search text
+ */
+function filterPrecedentNav(searchText) {
+    const items = document.querySelectorAll('#precedent-nav-items .precedent-nav-para');
+    const lowerSearch = searchText.toLowerCase().trim();
+
+    items.forEach(item => {
+        if (!lowerSearch) {
+            item.style.display = '';
+            return;
+        }
+
+        const itemText = item.dataset.searchText || '';
+        if (itemText.includes(lowerSearch)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Toggle light/dark mode for precedent navigator
+ */
+function togglePrecedentNavLightMode() {
+    precedentPanelState.navigatorLightMode = !precedentPanelState.navigatorLightMode;
+
+    // Save preference
+    try {
+        localStorage.setItem('precedent-nav-light-mode', precedentPanelState.navigatorLightMode);
+    } catch (e) {}
+
+    // Re-render navigator
+    renderPrecedentNavigator();
 }
 
 /**
@@ -321,6 +511,8 @@ function updateActiveNavItem(paraId) {
  * UAT FIX #1: Panel pushes main document instead of overlaying
  *
  * NEW: Auto-collapses the risk sidebar when precedent opens to prevent clutter
+ * NEW: Adds body class for bottom bar positioning
+ * NEW: Animated open with CSS transitions
  */
 function openPrecedentPanel() {
     const precedentPane = document.getElementById('precedent-pane');
@@ -329,14 +521,32 @@ function openPrecedentPanel() {
     // Auto-collapse the sidebar when precedent opens
     collapseSidebarForPrecedent();
 
-    // Show the precedent pane
+    // Setup for animation: first remove hidden but add opening class
+    precedentPane.classList.remove('closing');
+    precedentPane.classList.add('opening');
     precedentPane.classList.remove('hidden');
+
+    // Force reflow to ensure transition works
+    void precedentPane.offsetWidth;
+
+    // Start animation by removing opening class
+    precedentPane.classList.remove('opening');
+
     precedentPanelState.isOpen = true;
+
+    // Add body class for CSS targeting
+    document.body.classList.add('precedent-open');
 
     // Initialize Split.js if not already
     if (!splitInstance) {
         initializeSplit();
     }
+
+    // Update bottom bar position after DOM updates
+    // Need delay for Split.js to finish rendering the pane widths
+    setTimeout(() => {
+        updateBottomBarPosition();
+    }, 50);
 }
 
 /**
@@ -458,13 +668,49 @@ function initializeSplit() {
             gutterSize: 6,
             cursor: 'col-resize',
             direction: 'horizontal',
+            onDrag: () => {
+                updateBottomBarPosition();
+            },
             onDragEnd: (sizes) => {
                 saveSplitSizes(sizes);
+                updateBottomBarPosition();
             }
         });
     } catch (error) {
         console.error('Failed to initialize Split.js:', error);
     }
+}
+
+/**
+ * Update bottom bar position based on split pane sizes
+ * Keeps bottom bar aligned with main document pane only (not extending under precedent pane)
+ */
+function updateBottomBarPosition() {
+    const bottomBar = document.getElementById('bottom-bar');
+    const mainPane = document.getElementById('main-document-pane');
+
+    if (!bottomBar || !mainPane) return;
+
+    // Get main pane right edge position
+    const mainPaneRect = mainPane.getBoundingClientRect();
+
+    // Calculate right offset: distance from main pane right edge to window right edge
+    const rightOffset = window.innerWidth - mainPaneRect.right;
+
+    // Set right position so bottom bar ends where main pane ends
+    // Use setProperty with 'important' to ensure it overrides CSS
+    bottomBar.style.setProperty('right', `${rightOffset}px`, 'important');
+}
+
+/**
+ * Reset bottom bar position when precedent panel closes
+ */
+function resetBottomBarPosition() {
+    const bottomBar = document.getElementById('bottom-bar');
+    if (!bottomBar) return;
+
+    // Reset to CSS default (right: var(--sidebar-width))
+    bottomBar.style.right = '';
 }
 
 /**
@@ -500,6 +746,7 @@ function loadSplitSizes() {
  * Close the precedent panel and destroy Split.js instance
  *
  * NEW: Restores the sidebar to its previous state when closing
+ * NEW: Animated close with CSS transitions
  */
 function closePrecedentPanel() {
     const precedentPane = document.getElementById('precedent-pane');
@@ -511,30 +758,53 @@ function closePrecedentPanel() {
         precedentPanelState.scrollPosition = contentEl.scrollTop;
     }
 
-    // Hide the precedent pane
-    precedentPane.classList.add('hidden');
-    precedentPanelState.isOpen = false;
+    // Clear title tags
+    const targetTag = document.getElementById('target-title-tag');
+    const precedentTag = document.getElementById('precedent-title-tag');
+    if (targetTag) targetTag.textContent = '';
+    if (precedentTag) precedentTag.textContent = '';
 
-    // Restore the sidebar
-    restoreSidebarAfterPrecedent();
-
-    // Destroy Split.js instance
-    if (splitInstance) {
-        splitInstance.destroy();
-        splitInstance = null;
+    // Unlock any locked clause
+    if (precedentPanelState.lockedParaId) {
+        unlockClause();
     }
 
-    // Cleanup observer
-    if (precedentScrollObserver) {
-        precedentScrollObserver.disconnect();
-        precedentScrollObserver = null;
-    }
+    // Start closing animation
+    precedentPane.classList.add('closing');
 
-    // Exit edit mode if active
-    if (precedentPanelState.correlationEditMode) {
-        precedentPanelState.correlationEditMode = false;
-        teardownDocumentDropTargets();
-    }
+    // After animation, hide the pane
+    setTimeout(() => {
+        precedentPane.classList.add('hidden');
+        precedentPane.classList.remove('closing');
+        precedentPanelState.isOpen = false;
+
+        // Remove body class
+        document.body.classList.remove('precedent-open');
+
+        // Reset bottom bar position
+        resetBottomBarPosition();
+
+        // Restore the sidebar
+        restoreSidebarAfterPrecedent();
+
+        // Destroy Split.js instance
+        if (splitInstance) {
+            splitInstance.destroy();
+            splitInstance = null;
+        }
+
+        // Cleanup observer
+        if (precedentScrollObserver) {
+            precedentScrollObserver.disconnect();
+            precedentScrollObserver = null;
+        }
+
+        // Exit edit mode if active
+        if (precedentPanelState.correlationEditMode) {
+            precedentPanelState.correlationEditMode = false;
+            teardownDocumentDropTargets();
+        }
+    }, 250);  // Match CSS transition duration
 }
 
 /**
@@ -602,9 +872,15 @@ function scrollToFirstRelated() {
 
 /**
  * Update related clauses when selected paragraph changes
+ * Live scroll: Auto-scrolls to first match when clause changes
  */
 async function updatePrecedentRelatedClauses(paraId) {
     if (!precedentPanelState.isOpen || !precedentPanelState.document) return;
+
+    // Skip if clause is locked and different from current lock
+    if (precedentPanelState.lockedParaId && precedentPanelState.lockedParaId !== paraId) {
+        return;  // Keep showing locked clause's matches
+    }
 
     precedentPanelState.currentParaId = paraId;
 
@@ -628,24 +904,50 @@ async function updatePrecedentRelatedClauses(paraId) {
         });
     }
 
-    // Update navigator highlights
+    // Update navigator highlights (now paragraph-level)
     const navigatorEl = document.getElementById('precedent-navigator');
     if (navigatorEl) {
         // Remove old related highlights
         navigatorEl.querySelectorAll('.precedent-nav-related').forEach(el => {
-            el.classList.remove('precedent-nav-related');
+            el.classList.remove('precedent-nav-related', 'matched');
         });
 
         // Add new related highlights
         precedentPanelState.relatedClauseIds.forEach(id => {
-            const navItem = navigatorEl.querySelector(`.precedent-nav-item[data-para-id="${id}"]`);
+            const navItem = navigatorEl.querySelector(`.precedent-nav-para[data-para-id="${id}"]`);
             if (navItem) {
-                navItem.classList.add('precedent-nav-related');
+                navItem.classList.add('precedent-nav-related', 'matched');
             }
         });
 
         // Update related count indicator
         updateRelatedIndicator();
+    }
+
+    // Update status bar
+    updatePrecedentStatusBar();
+
+    // Update HTML mode highlights
+    updatePrecedentHighlights();
+
+    // Live scroll: Auto-scroll to first match after update
+    if (precedentPanelState.relatedClauseIds.length > 0) {
+        setTimeout(() => {
+            const firstId = precedentPanelState.relatedClauseIds[0];
+            // Try HTML mode element first, then fall back to plain text mode
+            const element = document.querySelector(`[data-para-id="${firstId}"]`) ||
+                           document.getElementById(`prec-${firstId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Brief highlight flash
+                element.classList.add('precedent-highlight-flash');
+                setTimeout(() => element.classList.remove('precedent-highlight-flash'), 1500);
+
+                // Update nav item
+                updateActiveNavItem(firstId);
+            }
+        }, 100);
     }
 }
 
@@ -925,6 +1227,112 @@ function setupCorrelationContextMenu() {
     });
 }
 
+// ============================================
+// Clause Lock Feature
+// ============================================
+
+/**
+ * Toggle clause lock on double-click
+ * When locked, precedent matches stay fixed on the locked clause
+ * @param {string} paraId - The paragraph ID to lock/unlock
+ */
+function toggleClauseLock(paraId) {
+    if (precedentPanelState.lockedParaId === paraId) {
+        // Already locked on this para - unlock it
+        unlockClause();
+    } else {
+        // Lock to this paragraph
+        lockClause(paraId);
+    }
+}
+
+/**
+ * Lock the precedent view to a specific clause
+ * @param {string} paraId - The paragraph ID to lock
+ */
+function lockClause(paraId) {
+    // Unlock previous if any
+    if (precedentPanelState.lockedParaId) {
+        const prevEl = document.querySelector(`.para-block[data-para-id="${precedentPanelState.lockedParaId}"]`);
+        if (prevEl) {
+            prevEl.classList.remove('locked');
+        }
+    }
+
+    // Lock new clause
+    precedentPanelState.lockedParaId = paraId;
+
+    // Update UI - use .para-block selector (main document uses this class)
+    const paraEl = document.querySelector(`.para-block[data-para-id="${paraId}"]`);
+    if (paraEl) {
+        paraEl.classList.add('locked');
+    }
+
+    // Update nav outline if visible
+    document.querySelectorAll('.nav-outline-item').forEach(item => {
+        item.classList.remove('locked');
+    });
+    const navItem = document.querySelector(`.nav-outline-item[onclick*="${paraId}"]`);
+    if (navItem) {
+        navItem.classList.add('locked');
+    }
+
+    // Update status bar
+    updatePrecedentStatusBar();
+
+    showToast('Clause locked - matches will stay fixed', 'info');
+}
+
+/**
+ * Unlock the currently locked clause
+ */
+function unlockClause() {
+    if (!precedentPanelState.lockedParaId) return;
+
+    const paraId = precedentPanelState.lockedParaId;
+
+    // Remove locked class from paragraph - use .para-block selector
+    const paraEl = document.querySelector(`.para-block[data-para-id="${paraId}"]`);
+    if (paraEl) {
+        paraEl.classList.remove('locked');
+    }
+
+    // Remove locked class from nav outline
+    document.querySelectorAll('.nav-outline-item.locked').forEach(item => {
+        item.classList.remove('locked');
+    });
+
+    precedentPanelState.lockedParaId = null;
+
+    // Update status bar
+    updatePrecedentStatusBar();
+
+    showToast('Clause unlocked', 'info');
+}
+
+/**
+ * Check if a clause is currently locked
+ * @returns {boolean}
+ */
+function isClauseLocked() {
+    return !!precedentPanelState.lockedParaId;
+}
+
+/**
+ * Get the currently locked clause ID
+ * @returns {string|null}
+ */
+function getLockedClauseId() {
+    return precedentPanelState.lockedParaId;
+}
+
+// Update bottom bar on window resize when precedent is open
+window.addEventListener('resize', () => {
+    if (precedentPanelState.isOpen) {
+        updateBottomBarPosition();
+    }
+});
+
 // Export functions for use in other modules
 window.comparePrecedent = comparePrecedent;
 window.closePrecedentPanel = closePrecedentPanel;
@@ -938,3 +1346,18 @@ window.toggleCorrelationEditMode = toggleCorrelationEditMode;
 window.handleNavItemDragStart = handleNavItemDragStart;
 window.removeCorrelation = removeCorrelation;
 window.toggleSidebarFromTab = toggleSidebarFromTab;
+window.filterPrecedentNav = filterPrecedentNav;
+window.togglePrecedentNavLightMode = togglePrecedentNavLightMode;
+window.renderPaneTitleTags = renderPaneTitleTags;
+window.updatePrecedentStatusBar = updatePrecedentStatusBar;
+window.toggleClauseLock = toggleClauseLock;
+window.lockClause = lockClause;
+window.unlockClause = unlockClause;
+window.isClauseLocked = isClauseLocked;
+window.getLockedClauseId = getLockedClauseId;
+window.updateBottomBarPosition = updateBottomBarPosition;
+window.resetBottomBarPosition = resetBottomBarPosition;
+window.renderPrecedentAsHtml = renderPrecedentAsHtml;
+window.renderPrecedentAsText = renderPrecedentAsText;
+window.setupPrecedentClickHandlers = setupPrecedentClickHandlers;
+window.updatePrecedentHighlights = updatePrecedentHighlights;
