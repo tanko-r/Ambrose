@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
 from datetime import datetime
 from app.services.content_filter import ContentFilter
+from app.services.initial_analyzer import run_initial_analysis
 
 # Global progress tracker for analysis jobs
 # Key: session_id, Value: progress dict
@@ -482,13 +483,16 @@ def analyze_document_with_llm(
     aggressiveness: int,
     batch_size: int = 5,
     session_id: str = None,
-    include_exhibits: bool = False
+    include_exhibits: bool = False,
+    use_forking: bool = True
 ) -> Dict:
     """
     Perform comprehensive LLM-based document analysis.
 
     Processes document in batches to manage context and cost.
     Uses ContentFilter to pre-filter non-substantive content before LLM analysis.
+    When use_forking=True, performs initial full-document analysis first to establish
+    context that batches can inherit.
 
     Args:
         parsed_doc: Parsed document dict with content array
@@ -498,6 +502,7 @@ def analyze_document_with_llm(
         batch_size: Number of clauses to analyze per API call
         session_id: Session ID for progress tracking
         include_exhibits: Whether to analyze exhibit content (default False)
+        use_forking: Whether to use initial full-document analysis (default True)
 
     Returns:
         Analysis dict with risks, opportunities, and summary
@@ -544,6 +549,58 @@ def analyze_document_with_llm(
             'total_skipped': sum(skip_stats.values()),
             'total_before_filter': len(all_paragraphs)
         })
+
+    # Perform initial full-document analysis if forking enabled
+    initial_context = None
+    if use_forking:
+        if session_id:
+            update_progress(session_id, {
+                'status': 'analyzing',
+                'current_action': 'Performing initial document analysis (this establishes context for parallel batch processing)...',
+                'stage': 'initial_analysis',
+                'percent': 5
+            })
+
+        try:
+            api_key = get_anthropic_api_key()
+            initial_context = run_initial_analysis(
+                api_key=api_key,
+                paragraphs=paragraphs,
+                contract_type=contract_type,
+                representation=representation
+            )
+
+            # Use extracted defined terms from initial analysis if richer than parsed_doc
+            initial_defined_terms = initial_context.get('defined_terms', [])
+            if initial_defined_terms and len(initial_defined_terms) > len(defined_terms):
+                defined_terms = [t['term'] for t in initial_defined_terms if isinstance(t, dict) and 'term' in t]
+
+            # Use concept map from initial analysis as starting point
+            initial_concept_map = initial_context.get('concept_map', {})
+            if initial_concept_map:
+                aggregated_concept_map = initial_concept_map
+
+            if session_id:
+                update_progress(session_id, {
+                    'initial_analysis_complete': True,
+                    'defined_terms_count': len(defined_terms),
+                    'current_action': 'Initial analysis complete. Starting batch analysis...',
+                    'percent': 15
+                })
+
+                # Store conversation context for parallel batch forking (Plan 03)
+                update_progress(session_id, {
+                    'initial_context': initial_context
+                })
+
+        except Exception as e:
+            print(f"Initial analysis failed, falling back to sequential: {e}")
+            initial_context = None
+            if session_id:
+                update_progress(session_id, {
+                    'initial_analysis_error': str(e),
+                    'current_action': 'Initial analysis failed, using sequential analysis...'
+                })
 
     # Process in batches
     for i in range(0, len(paragraphs), batch_size):
@@ -669,7 +726,9 @@ def analyze_document_with_llm(
             'skip_breakdown': skip_stats,
             'total_batches': total_batches,
             'elapsed_seconds': elapsed_seconds,
-            'analysis_method': 'Claude Opus 4.5'
+            'analysis_method': 'Claude Opus 4.5',
+            'used_forking': use_forking and initial_context is not None,
+            'initial_defined_terms': len(defined_terms) if initial_context else 0
         }
     }
 
