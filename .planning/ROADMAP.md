@@ -14,6 +14,7 @@
 | 3 | Compare Precedent | Side-by-side precedent viewing | PREC-01, PREC-02, PREC-03, PREC-04 | Pending |
 | 4 | New Project | Session management and reset | NEW-01, NEW-02, NEW-03, NEW-04 | Pending |
 | 5 | High-Fidelity Document Rendering | Exact Word formatting in both panels | RENDER-01, RENDER-02, RENDER-03, RENDER-04 | Pending |
+| 6 | Analysis Acceleration | Reduce analysis time from 30+ min to <5 min | ACCEL-01, ACCEL-02, ACCEL-03, ACCEL-04 | Pending |
 
 ## Phase Details
 
@@ -154,6 +155,41 @@ Plans:
 - PDF.js for browser-based PDF viewing
 - docx-preview.js as JavaScript-only fallback
 - Caching: convert once, serve cached PDF
+
+---
+
+### Phase 6: Analysis Acceleration
+
+**Goal:** Dramatically reduce contract analysis time from 30+ minutes to under 5 minutes by filtering non-substantive content, optimizing API calls, and implementing smart caching.
+
+**Requirements:**
+- ACCEL-01: Pre-filter non-substantive paragraphs (blank, headers, signatures, notice addresses)
+- ACCEL-02: Skip exhibit analysis when user indicates exhibits should be ignored
+- ACCEL-03: Batch and parallelize API calls to Gemini
+- ACCEL-04: Implement progress indicators and incremental results display
+
+**Success Criteria:**
+1. Standard 30-page PSA completes analysis in under 5 minutes
+2. Blank paragraphs, signature blocks, notice addresses, and headers are auto-skipped
+3. When user selects "ignore exhibits" in intake, exhibit paragraphs are not sent to LLM
+4. Progress bar shows real-time analysis status
+5. User sees risks populate incrementally as analysis progresses
+
+**Dependencies:** None (optimizes existing analysis pipeline)
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Content pre-filtering service (ACCEL-01, ACCEL-02)
+- [ ] 06-02-PLAN.md — Parallel async analyzer with rate limiting (ACCEL-03)
+- [ ] 06-03-PLAN.md — Progress streaming and incremental UI updates (ACCEL-04)
+
+**Implementation Notes:**
+- Pre-parse pass to classify paragraphs as substantive vs mechanical
+- Regex patterns for signature blocks, notice addresses, exhibit markers
+- Batch multiple paragraphs per API call where context allows
+- Parallel API calls with rate limiting
+- Streaming/incremental UI updates
 
 ---
 
