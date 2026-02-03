@@ -21,10 +21,12 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 2 | Generate Transmittal | Pending | 0% |
 | 3 | Compare Precedent | In Progress | 67% (2/3 plans) |
 | 4 | New Project | Pending | 0% |
+| 5 | High-Fidelity Document Rendering | In Progress | 50% (1/2 plans complete) |
+| 6 | Analysis Acceleration | Pending | 0% |
 
-**Overall:** 0/4 phases complete (Phase 3 in progress)
+**Overall:** 0/6 phases complete (Phase 3 in progress, Phase 5 in progress)
 
-Progress: [                    ] 8% (2/24 estimated plans)
+Progress: [###                 ] 15% (3/~20 estimated plans)
 
 ## Execution Strategy
 
@@ -32,6 +34,10 @@ Parallel execution with 4 independent agents, each implementing one feature and 
 
 ## Recent Activity
 
+- 2026-02-03: Phase 5 Plan 01 complete - HTML rendering service with caching
+- 2026-02-03: Phase 5 planned (2 plans) - docx-parser-converter for high-fidelity HTML rendering
+- 2026-02-03: Discovered docx-parser-converter handles all formatting requirements (117 list markers verified)
+- 2026-02-03: Simplified Phase 5 from 4 plans (LibreOffice/PDF.js) to 2 plans (pure Python HTML)
 - 2026-02-03: Phase 3 Plan 01 complete - Split.js split-pane layout
 - 2026-02-02: Phase 3 Plan 02 complete - TF-IDF matching and auto-jump
 - 2026-02-01: Project initialized
@@ -40,10 +46,13 @@ Parallel execution with 4 independent agents, each implementing one feature and 
 
 ## Next Action
 
-Continue Phase 3 Plan 03 (Copy button feature), or:
+Continue Phase 5 Plan 02 (Frontend HTML integration), or:
+- `/gsd:execute-phase 5` to continue High-Fidelity Document Rendering
+- Phase 3 Plan 03 (Copy button feature)
 - `/gsd:plan-phase 1` to plan Finalize Redline
 - `/gsd:plan-phase 2` to plan Generate Transmittal
 - `/gsd:plan-phase 4` to plan New Project
+- `/gsd:plan-phase 6` to plan Analysis Acceleration
 
 ## Accumulated Decisions
 
@@ -55,12 +64,23 @@ Continue Phase 3 Plan 03 (Copy button feature), or:
 | 03-02 | TF-IDF with bigrams | Better phrase matching than unigrams alone |
 | 03-02 | Legal stop words | Filter common contract language for better similarity |
 | 03-02 | Score boost for metadata | Section/hierarchy matches provide strong relevance signal |
+| 05-01 | docx-parser-converter for HTML | Pure Python, already installed, preserves all formatting |
+| 05-01 | Server-side rendering with caching | Convert once, serve cached HTML, ~100ms conversion |
+| 05-02 | Direct DOM injection (no iframe) | Better event handling, native text selection |
+| 05-02 | Paragraph ID injection | Enables click-to-select for risk sidebar integration |
+| 05-01 | Cache HTML without IDs, inject on request | IDs may change on re-analysis; cached HTML stays valid |
+
+## Roadmap Evolution
+
+- Phase 5 simplified: Reduced from 4 plans to 2 plans using docx-parser-converter
+- Phase 5 added: High-fidelity document rendering for both main and precedent panels
+- Phase 6 added: Analysis acceleration (parallel API calls, content pre-filtering)
 
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 03-01-PLAN.md
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
 
 ---
-*State updated: 2026-02-02*
+*State updated: 2026-02-03*
