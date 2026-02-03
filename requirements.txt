@@ -10,5 +10,8 @@ anthropic>=0.40.0
 # Diff visualization
 diff-match-patch>=20200713
 
+# TF-IDF clause matching
+scikit-learn>=1.0.0
+
 # Track changes (for native Word track changes)
 redlines>=0.4.0
