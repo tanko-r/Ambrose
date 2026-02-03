@@ -21,9 +21,12 @@ let precedentPanelState = {
     filename: '',
     sections: [],
     relatedClauseIds: [],
+    relatedClausesDetails: [],  // Full match details with scores
     scrollPosition: 0,
     currentParaId: null,
-    activeNavItem: null
+    activeNavItem: null,
+    correlationEditMode: false,
+    userCorrelations: {}  // User-defined correlations (para_id -> precedent_id mappings)
 };
 
 // IntersectionObserver for active section tracking
@@ -85,15 +88,19 @@ async function comparePrecedent() {
 
 /**
  * Fetch related clauses from precedent for a given paragraph
+ * Stores full match details including scores for navigator highlighting
  */
 async function fetchRelatedPrecedentClauses(paraId) {
     try {
         const relatedData = await api(`/precedent/${AppState.sessionId}/related/${paraId}`);
-        precedentPanelState.relatedClauseIds = (relatedData.related_clauses || []).map(c => c.id);
-        return relatedData.related_clauses || [];
+        const relatedClauses = relatedData.related_clauses || [];
+        precedentPanelState.relatedClauseIds = relatedClauses.map(c => c.id);
+        precedentPanelState.relatedClausesDetails = relatedClauses;  // Store full details with scores
+        return relatedClauses;
     } catch (error) {
         console.error('Failed to fetch related clauses:', error);
         precedentPanelState.relatedClauseIds = [];
+        precedentPanelState.relatedClausesDetails = [];
         return [];
     }
 }
@@ -168,8 +175,23 @@ function buildPrecedentContent(content) {
 }
 
 /**
+ * Get score indicator based on match confidence
+ * Returns colored dot: green (high), yellow (medium), orange (low)
+ */
+function getScoreIndicator(score) {
+    if (score >= 0.6) {
+        return '<span class="match-score-dot match-score-high" title="High confidence match"></span>';
+    } else if (score >= 0.35) {
+        return '<span class="match-score-dot match-score-medium" title="Medium confidence match"></span>';
+    } else {
+        return '<span class="match-score-dot match-score-low" title="Low confidence match"></span>';
+    }
+}
+
+/**
  * Render the precedent navigator (right side section list)
  * UAT FIX #2: Precedent has its own section navigator
+ * UAT FIX #4: Shows match indicators with score-based coloring
  */
 function renderPrecedentNavigator() {
     const navigatorEl = document.getElementById('precedent-navigator');
@@ -177,9 +199,24 @@ function renderPrecedentNavigator() {
 
     const sections = precedentPanelState.sections || [];
     const relatedIds = precedentPanelState.relatedClauseIds || [];
+    const relatedDetails = precedentPanelState.relatedClausesDetails || [];
+    const editMode = precedentPanelState.correlationEditMode;
+
+    // Build a map of para_id to score for quick lookup
+    const scoreMap = {};
+    relatedDetails.forEach(clause => {
+        scoreMap[clause.id] = clause.score || 0;
+    });
 
     let html = `
-        <div class="precedent-nav-header">Sections</div>
+        <div class="precedent-nav-header">
+            <span>Sections</span>
+            <button class="precedent-edit-btn ${editMode ? 'active' : ''}"
+                    onclick="toggleCorrelationEditMode()"
+                    title="${editMode ? 'Exit edit mode' : 'Edit correlations (drag & drop)'}">
+                <span class="edit-icon">&#9998;</span>
+            </button>
+        </div>
     `;
 
     if (sections.length === 0) {
@@ -189,13 +226,19 @@ function renderPrecedentNavigator() {
             const level = section.hierarchy?.length || 0;
             const indent = Math.min(level, 3);
             const isRelated = relatedIds.includes(section.para_id);
-            const relatedClass = isRelated ? 'precedent-nav-related' : '';
+            const score = scoreMap[section.para_id] || 0;
+            const relatedClass = isRelated ? 'precedent-nav-related matched' : '';
+            const draggableAttr = editMode ? 'draggable="true"' : '';
 
             html += `
                 <div class="precedent-nav-item ${relatedClass}"
                      data-level="${indent}"
                      data-para-id="${section.para_id}"
-                     onclick="scrollToPrecedentSection('${section.para_id}')">
+                     data-score="${score}"
+                     ${draggableAttr}
+                     onclick="scrollToPrecedentSection('${section.para_id}')"
+                     ${editMode ? `ondragstart="handleNavItemDragStart(event, '${section.para_id}')"` : ''}>
+                    ${isRelated ? getScoreIndicator(score) : ''}
                     <span class="precedent-nav-ref">${escapeHtml(section.number || '')}</span>
                     <span class="precedent-nav-text">${escapeHtml(section.title || '')}</span>
                 </div>
