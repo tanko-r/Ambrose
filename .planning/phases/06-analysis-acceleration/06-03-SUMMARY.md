@@ -93,8 +93,14 @@ semaphore = asyncio.Semaphore(30)      # Max 30 concurrent
 
 | Mode | Cost | Time | Notes |
 |------|------|------|-------|
-| Forked Parallel (this plan) | ~$6/doc | ~90 seconds | Initial + 30 parallel |
-| Sequential (fallback) | ~$2/doc | ~15 minutes | No initial, sequential batches |
+| Forked Parallel (with caching) | ~$2.50/doc | ~90 seconds | Fork 1 caches ($2), Forks 2-30 read cache at 90% discount ($0.50) |
+| Sequential (fallback) | ~$2/doc | ~15 minutes | No initial, sequential batches, document map only |
+
+**Prompt Caching Added** (commit 9d7db22):
+- Initial implementation cost: $6/doc (30 forks × $0.20 each)
+- With prompt caching: $2.50/doc (1 cache write $2 + 29 cache reads $0.50)
+- **60% cost reduction** while maintaining 10x speed improvement
+- Assistant's initial response marked with `cache_control: {"type": "ephemeral"}`
 
 ## Integration Points
 
@@ -124,6 +130,8 @@ else:
 |------|------|-------------|
 | b0f3342 | feat | Create ForkedParallelAnalyzer for parallel batch analysis |
 | 7ff2b12 | feat | Integrate forked parallel analysis into claude_service |
+| 1e9a587 | docs | Complete forked parallel batch analysis plan |
+| 9d7db22 | perf | Add prompt caching to reduce cost from $6 to $2.50 (60% reduction) |
 
 ## Deviations from Plan
 
