@@ -604,6 +604,220 @@ function getSplitSizes() {
     return null;
 }
 
+// ============================================
+// Correlation Edit Mode (UAT #6)
+// ============================================
+
+/**
+ * Toggle correlation edit mode
+ * When enabled, precedent nav items become draggable and main doc paragraphs become drop targets
+ */
+function toggleCorrelationEditMode() {
+    precedentPanelState.correlationEditMode = !precedentPanelState.correlationEditMode;
+    const editMode = precedentPanelState.correlationEditMode;
+
+    // Re-render navigator to update draggable state
+    renderPrecedentNavigator();
+
+    // Setup or teardown drop targets on main document
+    if (editMode) {
+        setupDocumentDropTargets();
+        showToast('Edit mode: Drag precedent items to document paragraphs', 'info');
+    } else {
+        teardownDocumentDropTargets();
+        showToast('Edit mode disabled', 'info');
+    }
+}
+
+/**
+ * Handle drag start from precedent navigator item
+ */
+function handleNavItemDragStart(event, precedentId) {
+    event.dataTransfer.setData('text/plain', precedentId);
+    event.dataTransfer.setData('application/x-precedent-id', precedentId);
+    event.dataTransfer.effectAllowed = 'link';
+
+    // Add dragging class for visual feedback
+    event.target.classList.add('dragging');
+
+    // Store the precedent ID for the drop handler
+    precedentPanelState.draggedPrecedentId = precedentId;
+}
+
+/**
+ * Setup drop targets on main document paragraphs
+ */
+function setupDocumentDropTargets() {
+    const documentContent = document.getElementById('document-content');
+    if (!documentContent) return;
+
+    const paragraphs = documentContent.querySelectorAll('.paragraph');
+    paragraphs.forEach(para => {
+        para.classList.add('drop-target');
+        para.addEventListener('dragover', handleParaDragOver);
+        para.addEventListener('dragenter', handleParaDragEnter);
+        para.addEventListener('dragleave', handleParaDragLeave);
+        para.addEventListener('drop', handleParaDrop);
+    });
+}
+
+/**
+ * Teardown drop targets from main document
+ */
+function teardownDocumentDropTargets() {
+    const documentContent = document.getElementById('document-content');
+    if (!documentContent) return;
+
+    const paragraphs = documentContent.querySelectorAll('.paragraph');
+    paragraphs.forEach(para => {
+        para.classList.remove('drop-target', 'drag-over');
+        para.removeEventListener('dragover', handleParaDragOver);
+        para.removeEventListener('dragenter', handleParaDragEnter);
+        para.removeEventListener('dragleave', handleParaDragLeave);
+        para.removeEventListener('drop', handleParaDrop);
+    });
+}
+
+/**
+ * Handle dragover on paragraph (allow drop)
+ */
+function handleParaDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'link';
+}
+
+/**
+ * Handle dragenter on paragraph
+ */
+function handleParaDragEnter(event) {
+    event.preventDefault();
+    event.target.closest('.paragraph')?.classList.add('drag-over');
+}
+
+/**
+ * Handle dragleave on paragraph
+ */
+function handleParaDragLeave(event) {
+    // Only remove if leaving the paragraph entirely
+    const para = event.target.closest('.paragraph');
+    if (para && !para.contains(event.relatedTarget)) {
+        para.classList.remove('drag-over');
+    }
+}
+
+/**
+ * Handle drop of precedent item onto paragraph
+ */
+async function handleParaDrop(event) {
+    event.preventDefault();
+
+    const para = event.target.closest('.paragraph');
+    if (!para) return;
+
+    para.classList.remove('drag-over');
+
+    const precedentId = event.dataTransfer.getData('application/x-precedent-id') ||
+                        event.dataTransfer.getData('text/plain');
+    const paraId = para.dataset.paraId;
+
+    if (!precedentId || !paraId) {
+        showToast('Failed to create correlation', 'error');
+        return;
+    }
+
+    // Save the correlation
+    try {
+        await api(`/correlations/${AppState.sessionId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                para_id: paraId,
+                precedent_ids: [precedentId],
+                action: 'add'
+            })
+        });
+
+        showToast('Correlation added', 'success');
+
+        // Refresh related clauses if this is the currently selected paragraph
+        if (paraId === precedentPanelState.currentParaId) {
+            await fetchRelatedPrecedentClauses(paraId);
+            renderPrecedentNavigator();
+        }
+
+        // Flash the target paragraph
+        para.classList.add('correlation-added-flash');
+        setTimeout(() => para.classList.remove('correlation-added-flash'), 1500);
+
+    } catch (error) {
+        console.error('Failed to save correlation:', error);
+        showToast('Failed to save correlation', 'error');
+    }
+}
+
+/**
+ * Remove a correlation via context menu or UI action
+ */
+async function removeCorrelation(paraId, precedentId) {
+    if (!AppState.sessionId) return;
+
+    try {
+        await api(`/correlations/${AppState.sessionId}/${paraId}?precedent_id=${precedentId}`, {
+            method: 'DELETE'
+        });
+
+        showToast('Correlation removed', 'success');
+
+        // Refresh if this is the current paragraph
+        if (paraId === precedentPanelState.currentParaId) {
+            await fetchRelatedPrecedentClauses(paraId);
+            renderPrecedentNavigator();
+
+            // Update highlights in document content
+            const contentEl = document.getElementById('precedent-content');
+            if (contentEl) {
+                contentEl.querySelectorAll('.precedent-related').forEach(el => {
+                    el.classList.remove('precedent-related');
+                });
+                precedentPanelState.relatedClauseIds.forEach(id => {
+                    const el = document.getElementById(`prec-${id}`);
+                    if (el) {
+                        el.classList.add('precedent-related');
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Failed to remove correlation:', error);
+        showToast('Failed to remove correlation', 'error');
+    }
+}
+
+/**
+ * Setup context menu for removing correlations on matched nav items
+ */
+function setupCorrelationContextMenu() {
+    const navigatorEl = document.getElementById('precedent-navigator');
+    if (!navigatorEl) return;
+
+    navigatorEl.addEventListener('contextmenu', async (event) => {
+        const navItem = event.target.closest('.precedent-nav-item.matched');
+        if (!navItem) return;
+
+        event.preventDefault();
+
+        const precedentId = navItem.dataset.paraId;
+        const currentParaId = precedentPanelState.currentParaId;
+
+        if (!precedentId || !currentParaId) return;
+
+        // Show simple confirmation
+        if (confirm('Remove this correlation?')) {
+            await removeCorrelation(currentParaId, precedentId);
+        }
+    });
+}
+
 // Export functions for use in other modules
 window.comparePrecedent = comparePrecedent;
 window.closePrecedentPanel = closePrecedentPanel;
@@ -613,3 +827,6 @@ window.autoJumpToFirstMatch = autoJumpToFirstMatch;
 window.updatePrecedentRelatedClauses = updatePrecedentRelatedClauses;
 window.isPrecedentPanelOpen = isPrecedentPanelOpen;
 window.getSplitSizes = getSplitSizes;
+window.toggleCorrelationEditMode = toggleCorrelationEditMode;
+window.handleNavItemDragStart = handleNavItemDragStart;
+window.removeCorrelation = removeCorrelation;
