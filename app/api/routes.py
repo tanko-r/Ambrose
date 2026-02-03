@@ -1241,12 +1241,12 @@ def get_related_precedent_clauses(session_id, para_id):
     Find clauses in the precedent document that relate to a specific paragraph
     in the target document.
 
-    Uses section matching and keyword overlap to identify related clauses.
-    Returns matching clauses ranked by relevance.
+    Uses TF-IDF vectorization with cosine similarity for improved concept-based
+    matching. Addresses UAT #5: clause matching quality.
 
     PREC-03: System highlights clauses in precedent that relate to current paragraph
     """
-    import re as regex_module
+    from app.services.matching_service import find_related_clauses
 
     session = get_session(session_id)
     if not session:
@@ -1270,90 +1270,21 @@ def get_related_precedent_clauses(session_id, para_id):
     if not target_para:
         return jsonify({'error': 'Paragraph not found'}), 404
 
-    # Get target paragraph details
-    target_text = target_para.get('text', '').lower()
     target_section_ref = target_para.get('section_ref', '')
-    target_hierarchy = target_para.get('section_hierarchy', [])
 
-    # Extract keywords from target paragraph (simple approach)
-    # Filter out common words and get significant terms
-    stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-                  'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
-                  'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
-                  'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'this',
-                  'that', 'these', 'those', 'it', 'its', 'any', 'all', 'such', 'other',
-                  'each', 'no', 'not', 'only', 'same', 'than', 'into', 'upon', 'under',
-                  'between', 'through', 'during', 'before', 'after', 'above', 'below'}
-
-    words = regex_module.findall(r'\b[a-z]{3,}\b', target_text)
-    target_keywords = set(w for w in words if w not in stop_words)
-
-    # Score each precedent paragraph
-    related_clauses = []
-    for item in parsed_precedent.get('content', []):
-        if item.get('type') != 'paragraph':
-            continue
-
-        prec_text = item.get('text', '').lower()
-        prec_section_ref = item.get('section_ref', '')
-        prec_hierarchy = item.get('section_hierarchy', [])
-
-        # Skip empty paragraphs
-        if not prec_text.strip():
-            continue
-
-        # Calculate relevance score
-        score = 0
-
-        # 1. Section reference similarity (strong signal)
-        if target_section_ref and prec_section_ref:
-            # Check for matching section numbers
-            if target_section_ref == prec_section_ref:
-                score += 50
-            elif target_section_ref.split('.')[0] == prec_section_ref.split('.')[0]:
-                score += 20
-
-        # 2. Hierarchy caption similarity
-        if target_hierarchy and prec_hierarchy:
-            target_captions = {h.get('caption', '').lower() for h in target_hierarchy if h.get('caption')}
-            prec_captions = {h.get('caption', '').lower() for h in prec_hierarchy if h.get('caption')}
-            common_captions = target_captions & prec_captions
-            score += len(common_captions) * 15
-
-        # 3. Keyword overlap
-        prec_words = set(regex_module.findall(r'\b[a-z]{3,}\b', prec_text))
-        prec_keywords = prec_words - stop_words
-        if target_keywords and prec_keywords:
-            overlap = target_keywords & prec_keywords
-            overlap_ratio = len(overlap) / max(len(target_keywords), 1)
-            score += int(overlap_ratio * 30)
-
-        # 4. Check for defined terms overlap
-        target_terms = set(regex_module.findall(r'"([A-Z][^"]+)"', target_para.get('text', '')))
-        prec_terms = set(regex_module.findall(r'"([A-Z][^"]+)"', item.get('text', '')))
-        common_terms = target_terms & prec_terms
-        score += len(common_terms) * 10
-
-        # Only include if score meets threshold
-        if score >= 10:
-            related_clauses.append({
-                'id': item.get('id'),
-                'text': item.get('text', ''),
-                'section_ref': prec_section_ref,
-                'caption': item.get('caption'),
-                'hierarchy': prec_hierarchy,
-                'score': score
-            })
-
-    # Sort by score (descending) and limit results
-    related_clauses.sort(key=lambda x: x['score'], reverse=True)
-    top_related = related_clauses[:10]  # Return top 10 matches
+    # Use TF-IDF based matching for better concept-based results
+    related_clauses = find_related_clauses(
+        target_clause=target_para,
+        precedent_content=parsed_precedent.get('content', []),
+        min_score=0.1,
+        max_results=10
+    )
 
     return jsonify({
         'session_id': session_id,
         'para_id': para_id,
         'target_section_ref': target_section_ref,
-        'related_clauses': top_related,
+        'related_clauses': related_clauses,
         'total_matches': len(related_clauses)
     })
 
