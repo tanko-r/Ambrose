@@ -17,7 +17,8 @@ import json
 import uuid
 from datetime import datetime
 from pathlib import Path
-from flask import Blueprint, request, jsonify, current_app, send_file
+from flask import Blueprint, request, jsonify, current_app, send_file, Response
+from app.services.html_renderer import render_document_html, render_precedent_html
 
 api_bp = Blueprint('api', __name__)
 
@@ -258,6 +259,66 @@ def get_document(session_id):
         'flags': session.get('flags', []),
         'revisions': session.get('revisions', {})
     })
+
+
+@api_bp.route('/document/<session_id>/html', methods=['GET'])
+def serve_document_html(session_id):
+    """
+    Serve high-fidelity HTML version of target document.
+
+    Uses docx-parser-converter to preserve all formatting including
+    automatic numbering, indentation, fonts, and styles.
+    RENDER-01, RENDER-02, RENDER-03: High-fidelity document preview
+    """
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    target_path = session.get('target_path')
+    if not target_path or not Path(target_path).exists():
+        return jsonify({'error': 'Document not found'}), 404
+
+    # Get paragraph IDs from parsed document for click handling
+    doc_data = session.get('parsed_doc', {})
+    paragraph_ids = [
+        item['id'] for item in doc_data.get('content', [])
+        if item.get('type') == 'paragraph'
+    ]
+
+    try:
+        html = render_document_html(target_path, paragraph_ids)
+        return Response(html, mimetype='text/html; charset=utf-8')
+    except Exception as e:
+        return jsonify({'error': f'HTML rendering failed: {str(e)}'}), 500
+
+
+@api_bp.route('/precedent/<session_id>/html', methods=['GET'])
+def serve_precedent_html(session_id):
+    """
+    Serve high-fidelity HTML version of precedent document.
+
+    RENDER-04: Same rendering engine for both panels
+    """
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    precedent_path = session.get('precedent_path')
+    if not precedent_path or not Path(precedent_path).exists():
+        return jsonify({'error': 'Precedent document not found'}), 404
+
+    # Get paragraph IDs from parsed precedent for click handling
+    prec_data = session.get('parsed_precedent', {})
+    paragraph_ids = [
+        item['id'] for item in prec_data.get('content', [])
+        if item.get('type') == 'paragraph'
+    ]
+
+    try:
+        html = render_precedent_html(precedent_path, paragraph_ids)
+        return Response(html, mimetype='text/html; charset=utf-8')
+    except Exception as e:
+        return jsonify({'error': f'HTML rendering failed: {str(e)}'}), 500
 
 
 @api_bp.route('/analysis/<session_id>', methods=['GET'])
