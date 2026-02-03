@@ -65,6 +65,9 @@ Phase 6 Plan 02 complete. Next options:
 | 05-02 | Direct DOM injection (no iframe) | Better event handling, native text selection |
 | 05-02 | Graceful fallback to plain text | Ensures app works even if HTML endpoint fails |
 | 05-01 | Cache HTML without IDs, inject on request | IDs may change on re-analysis; cached HTML stays valid |
+| 06-01 | 20 char minimum threshold for analysis | Paragraphs under 20 chars cannot contain meaningful legal language |
+| 06-01 | Regex patterns for content filtering | Fast and reliable detection of non-substantive content |
+| 06-01 | State machine for exhibit tracking | Track in_exhibit_section to skip all content after EXHIBIT header |
 | 06-02 | Extended thinking with 10000 token budget | Full document analysis requires thorough comprehension |
 | 06-02 | Graceful fallback on initial analysis failure | Ensure robustness - analysis should complete even if initial fails |
 | 06-02 | Use initial analysis terms if richer | Initial analysis can extract more complete term definitions |
