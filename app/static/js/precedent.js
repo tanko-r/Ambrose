@@ -21,6 +21,8 @@ let precedentPanelState = {
 /**
  * Open the precedent comparison panel
  * Called when user clicks "Compare Precedent" in sidebar
+ *
+ * UAT #3: Auto-jumps to first matched clause when panel opens
  */
 async function comparePrecedent() {
     if (!AppState.selectedParaId) {
@@ -57,6 +59,9 @@ async function comparePrecedent() {
         // Render and show the panel
         renderPrecedentPanel();
         openPrecedentPanel();
+
+        // Auto-jump to first match after panel opens (UAT #3)
+        autoJumpToFirstMatch();
 
     } catch (error) {
         if (error.message && error.message.includes('No precedent')) {
@@ -249,7 +254,39 @@ function scrollToPrecedentSection(paraId) {
 }
 
 /**
+ * Auto-jump to first match when panel opens
+ * Shows toast with match count and scrolls to first related clause
+ *
+ * UAT #3: Should auto-jump to first match
+ */
+function autoJumpToFirstMatch() {
+    const matchCount = precedentPanelState.relatedClauseIds.length;
+
+    if (matchCount > 0) {
+        // Show match count toast
+        showToast(`Found ${matchCount} related clause${matchCount !== 1 ? 's' : ''}`, 'success');
+
+        // Small delay to ensure panel is fully rendered before scrolling
+        setTimeout(() => {
+            const firstId = precedentPanelState.relatedClauseIds[0];
+            const element = document.getElementById(`prec-${firstId}`);
+            if (element) {
+                // Scroll to first match
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Add highlight flash animation
+                element.classList.add('precedent-highlight-flash');
+                setTimeout(() => element.classList.remove('precedent-highlight-flash'), 2000);
+            }
+        }, 100);
+    } else {
+        showToast('No related clauses found for this paragraph', 'info');
+    }
+}
+
+/**
  * Scroll to the first related clause in precedent
+ * Called when user clicks "Jump to First Match" button
  */
 function scrollToFirstRelated() {
     if (precedentPanelState.relatedClauseIds.length > 0) {
@@ -353,4 +390,5 @@ window.closePrecedentPanel = closePrecedentPanel;
 window.togglePrecedentTOC = togglePrecedentTOC;
 window.scrollToPrecedentSection = scrollToPrecedentSection;
 window.scrollToFirstRelated = scrollToFirstRelated;
+window.autoJumpToFirstMatch = autoJumpToFirstMatch;
 window.updatePrecedentRelatedClauses = updatePrecedentRelatedClauses;
