@@ -13,6 +13,7 @@
 | 2 | Generate Transmittal | Create summary email for client | TRANS-01, TRANS-02, TRANS-03, TRANS-04 | Pending |
 | 3 | Compare Precedent | Side-by-side precedent viewing | PREC-01, PREC-02, PREC-03, PREC-04 | Pending |
 | 4 | New Project | Session management and reset | NEW-01, NEW-02, NEW-03, NEW-04 | Pending |
+| 5 | High-Fidelity Document Rendering | Exact Word formatting in both panels | RENDER-01, RENDER-02, RENDER-03, RENDER-04 | Pending |
 
 ## Phase Details
 
@@ -118,6 +119,41 @@
 - Backend: Session save endpoint (already exists, may need enhancement)
 - Reset AppState and reload intake view
 - Session history (NEW-04) is optional enhancement
+
+---
+
+### Phase 5: High-Fidelity Document Rendering
+
+**Goal:** Render Word documents in both the main document panel and Compare Precedent panel with maximum fidelity — preserving exact formatting, indentation, automatic numbering, styles, fonts, and visual layout identical to Microsoft Word.
+
+**Requirements:**
+- RENDER-01: Document preview matches Word formatting exactly (fonts, sizes, spacing)
+- RENDER-02: Automatic numbering renders correctly (1.1, (a), (i), etc.)
+- RENDER-03: Indentation and margins preserved precisely
+- RENDER-04: Both main panel and precedent panel use same rendering engine
+
+**Success Criteria:**
+1. Opening a document in the app produces visually identical rendering to Microsoft Word
+2. Automatic numbering schemes (legal, outline, lettered) display correctly
+3. Nested indentation levels are preserved
+4. Font families, sizes, and styles match the source document
+5. Precedent panel renders with same fidelity as main document panel
+
+**Dependencies:** Phase 3 (Compare Precedent panel exists)
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — PDF conversion service with LibreOffice headless
+- [ ] 05-02-PLAN.md — Main document panel PDF rendering with PDF.js
+- [ ] 05-03-PLAN.md — Precedent panel PDF rendering (RENDER-04)
+- [ ] 05-04-PLAN.md — Fallback rendering and loading/error states
+
+**Implementation Notes:**
+- LibreOffice headless conversion to PDF for high-fidelity rendering
+- PDF.js for browser-based PDF viewing
+- docx-preview.js as JavaScript-only fallback
+- Caching: convert once, serve cached PDF
 
 ---
 
