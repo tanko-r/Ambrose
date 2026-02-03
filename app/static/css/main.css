@@ -4167,6 +4167,94 @@ body.nav-collapsed .bottom-sheet {
     font-variant-numeric: tabular-nums;
 }
 
+/* Two-stage progress indicators */
+.analysis-stages {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin: 1.5rem 0;
+}
+
+.analysis-stage {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-light);
+    transition: color var(--transition-fast);
+}
+
+.analysis-stage.active {
+    color: var(--primary);
+}
+
+.analysis-stage.complete {
+    color: #10b981;
+}
+
+.stage-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.analysis-stage.active .stage-indicator {
+    background: currentColor;
+}
+
+.analysis-stage.active .stage-indicator::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+}
+
+.analysis-stage.complete .stage-indicator {
+    background: currentColor;
+}
+
+.analysis-stage.complete .stage-indicator::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.stage-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.analysis-stage-display {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    min-height: 1.5em;
+}
+
+/* Incremental risk animation */
+.risk-item-new {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* Empty state */
 .empty-state {
     text-align: center;
