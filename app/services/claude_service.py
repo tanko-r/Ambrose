@@ -23,6 +23,11 @@ from app.services.parallel_analyzer import run_forked_parallel_analysis
 analysis_progress = {}
 progress_lock = threading.Lock()
 
+# Global partial results tracker for incremental risk display
+# Key: session_id, Value: list of risks found so far
+partial_results = {}
+partial_results_lock = threading.Lock()
+
 
 def update_progress(session_id: str, data: Dict):
     """Update progress for a session."""
@@ -44,6 +49,27 @@ def clear_progress(session_id: str):
     with progress_lock:
         if session_id in analysis_progress:
             del analysis_progress[session_id]
+
+
+def add_partial_risks(session_id: str, risks: List[Dict]):
+    """Add risks from a completed batch to partial results."""
+    with partial_results_lock:
+        if session_id not in partial_results:
+            partial_results[session_id] = []
+        partial_results[session_id].extend(risks)
+
+
+def get_partial_risks(session_id: str) -> List[Dict]:
+    """Get all risks found so far for a session."""
+    with partial_results_lock:
+        return partial_results.get(session_id, []).copy()
+
+
+def clear_partial_risks(session_id: str):
+    """Clear partial risks for a session."""
+    with partial_results_lock:
+        if session_id in partial_results:
+            del partial_results[session_id]
 
 # Load environment variables
 try:
@@ -634,6 +660,10 @@ def analyze_document_with_llm(
                     'current_action': f'Completed batch {completed}/{total} ({progress_data["risks_found"]} risks found so far)'
                 })
 
+                # Add partial risks from completed batch for incremental display
+                if batch_result and batch_result.get('success') and batch_result.get('risks'):
+                    add_partial_risks(session_id, batch_result['risks'])
+
         # Run forked parallel analysis
         api_key = get_anthropic_api_key()
         parallel_result = run_forked_parallel_analysis(
@@ -714,6 +744,10 @@ def analyze_document_with_llm(
                         'risks_found': len(all_risks),
                         'paragraphs_processed': paragraphs_processed
                     })
+                    # Add partial risks from completed batch for incremental display
+                    batch_risks = batch_result.get('risks', [])
+                    if batch_risks:
+                        add_partial_risks(session_id, batch_risks)
 
             except Exception as e:
                 # Log error but continue with other batches
@@ -729,10 +763,13 @@ def analyze_document_with_llm(
     if session_id:
         update_progress(session_id, {
             'status': 'complete',
+            'stage': 'complete',
             'percent': 100,
             'current_action': 'Analysis complete!',
             'elapsed_seconds': int(time.time() - start_time)
         })
+        # Clear partial results since analysis is complete
+        clear_partial_risks(session_id)
 
     # Renumber risks sequentially
     for i, risk in enumerate(all_risks):
