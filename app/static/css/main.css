@@ -1640,6 +1640,67 @@ body:not(.nav-collapsed) .nav-collapsed-toggle {
     transform: translateX(100%);
 }
 
+/* Collapsed sidebar state (when precedent panel is open) */
+.sidebar.sidebar-collapsed {
+    width: 0;
+    min-width: 0;
+    border: none;
+    padding: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Sidebar reopen tab (appears when sidebar is collapsed for precedent) */
+.sidebar-reopen-tab {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    background: linear-gradient(180deg, var(--card) 0%, var(--bg-subtle) 100%);
+    border: 1px solid var(--border);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    padding: 12px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-fast);
+}
+
+.sidebar-reopen-tab:hover {
+    background: var(--bg-subtle);
+    padding-right: 12px;
+}
+
+.sidebar-reopen-tab.hidden {
+    display: none;
+}
+
+.sidebar-reopen-icon {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.sidebar-reopen-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+
+.sidebar-reopen-tab:hover .sidebar-reopen-icon,
+.sidebar-reopen-tab:hover .sidebar-reopen-label {
+    color: var(--text);
+}
+
 .sidebar-header {
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border);

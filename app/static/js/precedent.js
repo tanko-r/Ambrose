@@ -26,7 +26,8 @@ let precedentPanelState = {
     currentParaId: null,
     activeNavItem: null,
     correlationEditMode: false,
-    userCorrelations: {}  // User-defined correlations (para_id -> precedent_id mappings)
+    userCorrelations: {},  // User-defined correlations (para_id -> precedent_id mappings)
+    sidebarWasVisible: false  // Track if sidebar was visible before precedent opened
 };
 
 // IntersectionObserver for active section tracking
@@ -318,10 +319,15 @@ function updateActiveNavItem(paraId) {
 /**
  * Open the precedent panel using Split.js
  * UAT FIX #1: Panel pushes main document instead of overlaying
+ *
+ * NEW: Auto-collapses the risk sidebar when precedent opens to prevent clutter
  */
 function openPrecedentPanel() {
     const precedentPane = document.getElementById('precedent-pane');
     if (!precedentPane) return;
+
+    // Auto-collapse the sidebar when precedent opens
+    collapseSidebarForPrecedent();
 
     // Show the precedent pane
     precedentPane.classList.remove('hidden');
@@ -330,6 +336,96 @@ function openPrecedentPanel() {
     // Initialize Split.js if not already
     if (!splitInstance) {
         initializeSplit();
+    }
+}
+
+/**
+ * Collapse the sidebar (risk pane) when precedent panel opens
+ * Shows a small tab to reopen it
+ */
+function collapseSidebarForPrecedent() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+
+    // Track if sidebar was visible before we collapse it
+    precedentPanelState.sidebarWasVisible = !sidebar.classList.contains('hidden');
+
+    // Collapse the sidebar
+    sidebar.classList.add('sidebar-collapsed');
+
+    // Show the reopen tab
+    showSidebarReopenTab();
+}
+
+/**
+ * Restore the sidebar when precedent panel closes
+ */
+function restoreSidebarAfterPrecedent() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+
+    // Remove collapsed state
+    sidebar.classList.remove('sidebar-collapsed');
+
+    // Hide the reopen tab
+    hideSidebarReopenTab();
+}
+
+/**
+ * Show the small tab on the right edge to reopen the sidebar
+ */
+function showSidebarReopenTab() {
+    // Check if tab already exists
+    let tab = document.getElementById('sidebar-reopen-tab');
+    if (!tab) {
+        tab = document.createElement('button');
+        tab.id = 'sidebar-reopen-tab';
+        tab.className = 'sidebar-reopen-tab';
+        tab.title = 'Show risk analysis panel';
+        tab.innerHTML = '<span class="sidebar-reopen-icon">&#9664;</span><span class="sidebar-reopen-label">Risks</span>';
+        tab.onclick = toggleSidebarFromTab;
+        document.body.appendChild(tab);
+    }
+    tab.classList.remove('hidden');
+}
+
+/**
+ * Hide the sidebar reopen tab
+ */
+function hideSidebarReopenTab() {
+    const tab = document.getElementById('sidebar-reopen-tab');
+    if (tab) {
+        tab.classList.add('hidden');
+    }
+}
+
+/**
+ * Toggle sidebar visibility from the reopen tab
+ */
+function toggleSidebarFromTab() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+
+    const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+
+    if (isCollapsed) {
+        // Expand the sidebar
+        sidebar.classList.remove('sidebar-collapsed');
+        // Update tab icon to show collapse arrow
+        const tab = document.getElementById('sidebar-reopen-tab');
+        if (tab) {
+            tab.querySelector('.sidebar-reopen-icon').innerHTML = '&#9654;';  // Right arrow
+            tab.title = 'Hide risk analysis panel';
+        }
+    } else {
+        // Collapse the sidebar
+        sidebar.classList.add('sidebar-collapsed');
+        // Update tab icon to show expand arrow
+        const tab = document.getElementById('sidebar-reopen-tab');
+        if (tab) {
+            tab.querySelector('.sidebar-reopen-icon').innerHTML = '&#9664;';  // Left arrow
+            tab.title = 'Show risk analysis panel';
+        }
     }
 }
 
@@ -402,6 +498,8 @@ function loadSplitSizes() {
 
 /**
  * Close the precedent panel and destroy Split.js instance
+ *
+ * NEW: Restores the sidebar to its previous state when closing
  */
 function closePrecedentPanel() {
     const precedentPane = document.getElementById('precedent-pane');
@@ -417,6 +515,9 @@ function closePrecedentPanel() {
     precedentPane.classList.add('hidden');
     precedentPanelState.isOpen = false;
 
+    // Restore the sidebar
+    restoreSidebarAfterPrecedent();
+
     // Destroy Split.js instance
     if (splitInstance) {
         splitInstance.destroy();
@@ -427,6 +528,12 @@ function closePrecedentPanel() {
     if (precedentScrollObserver) {
         precedentScrollObserver.disconnect();
         precedentScrollObserver = null;
+    }
+
+    // Exit edit mode if active
+    if (precedentPanelState.correlationEditMode) {
+        precedentPanelState.correlationEditMode = false;
+        teardownDocumentDropTargets();
     }
 }
 
@@ -830,3 +937,4 @@ window.getSplitSizes = getSplitSizes;
 window.toggleCorrelationEditMode = toggleCorrelationEditMode;
 window.handleNavItemDragStart = handleNavItemDragStart;
 window.removeCorrelation = removeCorrelation;
+window.toggleSidebarFromTab = toggleSidebarFromTab;
