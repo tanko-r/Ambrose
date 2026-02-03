@@ -179,10 +179,20 @@ Return the structured analysis as JSON. Wrap your response in ```json``` code bl
                 text_content = block.text
                 break
 
-        # Store conversation context for forking
+        # Store conversation context for forking with caching enabled
+        # The assistant's response is marked for caching so subsequent forks pay 90% less
         result['conversation_messages'] = [
             {"role": "user", "content": user_prompt},
-            {"role": "assistant", "content": text_content}
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": text_content,
+                        "cache_control": {"type": "ephemeral"}  # Cache this for forked batches
+                    }
+                ]
+            }
         ]
         result['initial_response_id'] = response.id
         result['system_prompt'] = system_prompt

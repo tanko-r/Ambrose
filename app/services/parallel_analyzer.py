@@ -12,9 +12,11 @@ Architecture:
 - Each fork inherits full document context but analyzes specific paragraphs
 - Results are aggregated into unified risk list
 
-Cost/Speed tradeoff:
-- ~$6/document, ~90 seconds total (fast mode)
-- Phase 7 will add 'economical' mode: ~$2/doc, ~15 minutes
+Cost/Speed tradeoff (with prompt caching):
+- ~$2.50/document, ~90 seconds total (fast mode with caching)
+  - Fork 1 pays to cache initial context (~$2)
+  - Forks 2-30 read from cache at 90% discount (~$0.50 total)
+- Phase 7 will add 'economical' mode: ~$2/doc, ~15 minutes (no initial analysis)
 
 Part of Phase 6: Analysis Acceleration
 """
@@ -48,8 +50,10 @@ class ForkedParallelAnalyzer:
     - Each fork inherits full document context but analyzes specific paragraphs
     - Results are aggregated into unified risk list
 
-    Cost/Speed tradeoff:
-    - ~$6/document, ~90 seconds total
+    Cost/Speed tradeoff (with prompt caching):
+    - ~$2.50/document, ~90 seconds total
+      - Fork 1 caches initial context
+      - Forks 2-30 reuse cached context at 90% discount
     - Phase 7 will add 'economical' mode: ~$2/doc, ~15 minutes
     """
 
@@ -139,14 +143,19 @@ Return as JSON:
         The fork includes:
         - Same system prompt as initial analysis
         - Initial user message (full document)
-        - Initial assistant response (concept map, etc.)
+        - Initial assistant response (concept map, etc.) - CACHED after fork 1
         - NEW: Batch-specific analysis request
+
+        Prompt Caching:
+        - Fork 1 pays full price to cache the initial assistant response
+        - Forks 2-30 pay 90% less for cached content
+        - Reduces cost from ~$6 to ~$2.50 per document
 
         Args:
             batch: List of paragraph dicts to analyze
             batch_num: Current batch number (1-indexed)
             total_batches: Total number of batches
-            initial_context: Context from Plan 02 initial analysis
+            initial_context: Context from Plan 02 initial analysis (includes cache_control)
 
         Returns:
             Dict with success status, batch_num, response or error, paragraph_ids
