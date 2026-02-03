@@ -359,7 +359,8 @@ def get_analysis(session_id):
             representation=session.get('representation', 'seller'),
             aggressiveness=session.get('aggressiveness', 3),
             batch_size=5,  # Analyze 5 clauses per API call
-            session_id=session_id  # Pass session_id for progress tracking
+            session_id=session_id,  # Pass session_id for progress tracking
+            include_exhibits=session.get('include_exhibits', False)  # Pass include_exhibits setting from intake
         )
 
         # Clear progress tracking
