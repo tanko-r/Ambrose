@@ -70,7 +70,8 @@ class ContentFilter:
     # Pattern that marks the START of an exhibit section
     # Once matched, all subsequent paragraphs are considered exhibit content
     # until the end of the document (unless we implement exhibit boundary detection)
-    EXHIBIT_START = r'^(?i)EXHIBIT\s+[A-Z0-9]+\s*[-:]?\s*$'
+    # Note: Use re.IGNORECASE flag at match time instead of inline (?i) to avoid position issues
+    EXHIBIT_START = r'^EXHIBIT\s+[A-Z0-9]+\s*[-:]?\s*$'
 
     def __init__(self, include_exhibits: bool = False):
         """
@@ -114,7 +115,7 @@ class ContentFilter:
                 return (False, name)
 
         # Check if we're entering an exhibit section
-        if re.match(self.EXHIBIT_START, text):
+        if re.match(self.EXHIBIT_START, text, re.IGNORECASE):
             self.in_exhibit_section = True
             if not self.include_exhibits:
                 return (False, 'exhibit_header')
