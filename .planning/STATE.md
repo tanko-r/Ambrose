@@ -22,11 +22,11 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 3 | Compare Precedent | In Progress | 67% (2/3 plans) |
 | 4 | New Project | Pending | 0% |
 | 5 | High-Fidelity Document Rendering | Complete | 100% (2/2 plans) |
-| 6 | Analysis Acceleration | In Progress | 75% (3/4 plans) |
+| 6 | Analysis Acceleration | Complete | 100% (4/4 plans) |
 
-**Overall:** 1/6 phases complete (Phases 3, 6 in progress)
+**Overall:** 2/6 phases complete (Phase 3 in progress)
 
-Progress: [#######             ] 35% (7/~20 estimated plans)
+Progress: [########            ] 40% (8/~20 estimated plans)
 
 ## Execution Strategy
 
@@ -34,21 +34,23 @@ Parallel execution with 4 independent agents, each implementing one feature and 
 
 ## Recent Activity
 
+- 2026-02-03: Phase 6 complete (4/4 plans) - Analysis acceleration with conversation forking
+- 2026-02-03: Phase 6 Plan 04 complete - Real-time progress UI with incremental results
 - 2026-02-03: Phase 6 Plan 03 complete - Forked parallel batch analysis with 30 concurrent forks
 - 2026-02-03: Phase 6 Plan 02 complete - Initial full-document analysis with forking context
 - 2026-02-03: Phase 6 Plan 01 complete - Content pre-filtering
-- 2026-02-03: Phase 5 Plan 02 complete - Frontend HTML integration
-- 2026-02-03: Phase 5 Plan 01 complete - HTML rendering service with caching
-- 2026-02-03: Phase 5 planned (2 plans) - docx-parser-converter for high-fidelity HTML rendering
+- 2026-02-03: Phase 5 complete (2/2 plans) - High-fidelity document rendering
+- 2026-02-03: Phase 3 Plan 02 complete - TF-IDF matching and auto-jump
 - 2026-02-03: Phase 3 Plan 01 complete - Split.js split-pane layout
-- 2026-02-02: Phase 3 Plan 02 complete - TF-IDF matching and auto-jump
 - 2026-02-01: Project initialized
 
 ## Next Action
 
-Phase 6 Plan 03 complete. Next options:
-- `/gsd:execute-plan 06-04` to implement incremental results display (completes Phase 6)
-- `/gsd:execute-phase 3` to complete Compare Precedent (1 plan remaining)
+Phase 6 complete. Next options:
+- `/gsd:execute-plan 03-03` to implement drag-and-drop correlation editing (completes Phase 3)
+- `/gsd:execute-phase 1` to implement Finalize Redline feature
+- `/gsd:execute-phase 2` to implement Generate Transmittal feature
+- `/gsd:execute-phase 4` to implement New Project flow
 
 ## Accumulated Decisions
 
@@ -75,18 +77,24 @@ Phase 6 Plan 03 complete. Next options:
 | 06-03 | 150 RPM rate limit with AsyncLimiter | Conservative rate limit for Tier 1 accounts; prevents 429 errors |
 | 06-03 | Max 30 concurrent forks | Matches typical batch count for 150-paragraph document at batch_size=5 |
 | 06-03 | Keep sequential as fallback | Ensures robustness when forking fails; future "economical" mode for Phase 7 |
+| 06-04 | CSS-only completion | Backend and JavaScript for incremental results already implemented in prior work |
+| 06-04 | Two-stage indicator with active/complete states | Visual distinction between initial analysis and parallel batch phases |
+| 06-04 | Fade-in animation at 0.4s | Smooth appearance of incremental risks without being distracting |
 
 ## Roadmap Evolution
 
 - Phase 5 simplified: Reduced from 4 plans to 2 plans using docx-parser-converter
 - Phase 5 complete: High-fidelity document rendering for both main and precedent panels
-- Phase 6 progress: Content filtering (01), initial analysis (02), parallel batch (03) complete
-- Phase 6 remaining: Incremental results display (Plan 04)
+- Phase 6 complete: Full analysis acceleration pipeline operational
+  - Plan 01: Content pre-filtering (skip non-substantive paragraphs)
+  - Plan 02: Initial full-document analysis with extended thinking
+  - Plan 03: Forked parallel batch analysis (30 concurrent forks, 90s total)
+  - Plan 04: Real-time progress UI with incremental results
 
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 06-03-PLAN.md
+Stopped at: Completed 06-04-PLAN.md (Phase 6 complete)
 Resume file: None
 
 ---
