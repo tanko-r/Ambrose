@@ -14,6 +14,7 @@ import threading
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
 from datetime import datetime
+from app.services.content_filter import ContentFilter
 
 # Global progress tracker for analysis jobs
 # Key: session_id, Value: progress dict
@@ -480,12 +481,14 @@ def analyze_document_with_llm(
     representation: str,
     aggressiveness: int,
     batch_size: int = 5,
-    session_id: str = None
+    session_id: str = None,
+    include_exhibits: bool = False
 ) -> Dict:
     """
     Perform comprehensive LLM-based document analysis.
 
     Processes document in batches to manage context and cost.
+    Uses ContentFilter to pre-filter non-substantive content before LLM analysis.
 
     Args:
         parsed_doc: Parsed document dict with content array
@@ -494,17 +497,24 @@ def analyze_document_with_llm(
         aggressiveness: 1-5 scale
         batch_size: Number of clauses to analyze per API call
         session_id: Session ID for progress tracking
+        include_exhibits: Whether to analyze exhibit content (default False)
 
     Returns:
         Analysis dict with risks, opportunities, and summary
     """
     start_time = time.time()
 
-    # Extract paragraphs with substantive content
-    paragraphs = [
+    # Use ContentFilter to pre-filter non-substantive content
+    content_filter = ContentFilter(include_exhibits=include_exhibits)
+
+    # Extract all paragraphs first
+    all_paragraphs = [
         item for item in parsed_doc.get('content', [])
-        if item.get('type') == 'paragraph' and len(item.get('text', '').strip()) > 50
+        if item.get('type') == 'paragraph'
     ]
+
+    # Apply content filtering to skip blank, signature blocks, notice addresses, etc.
+    paragraphs, skip_stats = content_filter.filter_content(all_paragraphs)
 
     defined_terms = parsed_doc.get('defined_terms', [])
 
@@ -516,7 +526,7 @@ def analyze_document_with_llm(
     aggregated_concept_map = {}  # Aggregate concept_map from all batches
     all_prompts = []  # Store all prompts for debugging/review
 
-    # Initialize progress
+    # Initialize progress with skip stats
     if session_id:
         update_progress(session_id, {
             'status': 'analyzing',
@@ -529,7 +539,10 @@ def analyze_document_with_llm(
             'started_at': start_time,
             'elapsed_seconds': 0,
             'estimated_remaining_seconds': None,
-            'current_action': 'Building document map...'
+            'current_action': 'Building document map...',
+            'skip_stats': skip_stats,
+            'total_skipped': sum(skip_stats.values()),
+            'total_before_filter': len(all_paragraphs)
         })
 
     # Process in batches
@@ -652,6 +665,8 @@ def analyze_document_with_llm(
             'medium_severity': severity_counts['medium'],
             'info_items': severity_counts['info'],
             'paragraphs_analyzed': len(paragraphs),
+            'paragraphs_skipped': sum(skip_stats.values()),
+            'skip_breakdown': skip_stats,
             'total_batches': total_batches,
             'elapsed_seconds': elapsed_seconds,
             'analysis_method': 'Claude Opus 4.5'
