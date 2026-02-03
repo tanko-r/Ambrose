@@ -11,7 +11,88 @@ async function loadDocument() {
     AppState.flags = result.flags || [];
     AppState.revisions = result.revisions || {};
 
-    renderDocument();
+    // Use high-fidelity HTML rendering
+    const htmlSuccess = await renderDocumentAsHtml();
+
+    if (!htmlSuccess) {
+        // Fallback to plain text rendering
+        console.log('Using plain text fallback');
+        renderDocument();
+    }
+
+    // Update navigation panel
+    if (typeof updateNavPanel === 'function') {
+        updateNavPanel();
+    }
+}
+
+/**
+ * Render document as high-fidelity HTML from backend
+ * Returns true if successful, false if fallback needed
+ */
+async function renderDocumentAsHtml() {
+    const container = document.getElementById('document-content');
+    if (!container) return false;
+
+    // Show loading state
+    container.innerHTML = `
+        <div class="document-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading document preview...</p>
+        </div>
+    `;
+
+    try {
+        // Fetch high-fidelity HTML from backend
+        const response = await fetch(`/api/document/${AppState.sessionId}/html`);
+        if (!response.ok) {
+            throw new Error(`Failed to load document: ${response.status}`);
+        }
+
+        const html = await response.text();
+        container.innerHTML = html;
+
+        // Setup paragraph click handlers
+        setupDocumentClickHandlers(container);
+
+        return true;
+    } catch (error) {
+        console.error('HTML rendering failed:', error);
+        return false;
+    }
+}
+
+/**
+ * Setup click handlers on paragraphs in the HTML-rendered document
+ */
+function setupDocumentClickHandlers(container) {
+    // Find all paragraphs with data-para-id
+    container.querySelectorAll('[data-para-id]').forEach(p => {
+        p.classList.add('clickable-paragraph');
+
+        p.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const paraId = p.dataset.paraId;
+
+            // Remove previous selection
+            container.querySelectorAll('.clickable-paragraph.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Select this paragraph
+            p.classList.add('selected');
+
+            // Trigger sidebar update
+            selectParagraph(paraId);
+        });
+
+        // Double-click for clause lock (matches existing behavior)
+        p.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const paraId = p.dataset.paraId;
+            handleParagraphDoubleClick(paraId);
+        });
+    });
 }
 
 // Render document content
@@ -82,9 +163,14 @@ function renderDocument() {
             rightTabs += '<div class="side-tab side-tab-attorney" title="Flagged for attorney review"></div>';
         }
 
+        // Check if this paragraph is locked
+        const isLocked = typeof getLockedClauseId === 'function' && getLockedClauseId() === para.id;
+        if (isLocked) classes.push('locked');
+
         html += `
             <div class="${classes.join(' ')}" data-para-id="${para.id}" ${rationaleAttr}
                  onclick="selectParagraph('${para.id}')"
+                 ondblclick="handleParagraphDoubleClick('${para.id}')"
                  ${isAccepted ? `onmouseenter="showRevisionTooltip(event, '${para.id}')" onmouseleave="hideRevisionTooltip()"` : ''}>
                 <div class="side-tabs side-tabs-left">${leftTabs}</div>
                 <div class="side-tabs side-tabs-right">${rightTabs}</div>
@@ -156,10 +242,16 @@ async function selectParagraph(paraId) {
         }
     }
 
-    // Update selection
-    document.querySelectorAll('.para-block.selected').forEach(el => el.classList.remove('selected'));
+    // Update selection - handle both HTML mode (.clickable-paragraph) and plain text mode (.para-block)
+    document.querySelectorAll('.para-block.selected, .clickable-paragraph.selected').forEach(el => el.classList.remove('selected'));
     const el = document.querySelector(`[data-para-id="${paraId}"]`);
-    if (el) el.classList.add('selected');
+    if (el) {
+        el.classList.add('selected');
+        // Scroll to and center the selected paragraph in HTML mode
+        if (el.classList.contains('clickable-paragraph')) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
 
     AppState.selectedParaId = paraId;
 
@@ -303,9 +395,25 @@ function unfocusRisk() {
     clearHighlightsInternal();
 }
 
+/**
+ * Handle double-click on a paragraph to toggle clause lock
+ * When locked, precedent matches stay fixed on the locked clause
+ * @param {string} paraId - The paragraph ID that was double-clicked
+ */
+function handleParagraphDoubleClick(paraId) {
+    // Toggle clause lock (works whether precedent panel is open or not)
+    if (typeof toggleClauseLock === 'function') {
+        toggleClauseLock(paraId);
+        // Re-render to update UI
+        renderDocument();
+    }
+}
+
 // Export for use in other modules
 window.loadDocument = loadDocument;
 window.renderDocument = renderDocument;
+window.renderDocumentAsHtml = renderDocumentAsHtml;
+window.setupDocumentClickHandlers = setupDocumentClickHandlers;
 window.highlightRisks = highlightRisks;
 window.selectParagraph = selectParagraph;
 window.highlightProblematicText = highlightProblematicText;
@@ -315,3 +423,4 @@ window.unfocusRisk = unfocusRisk;
 window.showRevisionTooltip = showRevisionTooltip;
 window.hideRevisionTooltip = hideRevisionTooltip;
 window.escapeAttr = escapeAttr;
+window.handleParagraphDoubleClick = handleParagraphDoubleClick;
