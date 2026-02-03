@@ -458,8 +458,9 @@ def get_analysis_progress(session_id):
     Get current progress of analysis.
 
     Returns real-time progress data for the analysis overlay.
+    Optionally includes incremental risks found so far when include_risks=true.
     """
-    from app.services.claude_service import get_progress
+    from app.services.claude_service import get_progress, get_partial_risks
 
     progress = get_progress(session_id)
     if not progress:
@@ -468,12 +469,39 @@ def get_analysis_progress(session_id):
         if session and session.get('analysis'):
             return jsonify({
                 'status': 'complete',
+                'stage': 'complete',
                 'percent': 100
             })
         return jsonify({
             'status': 'not_started',
             'percent': 0
         })
+
+    # Add incremental risks if requested and analysis is in progress
+    include_risks = request.args.get('include_risks', 'false').lower() == 'true'
+    if include_risks and progress.get('status') == 'analyzing':
+        progress['incremental_risks'] = get_partial_risks(session_id)
+
+    # Add human-readable stage description
+    stage = progress.get('stage')
+    if stage == 'initial_analysis':
+        progress['stage_display'] = 'Analyzing full document structure...'
+    elif stage == 'parallel_batches':
+        batch = progress.get('current_batch', 0)
+        total = progress.get('total_batches', 0)
+        progress['stage_display'] = f'Running parallel analysis ({batch}/{total} batches)'
+    elif stage == 'complete':
+        progress['stage_display'] = 'Analysis complete'
+    else:
+        progress['stage_display'] = progress.get('current_action', 'Processing...')
+
+    # Format elapsed time as human-readable
+    if progress.get('elapsed_seconds'):
+        elapsed = progress['elapsed_seconds']
+        if elapsed > 60:
+            progress['elapsed_display'] = f"{elapsed // 60}m {elapsed % 60}s"
+        else:
+            progress['elapsed_display'] = f"{elapsed}s"
 
     return jsonify(progress)
 
