@@ -14,7 +14,7 @@
 | 3 | Compare Precedent | Side-by-side precedent viewing | PREC-01, PREC-02, PREC-03, PREC-04 | Pending |
 | 4 | New Project | Session management and reset | NEW-01, NEW-02, NEW-03, NEW-04 | Pending |
 | 5 | High-Fidelity Document Rendering | Exact Word formatting in both panels | RENDER-01, RENDER-02, RENDER-03, RENDER-04 | Complete |
-| 6 | Analysis Acceleration | Reduce analysis time from 30+ min to <5 min | ACCEL-01, ACCEL-02, ACCEL-03, ACCEL-04 | Pending |
+| 6 | Analysis Acceleration | Reduce analysis time from 30+ min to <2 min | ACCEL-01, ACCEL-02, ACCEL-03, ACCEL-04 | Pending |
 
 ## Phase Details
 
@@ -149,7 +149,7 @@ Plans:
 - [x] 05-02-PLAN.md — Frontend HTML integration for both panels
 
 **Implementation Notes:**
-- docx-parser-converter (already installed v1.0.3) for server-side DOCX→HTML conversion
+- docx-parser-converter (already installed v1.0.3) for server-side DOCX->HTML conversion
 - Preserves automatic numbering (1.1, 11.3.1 patterns), fonts, indentation, styles
 - Pure Python solution — no external dependencies (LibreOffice not needed)
 - HTML caching after first conversion
@@ -160,36 +160,53 @@ Plans:
 
 ### Phase 6: Analysis Acceleration
 
-**Goal:** Dramatically reduce contract analysis time from 30+ minutes to under 5 minutes by filtering non-substantive content, optimizing API calls, and implementing smart caching.
+**Goal:** Dramatically reduce contract analysis time from 30+ minutes to under 2 minutes using conversation forking architecture for massive parallelism.
 
 **Requirements:**
 - ACCEL-01: Pre-filter non-substantive paragraphs (blank, headers, signatures, notice addresses)
 - ACCEL-02: Skip exhibit analysis when user indicates exhibits should be ignored
-- ACCEL-03: Batch and parallelize API calls to Gemini
+- ACCEL-03: Parallel batch analysis via conversation forking (30 concurrent batches)
 - ACCEL-04: Implement progress indicators and incremental results display
 
 **Success Criteria:**
-1. Standard 30-page PSA completes analysis in under 5 minutes
+1. Standard 30-page PSA completes analysis in under 2 minutes
 2. Blank paragraphs, signature blocks, notice addresses, and headers are auto-skipped
 3. When user selects "ignore exhibits" in intake, exhibit paragraphs are not sent to LLM
-4. Progress bar shows real-time analysis status
+4. Progress bar shows real-time analysis status with two stages (initial + parallel)
 5. User sees risks populate incrementally as analysis progresses
 
 **Dependencies:** None (optimizes existing analysis pipeline)
 
-**Plans:** 3 plans
+**Plans:** 4 plans
 
 Plans:
 - [ ] 06-01-PLAN.md — Content pre-filtering service (ACCEL-01, ACCEL-02)
-- [ ] 06-02-PLAN.md — Parallel async analyzer with rate limiting (ACCEL-03)
-- [ ] 06-03-PLAN.md — Progress streaming and incremental UI updates (ACCEL-04)
+- [ ] 06-02-PLAN.md — Initial full-document analysis (establishes context for forking)
+- [ ] 06-03-PLAN.md — Forked parallel batch analysis (30 concurrent batches)
+- [ ] 06-04-PLAN.md — Progress streaming and incremental UI updates (ACCEL-04)
+
+**Wave Structure:**
+```
+Wave 1: 06-01 (filter) + 06-02 (initial analysis) — parallel
+Wave 2: 06-03 (forked batches) — depends on 01, 02
+Wave 3: 06-04 (progress UI) — depends on 03
+```
+
+**Architecture: Conversation Forking**
+1. **Initial Analysis (06-02):** Send entire document to Opus 4.5, extract concept map, defined terms, cross-references
+2. **Forked Batches (06-03):** 30 parallel "forks" from initial conversation, each inheriting full document context
+
+**Cost/Speed Tradeoff:**
+- Fast mode (this phase): ~$6/document, ~90 seconds
+- Economical mode (Phase 7): ~$2/document, ~15 minutes (sequential with document map)
 
 **Implementation Notes:**
 - Pre-parse pass to classify paragraphs as substantive vs mechanical
 - Regex patterns for signature blocks, notice addresses, exhibit markers
-- Batch multiple paragraphs per API call where context allows
-- Parallel API calls with rate limiting
-- Streaming/incremental UI updates
+- Initial analysis uses extended thinking for comprehensive document understanding
+- Each batch fork inherits conversation_messages from initial analysis
+- AsyncAnthropic with aiolimiter for rate-limited parallel execution
+- Phase 7 will add `analysis_mode: 'fast' | 'economical'` toggle in intake
 
 ---
 
@@ -225,3 +242,4 @@ Each agent:
 
 ---
 *Roadmap created: 2026-02-01*
+*Updated: 2026-02-03 (Phase 6 revised for conversation forking architecture)*
