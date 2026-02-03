@@ -1,11 +1,18 @@
 /**
- * Precedent Panel - Compare Precedent Feature
+ * Precedent Panel - Compare Precedent Feature (Split.js Version)
  *
- * PREC-01: User can open precedent document in separate panel from sidebar
+ * PREC-01: User can open precedent document in split pane beside main document
  * PREC-02: Precedent panel displays full document with navigation
  * PREC-03: System highlights clauses in precedent that relate to current paragraph
  * PREC-04: User can copy text from precedent panel for reference
+ *
+ * UAT FIX #1: Panel now pushes main document left instead of overlaying
+ * UAT FIX #2: Precedent has its own section navigator on right side
  */
+
+// Split.js instance management
+let splitInstance = null;
+const SPLIT_SIZES_KEY = 'precedent-split-sizes';
 
 // Precedent panel state
 let precedentPanelState = {
@@ -15,8 +22,12 @@ let precedentPanelState = {
     sections: [],
     relatedClauseIds: [],
     scrollPosition: 0,
-    currentParaId: null
+    currentParaId: null,
+    activeNavItem: null
 };
+
+// IntersectionObserver for active section tracking
+let precedentScrollObserver = null;
 
 /**
  * Open the precedent comparison panel
@@ -88,81 +99,37 @@ async function fetchRelatedPrecedentClauses(paraId) {
 }
 
 /**
- * Render the precedent panel content
+ * Render the precedent panel content into the split pane structure
  */
 function renderPrecedentPanel() {
-    const panel = document.getElementById('precedent-panel');
-    if (!panel) return;
-
     const doc = precedentPanelState.document;
     if (!doc) return;
 
-    // Build table of contents
-    const tocHtml = buildPrecedentTOC(doc.sections || []);
-
-    // Build document content
-    const contentHtml = buildPrecedentContent(doc.content || []);
-
-    panel.innerHTML = `
-        <div class="precedent-panel-header">
-            <div class="precedent-panel-title">
-                <span class="precedent-panel-icon">&#128203;</span>
-                <span class="precedent-panel-filename">${escapeHtml(precedentPanelState.filename)}</span>
+    // Render header
+    const headerEl = document.getElementById('precedent-header');
+    if (headerEl) {
+        headerEl.innerHTML = `
+            <div class="precedent-header-left">
+                <span class="precedent-header-icon">&#128203;</span>
+                <span class="precedent-header-filename">${escapeHtml(precedentPanelState.filename)}</span>
             </div>
-            <button class="precedent-panel-close" onclick="closePrecedentPanel()" title="Close panel">&times;</button>
-        </div>
-        <div class="precedent-panel-body">
-            <div class="precedent-panel-toc">
-                <div class="precedent-toc-header">
-                    <span class="precedent-toc-title">Contents</span>
-                    <button class="precedent-toc-collapse" onclick="togglePrecedentTOC()" title="Toggle contents">
-                        <span id="precedent-toc-icon">&#9660;</span>
-                    </button>
-                </div>
-                <div class="precedent-toc-list" id="precedent-toc-list">
-                    ${tocHtml}
-                </div>
-            </div>
-            <div class="precedent-panel-content" id="precedent-panel-content">
-                ${contentHtml}
-            </div>
-        </div>
-        <div class="precedent-panel-footer">
-            <span class="precedent-related-count" id="precedent-related-count">
-                ${precedentPanelState.relatedClauseIds.length} related clause(s) highlighted
-            </span>
-            <button class="btn btn-sm btn-secondary" onclick="scrollToFirstRelated()">
-                Jump to First Match
-            </button>
-        </div>
-    `;
-
-    // Setup copy functionality for text selection (PREC-04)
-    setupPrecedentCopyHandler();
-}
-
-/**
- * Build table of contents HTML from sections
- */
-function buildPrecedentTOC(sections) {
-    if (!sections || sections.length === 0) {
-        return '<div class="precedent-toc-empty">No sections found</div>';
+            <button class="precedent-header-close" onclick="closePrecedentPanel()" title="Close panel">&times;</button>
+        `;
     }
 
-    let html = '';
-    sections.forEach(section => {
-        const level = section.hierarchy?.length || 0;
-        const indent = Math.min(level, 3);
-        html += `
-            <div class="precedent-toc-item" data-level="${indent}"
-                 onclick="scrollToPrecedentSection('${section.para_id}')">
-                <span class="precedent-toc-ref">${escapeHtml(section.number || '')}</span>
-                <span class="precedent-toc-text">${escapeHtml(section.title || '')}</span>
-            </div>
-        `;
-    });
+    // Build and render document content
+    const contentHtml = buildPrecedentContent(doc.content || []);
+    const contentEl = document.getElementById('precedent-content');
+    if (contentEl) {
+        contentEl.innerHTML = contentHtml;
+        // Setup copy functionality (PREC-04)
+        setupPrecedentCopyHandler();
+        // Setup scroll observer for active section tracking
+        setupPrecedentScrollObserver();
+    }
 
-    return html;
+    // Build and render navigator
+    renderPrecedentNavigator();
 }
 
 /**
@@ -186,7 +153,8 @@ function buildPrecedentContent(content) {
             html += `
                 <div class="precedent-para ${relatedClass}"
                      id="prec-${item.id}"
-                     data-para-id="${item.id}">
+                     data-para-id="${item.id}"
+                     data-section-ref="${item.section_ref || ''}">
                     ${item.section_ref ? `<span class="precedent-para-ref">${escapeHtml(item.section_ref)}</span>` : ''}
                     <div class="precedent-para-text">${escapeHtml(text)}</div>
                 </div>
@@ -200,43 +168,222 @@ function buildPrecedentContent(content) {
 }
 
 /**
- * Open the precedent panel (slide in)
+ * Render the precedent navigator (right side section list)
+ * UAT FIX #2: Precedent has its own section navigator
+ */
+function renderPrecedentNavigator() {
+    const navigatorEl = document.getElementById('precedent-navigator');
+    if (!navigatorEl) return;
+
+    const sections = precedentPanelState.sections || [];
+    const relatedIds = precedentPanelState.relatedClauseIds || [];
+
+    let html = `
+        <div class="precedent-nav-header">Sections</div>
+    `;
+
+    if (sections.length === 0) {
+        html += '<div class="precedent-nav-empty">No sections found</div>';
+    } else {
+        sections.forEach(section => {
+            const level = section.hierarchy?.length || 0;
+            const indent = Math.min(level, 3);
+            const isRelated = relatedIds.includes(section.para_id);
+            const relatedClass = isRelated ? 'precedent-nav-related' : '';
+
+            html += `
+                <div class="precedent-nav-item ${relatedClass}"
+                     data-level="${indent}"
+                     data-para-id="${section.para_id}"
+                     onclick="scrollToPrecedentSection('${section.para_id}')">
+                    <span class="precedent-nav-ref">${escapeHtml(section.number || '')}</span>
+                    <span class="precedent-nav-text">${escapeHtml(section.title || '')}</span>
+                </div>
+            `;
+        });
+    }
+
+    // Add related count at bottom
+    const relatedCount = relatedIds.length;
+    if (relatedCount > 0) {
+        html += `
+            <div class="precedent-related-indicator">
+                ${relatedCount} related clause${relatedCount !== 1 ? 's' : ''}
+            </div>
+        `;
+    }
+
+    navigatorEl.innerHTML = html;
+}
+
+/**
+ * Setup IntersectionObserver for tracking active section in navigator
+ */
+function setupPrecedentScrollObserver() {
+    // Cleanup existing observer
+    if (precedentScrollObserver) {
+        precedentScrollObserver.disconnect();
+    }
+
+    const contentEl = document.getElementById('precedent-content');
+    if (!contentEl) return;
+
+    const options = {
+        root: contentEl,
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0
+    };
+
+    precedentScrollObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const paraId = entry.target.dataset.paraId;
+                updateActiveNavItem(paraId);
+            }
+        });
+    }, options);
+
+    // Observe all paragraphs
+    contentEl.querySelectorAll('.precedent-para').forEach(para => {
+        precedentScrollObserver.observe(para);
+    });
+}
+
+/**
+ * Update the active item in the navigator
+ */
+function updateActiveNavItem(paraId) {
+    // Remove active class from previous
+    const navigatorEl = document.getElementById('precedent-navigator');
+    if (!navigatorEl) return;
+
+    navigatorEl.querySelectorAll('.precedent-nav-item.active').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // Find matching nav item (may be section that contains this para)
+    const navItem = navigatorEl.querySelector(`.precedent-nav-item[data-para-id="${paraId}"]`);
+    if (navItem) {
+        navItem.classList.add('active');
+        precedentPanelState.activeNavItem = paraId;
+
+        // Scroll nav item into view if needed
+        navItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+/**
+ * Open the precedent panel using Split.js
+ * UAT FIX #1: Panel pushes main document instead of overlaying
  */
 function openPrecedentPanel() {
-    const panel = document.getElementById('precedent-panel');
-    if (panel) {
-        panel.classList.add('open');
-        precedentPanelState.isOpen = true;
-        document.body.classList.add('precedent-panel-open');
+    const precedentPane = document.getElementById('precedent-pane');
+    if (!precedentPane) return;
+
+    // Show the precedent pane
+    precedentPane.classList.remove('hidden');
+    precedentPanelState.isOpen = true;
+
+    // Initialize Split.js if not already
+    if (!splitInstance) {
+        initializeSplit();
     }
 }
 
 /**
- * Close the precedent panel
+ * Initialize Split.js for resizable split panes
+ */
+function initializeSplit() {
+    const mainPane = document.getElementById('main-document-pane');
+    const precedentPane = document.getElementById('precedent-pane');
+
+    if (!mainPane || !precedentPane) {
+        console.error('Split panes not found');
+        return;
+    }
+
+    // Check if Split.js is available
+    if (typeof Split === 'undefined') {
+        console.error('Split.js not loaded');
+        return;
+    }
+
+    // Load saved sizes or use defaults
+    const savedSizes = loadSplitSizes();
+    const sizes = savedSizes || [55, 45];
+
+    try {
+        splitInstance = Split(['#main-document-pane', '#precedent-pane'], {
+            sizes: sizes,
+            minSize: [400, 350],
+            gutterSize: 6,
+            cursor: 'col-resize',
+            direction: 'horizontal',
+            onDragEnd: (sizes) => {
+                saveSplitSizes(sizes);
+            }
+        });
+    } catch (error) {
+        console.error('Failed to initialize Split.js:', error);
+    }
+}
+
+/**
+ * Save split sizes to localStorage
+ */
+function saveSplitSizes(sizes) {
+    try {
+        localStorage.setItem(SPLIT_SIZES_KEY, JSON.stringify(sizes));
+    } catch (e) {
+        console.warn('Could not save split sizes:', e);
+    }
+}
+
+/**
+ * Load split sizes from localStorage
+ */
+function loadSplitSizes() {
+    try {
+        const saved = localStorage.getItem(SPLIT_SIZES_KEY);
+        if (saved) {
+            const sizes = JSON.parse(saved);
+            if (Array.isArray(sizes) && sizes.length === 2) {
+                return sizes;
+            }
+        }
+    } catch (e) {
+        console.warn('Could not load split sizes:', e);
+    }
+    return null;
+}
+
+/**
+ * Close the precedent panel and destroy Split.js instance
  */
 function closePrecedentPanel() {
-    const panel = document.getElementById('precedent-panel');
-    if (panel) {
-        // Save scroll position before closing
-        const contentEl = document.getElementById('precedent-panel-content');
-        if (contentEl) {
-            precedentPanelState.scrollPosition = contentEl.scrollTop;
-        }
-        panel.classList.remove('open');
-        precedentPanelState.isOpen = false;
-        document.body.classList.remove('precedent-panel-open');
-    }
-}
+    const precedentPane = document.getElementById('precedent-pane');
+    if (!precedentPane) return;
 
-/**
- * Toggle the table of contents visibility
- */
-function togglePrecedentTOC() {
-    const tocList = document.getElementById('precedent-toc-list');
-    const tocIcon = document.getElementById('precedent-toc-icon');
-    if (tocList && tocIcon) {
-        tocList.classList.toggle('collapsed');
-        tocIcon.innerHTML = tocList.classList.contains('collapsed') ? '&#9654;' : '&#9660;';
+    // Save scroll position before closing
+    const contentEl = document.getElementById('precedent-content');
+    if (contentEl) {
+        precedentPanelState.scrollPosition = contentEl.scrollTop;
+    }
+
+    // Hide the precedent pane
+    precedentPane.classList.add('hidden');
+    precedentPanelState.isOpen = false;
+
+    // Destroy Split.js instance
+    if (splitInstance) {
+        splitInstance.destroy();
+        splitInstance = null;
+    }
+
+    // Cleanup observer
+    if (precedentScrollObserver) {
+        precedentScrollObserver.disconnect();
+        precedentScrollObserver = null;
     }
 }
 
@@ -250,6 +397,9 @@ function scrollToPrecedentSection(paraId) {
         // Brief highlight effect
         element.classList.add('precedent-highlight-flash');
         setTimeout(() => element.classList.remove('precedent-highlight-flash'), 1500);
+
+        // Update nav item
+        updateActiveNavItem(paraId);
     }
 }
 
@@ -277,8 +427,11 @@ function autoJumpToFirstMatch() {
                 // Add highlight flash animation
                 element.classList.add('precedent-highlight-flash');
                 setTimeout(() => element.classList.remove('precedent-highlight-flash'), 2000);
+
+                // Update nav item
+                updateActiveNavItem(firstId);
             }
-        }, 100);
+        }, 150);
     } else {
         showToast('No related clauses found for this paragraph', 'info');
     }
@@ -306,10 +459,10 @@ async function updatePrecedentRelatedClauses(paraId) {
     precedentPanelState.currentParaId = paraId;
 
     // Fetch new related clauses
-    const relatedClauses = await fetchRelatedPrecedentClauses(paraId);
+    await fetchRelatedPrecedentClauses(paraId);
 
-    // Update highlights in the document
-    const contentEl = document.getElementById('precedent-panel-content');
+    // Update highlights in the document content
+    const contentEl = document.getElementById('precedent-content');
     if (contentEl) {
         // Remove old highlights
         contentEl.querySelectorAll('.precedent-related').forEach(el => {
@@ -325,10 +478,47 @@ async function updatePrecedentRelatedClauses(paraId) {
         });
     }
 
-    // Update count display
-    const countEl = document.getElementById('precedent-related-count');
-    if (countEl) {
-        countEl.textContent = `${precedentPanelState.relatedClauseIds.length} related clause(s) highlighted`;
+    // Update navigator highlights
+    const navigatorEl = document.getElementById('precedent-navigator');
+    if (navigatorEl) {
+        // Remove old related highlights
+        navigatorEl.querySelectorAll('.precedent-nav-related').forEach(el => {
+            el.classList.remove('precedent-nav-related');
+        });
+
+        // Add new related highlights
+        precedentPanelState.relatedClauseIds.forEach(id => {
+            const navItem = navigatorEl.querySelector(`.precedent-nav-item[data-para-id="${id}"]`);
+            if (navItem) {
+                navItem.classList.add('precedent-nav-related');
+            }
+        });
+
+        // Update related count indicator
+        updateRelatedIndicator();
+    }
+}
+
+/**
+ * Update the related count indicator in navigator
+ */
+function updateRelatedIndicator() {
+    const navigatorEl = document.getElementById('precedent-navigator');
+    if (!navigatorEl) return;
+
+    // Remove existing indicator
+    const existingIndicator = navigatorEl.querySelector('.precedent-related-indicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+
+    // Add new indicator if there are related clauses
+    const relatedCount = precedentPanelState.relatedClauseIds.length;
+    if (relatedCount > 0) {
+        const indicator = document.createElement('div');
+        indicator.className = 'precedent-related-indicator';
+        indicator.textContent = `${relatedCount} related clause${relatedCount !== 1 ? 's' : ''}`;
+        navigatorEl.appendChild(indicator);
     }
 }
 
@@ -336,20 +526,11 @@ async function updatePrecedentRelatedClauses(paraId) {
  * Setup copy handler for text selection (PREC-04)
  */
 function setupPrecedentCopyHandler() {
-    const contentEl = document.getElementById('precedent-panel-content');
+    const contentEl = document.getElementById('precedent-content');
     if (!contentEl) return;
 
     // Enable text selection (CSS handles this, but ensure it's not disabled)
     contentEl.style.userSelect = 'text';
-
-    // Add context menu with copy option
-    contentEl.addEventListener('contextmenu', (e) => {
-        const selection = window.getSelection();
-        if (selection && selection.toString().trim()) {
-            // Browser default context menu will handle copy
-            // Alternatively, we could add a custom copy action
-        }
-    });
 
     // Add keyboard shortcut for copy (Ctrl+C / Cmd+C)
     contentEl.addEventListener('keydown', (e) => {
@@ -364,31 +545,28 @@ function setupPrecedentCopyHandler() {
 }
 
 /**
- * Handle click outside to close panel
+ * Check if precedent panel is currently open
  */
-function setupPrecedentPanelClickOutside() {
-    document.addEventListener('click', (e) => {
-        const panel = document.getElementById('precedent-panel');
-        if (!panel || !precedentPanelState.isOpen) return;
-
-        // Check if click is outside the panel
-        if (!panel.contains(e.target) && !e.target.closest('.precedent-clause')) {
-            // Don't close if clicking on sidebar or document content
-            if (e.target.closest('.sidebar') || e.target.closest('.document-panel')) {
-                return;
-            }
-        }
-    });
+function isPrecedentPanelOpen() {
+    return precedentPanelState.isOpen;
 }
 
-// Initialize click outside handler
-document.addEventListener('DOMContentLoaded', setupPrecedentPanelClickOutside);
+/**
+ * Get current split sizes
+ */
+function getSplitSizes() {
+    if (splitInstance) {
+        return splitInstance.getSizes();
+    }
+    return null;
+}
 
 // Export functions for use in other modules
 window.comparePrecedent = comparePrecedent;
 window.closePrecedentPanel = closePrecedentPanel;
-window.togglePrecedentTOC = togglePrecedentTOC;
 window.scrollToPrecedentSection = scrollToPrecedentSection;
 window.scrollToFirstRelated = scrollToFirstRelated;
 window.autoJumpToFirstMatch = autoJumpToFirstMatch;
 window.updatePrecedentRelatedClauses = updatePrecedentRelatedClauses;
+window.isPrecedentPanelOpen = isPrecedentPanelOpen;
+window.getSplitSizes = getSplitSizes;
