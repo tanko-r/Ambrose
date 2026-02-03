@@ -35,6 +35,13 @@ Requirements for completing placeholder UI features.
 - [ ] **NEW-03**: After save/discard decision, UI returns to fresh intake form
 - [ ] **NEW-04**: Session history allows returning to previous projects (optional enhancement)
 
+### Document Rendering
+
+- [x] **RENDER-01**: Document preview matches Word formatting exactly (fonts, sizes, spacing)
+- [x] **RENDER-02**: Automatic numbering renders correctly (1.1, (a), (i), etc.)
+- [x] **RENDER-03**: Indentation and margins preserved precisely
+- [x] **RENDER-04**: Both main panel and precedent panel use same high-fidelity rendering engine
+
 ## v2 Requirements
 
 Deferred to future release.
@@ -80,10 +87,14 @@ Deferred to future release.
 | NEW-02 | Phase 4 | Pending |
 | NEW-03 | Phase 4 | Pending |
 | NEW-04 | Phase 4 | Pending |
+| RENDER-01 | Phase 5 | Complete |
+| RENDER-02 | Phase 5 | Complete |
+| RENDER-03 | Phase 5 | Complete |
+| RENDER-04 | Phase 5 | Complete |
 
 **Coverage:**
-- v1 requirements: 16 total
-- Mapped to phases: 16
+- v1 requirements: 20 total
+- Mapped to phases: 20
 - Unmapped: 0 ✓
 
 ---
