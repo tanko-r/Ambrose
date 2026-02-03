@@ -48,7 +48,7 @@
             <span class="header-filename" id="header-filename"></span>
         </div>
         <div class="header-actions">
-            <button class="btn btn-secondary btn-sm" id="btn-new" onclick="showIntake()">New Document</button>
+            <button class="btn btn-secondary btn-sm" id="btn-new" onclick="showNewProjectModal()">New</button>
             <!-- User Menu -->
             <div class="user-menu-container">
                 <button class="user-menu-btn" id="user-menu-btn" title="User menu">
@@ -83,98 +83,134 @@
 
     <!-- Main Container - Three Panel Layout -->
     <div class="main-container">
-        <!-- Intake Screen -->
-        <div class="intake-screen" id="intake-screen">
-            <div class="intake-card">
-                <h2 class="intake-title">Start Contract Review</h2>
-                <p class="intake-subtitle">Upload a contract and configure your review preferences.</p>
+        <!-- Dashboard Screen -->
+        <div class="dashboard-screen" id="intake-screen">
+            <!-- Left Panel: Recent & Active -->
+            <div class="dashboard-panel dashboard-panel-left">
+                <div class="dashboard-section">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128337;</span>
+                        <span>Recent Projects</span>
+                    </div>
+                    <div class="dashboard-section-content" id="recent-projects-container">
+                        <p class="dashboard-empty">No recent projects</p>
+                    </div>
+                </div>
+                <div class="dashboard-section dashboard-section-muted">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128221;</span>
+                        <span>Active Reviews</span>
+                        <span class="dashboard-coming-soon">Coming Soon</span>
+                    </div>
+                    <div class="dashboard-section-content">
+                        <p class="dashboard-empty">In-progress reviews will appear here</p>
+                    </div>
+                </div>
+            </div>
 
-                <form id="intake-form" onsubmit="submitIntake(event)">
-                    <!-- File uploads -->
-                    <div class="form-group">
-                        <label class="form-label">Target Contract *</label>
-                        <div class="upload-area" id="target-upload" onclick="document.getElementById('target-file').click()">
-                            <div class="upload-icon">&#128196;</div>
-                            <div id="target-filename">Click or drag to upload .docx file</div>
+            <!-- Center Panel: New Review Form -->
+            <div class="dashboard-panel dashboard-panel-center">
+                <div class="dashboard-card">
+                    <h2 class="dashboard-card-title">New Contract Review</h2>
+
+                    <form id="intake-form" onsubmit="submitIntake(event)">
+                        <!-- File uploads row -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">Target Contract *</label>
+                                <div class="upload-area upload-area-compact" id="target-upload" onclick="document.getElementById('target-file').click()">
+                                    <span class="upload-icon-sm">&#128196;</span>
+                                    <span id="target-filename">Drop or click to upload</span>
+                                </div>
+                                <input type="file" id="target-file" accept=".docx" style="display:none" onchange="handleFileSelect(this, 'target')">
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Precedent (Optional)</label>
+                                <div class="upload-area upload-area-compact" id="precedent-upload" onclick="document.getElementById('precedent-file').click()">
+                                    <span class="upload-icon-sm">&#128203;</span>
+                                    <span id="precedent-filename">Drop or click to upload</span>
+                                </div>
+                                <input type="file" id="precedent-file" accept=".docx" style="display:none" onchange="handleFileSelect(this, 'precedent')">
+                            </div>
                         </div>
-                        <input type="file" id="target-file" accept=".docx" style="display:none" onchange="handleFileSelect(this, 'target')">
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Precedent/Preferred Form (Optional)</label>
-                        <div class="upload-area" id="precedent-upload" onclick="document.getElementById('precedent-file').click()">
-                            <div class="upload-icon">&#128203;</div>
-                            <div id="precedent-filename">Click or drag to upload .docx file</div>
+                        <!-- Settings row -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">You represent</label>
+                                <select class="form-select" name="representation" required>
+                                    <option value="seller">Seller</option>
+                                    <option value="buyer">Buyer/Purchaser</option>
+                                    <option value="landlord">Landlord</option>
+                                    <option value="tenant">Tenant</option>
+                                    <option value="lender">Lender</option>
+                                    <option value="borrower">Borrower</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="grantor">Grantor</option>
+                                    <option value="grantee">Grantee</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Review Approach</label>
+                                <select class="form-select" name="approach">
+                                    <option value="quick-sale">Quick-Sale</option>
+                                    <option value="competitive-bid" selected>Competitive Bid</option>
+                                    <option value="relationship">Relationship Deal</option>
+                                    <option value="adversarial">Adversarial</option>
+                                </select>
+                            </div>
+                            <div class="form-col form-col-sm">
+                                <label class="form-label">Intensity: <span id="aggr-value">3</span></label>
+                                <input type="range" class="form-range" name="aggressiveness" min="1" max="5" value="3"
+                                       oninput="document.getElementById('aggr-value').textContent=this.value">
+                            </div>
                         </div>
-                        <input type="file" id="precedent-file" accept=".docx" style="display:none" onchange="handleFileSelect(this, 'precedent')">
-                    </div>
 
-                    <!-- Representation -->
-                    <div class="form-group">
-                        <label class="form-label">You represent:</label>
-                        <select class="form-select" name="representation" required>
-                            <option value="seller">Seller</option>
-                            <option value="buyer">Buyer/Purchaser</option>
-                            <option value="landlord">Landlord</option>
-                            <option value="tenant">Tenant</option>
-                            <option value="lender">Lender</option>
-                            <option value="borrower">Borrower</option>
-                            <option value="developer">Developer</option>
-                            <option value="grantor">Grantor</option>
-                            <option value="grantee">Grantee</option>
-                        </select>
-                    </div>
-
-                    <!-- Approach -->
-                    <div class="form-group">
-                        <label class="form-label">Review Approach:</label>
-                        <select class="form-select" name="approach">
-                            <option value="quick-sale">Quick-Sale (Minimize redlines, critical risks only)</option>
-                            <option value="competitive-bid" selected>Competitive Bid (Balanced protection)</option>
-                            <option value="relationship">Relationship Deal (Thorough review)</option>
-                            <option value="adversarial">Adversarial (Maximum protection)</option>
-                        </select>
-                    </div>
-
-                    <!-- Aggressiveness -->
-                    <div class="form-group">
-                        <label class="form-label">Aggressiveness: <span id="aggr-value">3</span>/5</label>
-                        <input type="range" class="form-input" name="aggressiveness" min="1" max="5" value="3"
-                               style="padding:0" oninput="document.getElementById('aggr-value').textContent=this.value">
-                    </div>
-
-                    <!-- Deal context -->
-                    <div class="form-group">
-                        <label class="form-label">Deal Context (Optional)</label>
-                        <textarea class="form-textarea" name="deal_context" placeholder="Any relevant context about the deal, parties, or special considerations..."></textarea>
-                    </div>
-
-                    <!-- Include exhibits -->
-                    <div class="form-group">
-                        <label class="form-checkbox">
-                            <input type="checkbox" name="include_exhibits">
-                            <span>Include exhibits in review</span>
-                        </label>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width:100%">Start Review</button>
-
-                    <!-- Recent Projects Section (NEW-04) -->
-                    <div class="recent-projects-section" id="recent-projects-section">
-                        <div class="recent-projects-title">
-                            <span class="recent-projects-title-icon">&#128337;</span>
-                            <span>Recent Projects</span>
+                        <!-- Context row -->
+                        <div class="form-row">
+                            <div class="form-col form-col-full">
+                                <label class="form-label">Deal Context <span class="form-label-optional">(optional)</span></label>
+                                <input type="text" class="form-input" name="deal_context" placeholder="Key deal points, client concerns, special considerations...">
+                            </div>
                         </div>
-                        <div id="recent-projects-container">
-                            <p class="recent-projects-empty">Loading recent projects...</p>
-                        </div>
-                    </div>
 
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center;">
-                        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.5rem;">Or load saved analysis for testing:</p>
-                        <button type="button" class="btn btn-secondary" onclick="loadTestSession()" style="width:100%">Load Test Session</button>
+                        <!-- Actions row -->
+                        <div class="form-row form-row-actions">
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="include_exhibits">
+                                <span>Include exhibits</span>
+                            </label>
+                            <div class="form-actions-right">
+                                <button type="button" class="btn btn-link" onclick="loadTestSession()">Load Test Data</button>
+                                <button type="submit" class="btn btn-primary">Start Review</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Panel: Team & Library -->
+            <div class="dashboard-panel dashboard-panel-right">
+                <div class="dashboard-section dashboard-section-muted">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128101;</span>
+                        <span>Team Activity</span>
+                        <span class="dashboard-coming-soon">Coming Soon</span>
                     </div>
-                </form>
+                    <div class="dashboard-section-content">
+                        <p class="dashboard-empty">Shared reviews and comments will appear here</p>
+                    </div>
+                </div>
+                <div class="dashboard-section dashboard-section-muted">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128218;</span>
+                        <span>Clause Library</span>
+                        <span class="dashboard-coming-soon">Coming Soon</span>
+                    </div>
+                    <div class="dashboard-section-content">
+                        <p class="dashboard-empty">Saved clauses and templates</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -228,10 +264,29 @@
             </div>
         </nav>
 
-        <!-- Document Panel -->
-        <div class="document-panel hidden" id="document-panel">
-            <div class="document-wrapper" id="document-content">
-                <!-- Document paragraphs will be rendered here -->
+        <!-- Split Container for Document and Precedent -->
+        <div class="split-container hidden" id="split-container">
+            <!-- Main Document Pane -->
+            <div class="split-pane" id="main-document-pane">
+                <div class="document-panel" id="document-panel">
+                    <div class="document-wrapper" id="document-content">
+                        <!-- Document paragraphs will be rendered here -->
+                    </div>
+                </div>
+            </div>
+            <!-- Precedent Pane (hidden by default) -->
+            <div class="split-pane precedent-pane hidden" id="precedent-pane">
+                <div class="precedent-header" id="precedent-header">
+                    <!-- Header rendered by JS -->
+                </div>
+                <div class="precedent-body">
+                    <div class="precedent-content" id="precedent-content">
+                        <!-- Document content rendered by JS -->
+                    </div>
+                    <div class="precedent-navigator" id="precedent-navigator">
+                        <!-- Navigator content rendered by JS -->
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -318,11 +373,6 @@
                 </div>
             </div>
         </aside>
-    </div>
-
-    <!-- Precedent Comparison Panel (PREC-01..PREC-04) -->
-    <div class="precedent-panel" id="precedent-panel">
-        <!-- Content rendered dynamically by precedent.js -->
     </div>
 
     <!-- Flag Modal -->
@@ -574,6 +624,9 @@
             <div class="analysis-batch-info" id="analysis-batch-info"></div>
         </div>
     </div>
+
+    <!-- Split.js for resizable split panes -->
+    <script src="https://unpkg.com/split.js@1.6.5/dist/split.min.js"></script>
 
     <!-- JavaScript modules (order matters for dependencies) -->
     <script src="/static/js/utils.js"></script>

@@ -5,7 +5,7 @@
 function showIntake() {
     document.getElementById('intake-screen')?.classList.remove('hidden');
     document.getElementById('nav-panel')?.classList.add('hidden');
-    document.getElementById('document-panel')?.classList.add('hidden');
+    document.getElementById('split-container')?.classList.add('hidden');
     document.getElementById('sidebar')?.classList.add('hidden');
     const sessionInfo = document.getElementById('session-info');
     if (sessionInfo) sessionInfo.textContent = '';
@@ -19,7 +19,7 @@ function showIntake() {
 function showReviewView() {
     document.getElementById('intake-screen')?.classList.add('hidden');
     document.getElementById('nav-panel')?.classList.remove('hidden');
-    document.getElementById('document-panel')?.classList.remove('hidden');
+    document.getElementById('split-container')?.classList.remove('hidden');
     document.getElementById('sidebar')?.classList.remove('hidden');
     // Show full session ID (clickable to copy)
     const sessionInfo = document.getElementById('session-info');
