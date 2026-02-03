@@ -16,6 +16,7 @@ from typing import Dict, List, Any, Optional, Callable
 from datetime import datetime
 from app.services.content_filter import ContentFilter
 from app.services.initial_analyzer import run_initial_analysis
+from app.services.parallel_analyzer import run_forked_parallel_analysis
 
 # Global progress tracker for analysis jobs
 # Key: session_id, Value: progress dict
@@ -602,77 +603,127 @@ def analyze_document_with_llm(
                     'current_action': 'Initial analysis failed, using sequential analysis...'
                 })
 
-    # Process in batches
-    for i in range(0, len(paragraphs), batch_size):
-        batch = paragraphs[i:i + batch_size]
-        batch_num = i // batch_size + 1
-        paragraphs_processed = min(i + batch_size, len(paragraphs))
+    # TODO (Phase 7): Add analysis_mode parameter to toggle between:
+    # - 'fast': use_forking=True, ~$6/doc, ~90 seconds
+    # - 'economical': use_forking=False, ~$2/doc, ~15 minutes
+    # Expose this choice in intake form
 
-        # Update progress before processing
+    # Track batch stats for summary
+    batch_stats = None
+
+    if use_forking and initial_context:
+        # ===== FORKED PARALLEL PATH (fast, ~$6/doc, ~90 seconds) =====
         if session_id:
-            elapsed = time.time() - start_time
-            # Estimate remaining time based on average time per batch
-            if batch_num > 1:
-                avg_time_per_batch = elapsed / (batch_num - 1)
-                remaining_batches = total_batches - batch_num + 1
-                est_remaining = avg_time_per_batch * remaining_batches
-            else:
-                est_remaining = None
-
             update_progress(session_id, {
-                'current_batch': batch_num,
-                'paragraphs_processed': i,
-                'percent': int((batch_num - 1) / total_batches * 100),
-                'elapsed_seconds': int(elapsed),
-                'estimated_remaining_seconds': int(est_remaining) if est_remaining else None,
-                'current_action': f'Analyzing batch {batch_num} of {total_batches}...',
-                'current_clause_preview': batch[0].get('text', '')[:100] + '...' if batch else ''
+                'current_action': f'Running {total_batches} parallel batch analyses (forked from initial context)...',
+                'stage': 'parallel_batches',
+                'percent': 20
             })
 
-        try:
-            batch_result = analyze_clauses_with_claude(
-                clauses=batch,
-                contract_type=contract_type,
-                representation=representation,
-                aggressiveness=aggressiveness,
-                defined_terms=defined_terms,
-                document_map=document_map
-            )
-            all_risks.extend(batch_result.get('risks', []))
-
-            # Store prompts for this batch
-            if batch_result.get('prompts'):
-                all_prompts.append({
-                    'batch': batch_num,
-                    'clause_ids': [c['id'] for c in batch],
-                    'system': batch_result['prompts'].get('system', ''),
-                    'user': batch_result['prompts'].get('user', '')
-                })
-
-            # Merge concept_map from this batch (later batches may override earlier)
-            batch_concept_map = batch_result.get('concept_map', {})
-            for category, provisions in batch_concept_map.items():
-                if category not in aggregated_concept_map:
-                    aggregated_concept_map[category] = {}
-                if isinstance(provisions, dict):
-                    aggregated_concept_map[category].update(provisions)
-
-            # Update progress after processing
+        def progress_callback(progress_data, batch_result=None):
             if session_id:
+                completed = progress_data['completed']
+                total = progress_data['total']
+                pct = 20 + int(completed / total * 75)  # 20-95%
+
                 update_progress(session_id, {
-                    'risks_found': len(all_risks),
-                    'paragraphs_processed': paragraphs_processed
+                    'current_batch': completed,
+                    'total_batches': total,
+                    'risks_found': progress_data['risks_found'],
+                    'percent': pct,
+                    'current_action': f'Completed batch {completed}/{total} ({progress_data["risks_found"]} risks found so far)'
                 })
 
-        except Exception as e:
-            # Log error but continue with other batches
-            print(f"Error analyzing batch {batch_num}: {e}")
+        # Run forked parallel analysis
+        api_key = get_anthropic_api_key()
+        parallel_result = run_forked_parallel_analysis(
+            api_key=api_key,
+            paragraphs=paragraphs,
+            initial_context=initial_context,
+            batch_size=batch_size,
+            on_progress=progress_callback
+        )
+
+        all_risks = parallel_result['risks']
+
+        # Store batch stats for summary
+        batch_stats = parallel_result['stats']
+
+    else:
+        # ===== SEQUENTIAL PATH (economical, ~$2/doc, ~15 minutes) =====
+        # Keep existing sequential batch processing code as fallback
+        # This becomes the fallback when use_forking=False or initial_context failed
+
+        for i in range(0, len(paragraphs), batch_size):
+            batch = paragraphs[i:i + batch_size]
+            batch_num = i // batch_size + 1
+            paragraphs_processed = min(i + batch_size, len(paragraphs))
+
+            # Update progress before processing
             if session_id:
+                elapsed = time.time() - start_time
+                # Estimate remaining time based on average time per batch
+                if batch_num > 1:
+                    avg_time_per_batch = elapsed / (batch_num - 1)
+                    remaining_batches = total_batches - batch_num + 1
+                    est_remaining = avg_time_per_batch * remaining_batches
+                else:
+                    est_remaining = None
+
                 update_progress(session_id, {
-                    'last_error': str(e),
-                    'current_action': f'Error in batch {batch_num}, continuing...'
+                    'current_batch': batch_num,
+                    'paragraphs_processed': i,
+                    'percent': int((batch_num - 1) / total_batches * 100),
+                    'elapsed_seconds': int(elapsed),
+                    'estimated_remaining_seconds': int(est_remaining) if est_remaining else None,
+                    'current_action': f'Analyzing batch {batch_num} of {total_batches}...',
+                    'current_clause_preview': batch[0].get('text', '')[:100] + '...' if batch else ''
                 })
-            continue
+
+            try:
+                batch_result = analyze_clauses_with_claude(
+                    clauses=batch,
+                    contract_type=contract_type,
+                    representation=representation,
+                    aggressiveness=aggressiveness,
+                    defined_terms=defined_terms,
+                    document_map=document_map
+                )
+                all_risks.extend(batch_result.get('risks', []))
+
+                # Store prompts for this batch
+                if batch_result.get('prompts'):
+                    all_prompts.append({
+                        'batch': batch_num,
+                        'clause_ids': [c['id'] for c in batch],
+                        'system': batch_result['prompts'].get('system', ''),
+                        'user': batch_result['prompts'].get('user', '')
+                    })
+
+                # Merge concept_map from this batch (later batches may override earlier)
+                batch_concept_map = batch_result.get('concept_map', {})
+                for category, provisions in batch_concept_map.items():
+                    if category not in aggregated_concept_map:
+                        aggregated_concept_map[category] = {}
+                    if isinstance(provisions, dict):
+                        aggregated_concept_map[category].update(provisions)
+
+                # Update progress after processing
+                if session_id:
+                    update_progress(session_id, {
+                        'risks_found': len(all_risks),
+                        'paragraphs_processed': paragraphs_processed
+                    })
+
+            except Exception as e:
+                # Log error but continue with other batches
+                print(f"Error analyzing batch {batch_num}: {e}")
+                if session_id:
+                    update_progress(session_id, {
+                        'last_error': str(e),
+                        'current_action': f'Error in batch {batch_num}, continuing...'
+                    })
+                continue
 
     # Mark as complete
     if session_id:
@@ -727,6 +778,9 @@ def analyze_document_with_llm(
             'total_batches': total_batches,
             'elapsed_seconds': elapsed_seconds,
             'analysis_method': 'Claude Opus 4.5',
+            'analysis_mode': 'forked_parallel' if (use_forking and initial_context) else 'sequential',
+            'parallel_stats': batch_stats if (use_forking and initial_context) else None,
+            'estimated_cost': '$6' if (use_forking and initial_context) else '$2',
             'used_forking': use_forking and initial_context is not None,
             'initial_defined_terms': len(defined_terms) if initial_context else 0
         }
