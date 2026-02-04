@@ -1,29 +1,33 @@
 #!/usr/bin/env python3
 """
-Forked Parallel Analyzer for Batch Document Analysis
+Forked Parallel Analyzer for Batch Document Analysis (Gemini Version)
 
-Performs parallel batch analysis by forking from an initial conversation.
-Each batch inherits full document context from the initial analysis,
+Performs parallel batch analysis using Gemini for higher rate limits.
+Each batch includes full document context from the initial Claude analysis,
 enabling true parallelism with shared understanding.
 
 Architecture:
-- Initial analysis (Plan 02) creates first conversation with full document
-- This class creates N parallel "forks" of that conversation
-- Each fork inherits full document context but analyzes specific paragraphs
+- Initial analysis (Plan 02) uses Claude Opus for full document understanding
+- This class creates N parallel Gemini calls for batch analysis
+- Each call includes the full document context + specific paragraphs to analyze
 - Results are aggregated into unified risk list
 
-Cost/Speed tradeoff (with prompt caching):
-- ~$2.50/document, ~90 seconds total (fast mode with caching)
-  - Fork 1 pays to cache initial context (~$2)
-  - Forks 2-30 read from cache at 90% discount (~$0.50 total)
-- Phase 7 will add 'economical' mode: ~$2/doc, ~15 minutes (no initial analysis)
+Why Gemini for batches:
+- Claude Opus has 30K input tokens/minute rate limit
+- Each batch with full context is ~29K tokens, limiting to ~1 request/minute
+- Gemini has much higher rate limits, allowing true parallel execution
+- Initial Claude analysis provides document understanding context
 
 Part of Phase 6: Analysis Acceleration
 """
 
 import asyncio
 import json
+import os
 import re
+import time
+import random
+from pathlib import Path
 from typing import List, Dict, Any, Optional, Callable
 
 # Try to import required packages
@@ -33,54 +37,98 @@ try:
 except ImportError:
     HAS_AIOLIMITER = False
 
+# Try to import Gemini SDK
 try:
-    from anthropic import AsyncAnthropic
-    HAS_ANTHROPIC = True
+    from google import genai
+    from google.genai import types
+    HAS_GEMINI = True
 except ImportError:
-    HAS_ANTHROPIC = False
+    HAS_GEMINI = False
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+
+def get_gemini_api_key() -> Optional[str]:
+    """Get Gemini API key from various sources."""
+    # Try environment variables
+    key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if key:
+        return key
+
+    # Try api.txt file in project root
+    api_txt_paths = [
+        Path(__file__).parent.parent.parent / 'api.txt',
+        Path(__file__).parent.parent.parent / '.env',
+        Path.home() / '.gemini_api_key'
+    ]
+
+    for path in api_txt_paths:
+        if path.exists():
+            content = path.read_text().strip()
+            if path.suffix == '.txt':
+                return content
+            # Parse .env format
+            for line in content.split('\n'):
+                if line.startswith('GEMINI_API_KEY=') or line.startswith('GOOGLE_API_KEY='):
+                    return line.split('=', 1)[1].strip().strip('"\'')
+
+    return None
 
 
 class ForkedParallelAnalyzer:
     """
-    Performs parallel batch analysis by forking from an initial conversation.
+    Performs parallel batch analysis using Gemini for higher rate limits.
 
     Architecture:
-    - Initial analysis (Plan 02) creates first conversation with full document
-    - This class creates N parallel "forks" of that conversation
-    - Each fork inherits full document context but analyzes specific paragraphs
+    - Initial analysis (Plan 02) uses Claude Opus for full document understanding
+    - This class creates N parallel Gemini calls for batch analysis
+    - Each call includes initial context + specific paragraphs to analyze
     - Results are aggregated into unified risk list
 
-    Cost/Speed tradeoff (with prompt caching):
-    - ~$2.50/document, ~90 seconds total
-      - Fork 1 caches initial context
-      - Forks 2-30 reuse cached context at 90% discount
-    - Phase 7 will add 'economical' mode: ~$2/doc, ~15 minutes
+    Why Gemini:
+    - Claude Opus has 30K tokens/minute rate limit (each batch is ~29K tokens)
+    - Gemini has much higher limits, enabling true parallel execution
+    - Cost is lower per batch while maintaining quality for structured extraction
     """
 
     def __init__(
         self,
-        api_key: str,
-        requests_per_minute: int = 150,  # Higher limit for Opus
-        max_concurrent: int = 30         # 30 parallel forks
+        api_key: str = None,
+        requests_per_minute: int = 1000,  # Gemini has higher limits
+        max_concurrent: int = 30          # 30 parallel batches
     ):
         """
-        Initialize the parallel analyzer.
+        Initialize the parallel analyzer with Gemini.
 
         Args:
-            api_key: Anthropic API key
-            requests_per_minute: Rate limit for API calls (default 150 RPM)
+            api_key: Gemini API key (optional, will try to load from env)
+            requests_per_minute: Rate limit for API calls (default 1000 RPM)
             max_concurrent: Maximum concurrent API calls (default 30)
         """
-        if not HAS_ANTHROPIC:
-            raise RuntimeError("Anthropic SDK not installed. Run: pip install anthropic")
+        if not HAS_GEMINI:
+            raise RuntimeError("Gemini SDK not installed. Run: pip install google-genai")
         if not HAS_AIOLIMITER:
             raise RuntimeError("aiolimiter not installed. Run: pip install aiolimiter")
 
-        self.client = AsyncAnthropic(api_key=api_key)
+        # Get API key
+        self.api_key = api_key or get_gemini_api_key()
+        if not self.api_key:
+            raise RuntimeError("Gemini API key not found. Set GEMINI_API_KEY environment variable")
+
+        self.client = genai.Client(api_key=self.api_key)
         self.rate_limiter = AsyncLimiter(requests_per_minute, 60)
         self.semaphore = asyncio.Semaphore(max_concurrent)
         self.progress_lock = asyncio.Lock()
         self.progress = {'completed': 0, 'total': 0, 'risks_found': 0}
+
+        # Models to try (with fallback)
+        self.primary_model = "gemini-3-flash-preview"
+        self.fallback_model = "gemini-3-pro-preview"
 
     def build_batch_fork_prompt(
         self,
@@ -138,24 +186,20 @@ Return as JSON:
         initial_context: Dict
     ) -> Dict[str, Any]:
         """
-        Analyze a batch by forking from the initial conversation.
+        Analyze a batch using Gemini with full document context.
 
-        The fork includes:
-        - Same system prompt as initial analysis
-        - Initial user message (full document)
-        - Initial assistant response (concept map, etc.) - CACHED after fork 1
-        - NEW: Batch-specific analysis request
+        Each batch includes:
+        - System prompt with initial analysis context
+        - Full conversation history (document + initial analysis)
+        - Batch-specific analysis request
 
-        Prompt Caching:
-        - Fork 1 pays full price to cache the initial assistant response
-        - Forks 2-30 pay 90% less for cached content
-        - Reduces cost from ~$6 to ~$2.50 per document
+        Uses Gemini for higher rate limits than Claude Opus.
 
         Args:
             batch: List of paragraph dicts to analyze
             batch_num: Current batch number (1-indexed)
             total_batches: Total number of batches
-            initial_context: Context from Plan 02 initial analysis (includes cache_control)
+            initial_context: Context from Plan 02 initial analysis
 
         Returns:
             Dict with success status, batch_num, response or error, paragraph_ids
@@ -163,20 +207,63 @@ Return as JSON:
         async with self.semaphore:
             async with self.rate_limiter:
                 try:
-                    # Build forked message history
-                    messages = initial_context['conversation_messages'].copy()
+                    # Build the full prompt for Gemini
+                    # Include initial analysis context in system instruction
+                    system_prompt = initial_context.get('system_prompt', '')
 
-                    # Add batch-specific prompt
+                    # Build conversation context from initial messages
+                    conversation_context = ""
+                    for msg in initial_context.get('conversation_messages', []):
+                        role = msg.get('role', 'user')
+                        content = msg.get('content', '')
+                        # Handle content that might be a list (with cache_control blocks)
+                        if isinstance(content, list):
+                            text_parts = []
+                            for block in content:
+                                if isinstance(block, dict) and block.get('type') == 'text':
+                                    text_parts.append(block.get('text', ''))
+                            content = '\n'.join(text_parts)
+                        conversation_context += f"\n\n[{role.upper()}]:\n{content}"
+
+                    # Build batch-specific prompt
                     batch_prompt = self.build_batch_fork_prompt(batch, batch_num, total_batches)
-                    messages.append({"role": "user", "content": batch_prompt})
 
-                    # Call API with forked conversation
-                    response = await self.client.messages.create(
-                        model="claude-opus-4-5-20251101",
-                        max_tokens=8000,
-                        system=initial_context.get('system_prompt', ''),
-                        messages=messages
+                    # Combine everything into a single prompt for Gemini
+                    full_prompt = f"""DOCUMENT ANALYSIS CONTEXT:
+{conversation_context}
+
+---
+
+NEW TASK:
+{batch_prompt}"""
+
+                    # Configure Gemini generation
+                    config = types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        candidate_count=1,
+                        max_output_tokens=8000,
+                        temperature=0.1,
+                        safety_settings=[
+                            types.SafetySetting(category='HARM_CATEGORY_HATE_SPEECH', threshold='BLOCK_NONE'),
+                            types.SafetySetting(category='HARM_CATEGORY_HARASSMENT', threshold='BLOCK_NONE'),
+                            types.SafetySetting(category='HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold='BLOCK_NONE'),
+                            types.SafetySetting(category='HARM_CATEGORY_DANGEROUS_CONTENT', threshold='BLOCK_NONE'),
+                        ]
                     )
+
+                    # Log prompt summary
+                    para_ids = [p.get('id', f'para_{i}') for i, p in enumerate(batch)]
+                    prompt_summary = {
+                        "stage": "batch_analysis",
+                        "api": "gemini",
+                        "model": self.primary_model,
+                        "batch": f"{batch_num}/{total_batches}",
+                        "paragraphs": para_ids,
+                        "prompt_chars": len(full_prompt)
+                    }
+                    print(f"[GEMINI API] {json.dumps(prompt_summary)}", flush=True)
+                    response = await self._call_gemini_with_retry(full_prompt, config)
+                    print(f"[Batch {batch_num}/{total_batches}] Completed successfully", flush=True)
 
                     return {
                         'success': True,
@@ -186,12 +273,79 @@ Return as JSON:
                     }
 
                 except Exception as e:
+                    print(f"[Batch {batch_num}/{total_batches}] FAILED: {str(e)}", flush=True)
                     return {
                         'success': False,
                         'batch_num': batch_num,
                         'error': str(e),
                         'paragraph_ids': [p.get('id') for p in batch]
                     }
+
+    async def _call_gemini_with_retry(
+        self,
+        prompt: str,
+        config: types.GenerateContentConfig,
+        max_retries: int = 3
+    ):
+        """
+        Call Gemini API with exponential backoff retry.
+
+        Args:
+            prompt: The prompt to send
+            config: Generation config
+            max_retries: Maximum retry attempts
+
+        Returns:
+            Gemini response object
+        """
+        initial_delay = 2
+        last_error = None
+
+        for attempt in range(max_retries + 1):
+            try:
+                # Gemini SDK is sync, so run in executor
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(
+                    None,
+                    lambda: self.client.models.generate_content(
+                        model=self.primary_model,
+                        contents=prompt,
+                        config=config
+                    )
+                )
+                return response
+
+            except Exception as e:
+                last_error = e
+                err_str = str(e).lower()
+
+                # Check if rate limit error
+                if "429" in err_str or "quota" in err_str or "rate_limit" in err_str:
+                    if attempt < max_retries:
+                        delay = initial_delay * (2 ** attempt) + random.uniform(0, 1)
+                        print(f"[Batch] Rate limited, retrying in {delay:.1f}s (attempt {attempt + 1})")
+                        await asyncio.sleep(delay)
+                        continue
+
+                # Try fallback model on last attempt
+                if attempt == max_retries - 1:
+                    try:
+                        loop = asyncio.get_event_loop()
+                        response = await loop.run_in_executor(
+                            None,
+                            lambda: self.client.models.generate_content(
+                                model=self.fallback_model,
+                                contents=prompt,
+                                config=config
+                            )
+                        )
+                        return response
+                    except Exception:
+                        pass
+
+                raise e
+
+        raise last_error
 
     async def analyze_all_batches(
         self,
@@ -213,6 +367,16 @@ Return as JSON:
         self.progress['total'] = len(batches)
         self.progress['completed'] = 0
         self.progress['risks_found'] = 0
+
+        start_summary = {
+            "stage": "parallel_analysis_start",
+            "api": "gemini",
+            "model": self.primary_model,
+            "total_batches": len(batches),
+            "max_concurrent": self.semaphore._value,
+            "total_paragraphs": sum(len(b) for b in batches)
+        }
+        print(f"[GEMINI API] Starting parallel batches: {json.dumps(start_summary)}", flush=True)
 
         async def process_batch(batch_idx: int, batch: List[Dict]):
             result = await self.analyze_batch_fork(
@@ -246,6 +410,8 @@ Return as JSON:
 
         # Handle any exceptions that weren't caught
         processed_results = []
+        successful = 0
+        failed = 0
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 processed_results.append({
@@ -254,8 +420,15 @@ Return as JSON:
                     'error': str(result),
                     'risks': []
                 })
+                failed += 1
             else:
                 processed_results.append(result)
+                if result.get('success'):
+                    successful += 1
+                else:
+                    failed += 1
+
+        print(f"\n[Parallel Analysis] Complete: {successful} successful, {failed} failed, {self.progress['risks_found']} risks found", flush=True)
 
         return processed_results
 
@@ -264,13 +437,14 @@ Return as JSON:
         Parse risks from a batch response.
 
         Args:
-            response: Anthropic API response object
+            response: Gemini API response object
 
         Returns:
             List of risk dicts extracted from the response
         """
         try:
-            text = response.content[0].text
+            # Gemini response has .text property directly
+            text = response.text if hasattr(response, 'text') else str(response)
 
             # Try to extract JSON from code block
             json_match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL)
@@ -328,17 +502,17 @@ Return as JSON:
 
 
 def run_forked_parallel_analysis(
-    api_key: str,
-    paragraphs: List[Dict],
-    initial_context: Dict,
+    api_key: str = None,
+    paragraphs: List[Dict] = None,
+    initial_context: Dict = None,
     batch_size: int = 5,
     on_progress: Optional[Callable] = None
 ) -> Dict:
     """
-    Synchronous wrapper for forked parallel analysis.
+    Synchronous wrapper for forked parallel analysis using Gemini.
 
     Args:
-        api_key: Anthropic API key
+        api_key: Gemini API key (optional, will try to load from env)
         paragraphs: List of paragraph dicts to analyze
         initial_context: Context from Plan 02 initial analysis (must include
             conversation_messages and system_prompt)
@@ -351,6 +525,11 @@ def run_forked_parallel_analysis(
         - batch_results: List of individual batch results
         - stats: Summary statistics
     """
+    if paragraphs is None:
+        paragraphs = []
+    if initial_context is None:
+        initial_context = {}
+
     # Create batches
     batches = [
         paragraphs[i:i + batch_size]

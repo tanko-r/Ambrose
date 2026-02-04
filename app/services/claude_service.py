@@ -28,6 +28,36 @@ progress_lock = threading.Lock()
 partial_results = {}
 partial_results_lock = threading.Lock()
 
+# API call log for browser console display
+# Key: session_id, Value: list of API call summaries
+api_call_log = {}
+api_call_log_lock = threading.Lock()
+
+
+def log_api_call(session_id: str, call_info: Dict):
+    """Log an API call for browser console display."""
+    import datetime
+    with api_call_log_lock:
+        if session_id not in api_call_log:
+            api_call_log[session_id] = []
+        call_info['timestamp'] = datetime.datetime.now().isoformat()
+        call_info['id'] = len(api_call_log[session_id])
+        api_call_log[session_id].append(call_info)
+
+
+def get_api_calls(session_id: str, since_id: int = 0) -> List[Dict]:
+    """Get API calls since a given ID."""
+    with api_call_log_lock:
+        calls = api_call_log.get(session_id, [])
+        return [c for c in calls if c.get('id', 0) >= since_id]
+
+
+def clear_api_calls(session_id: str):
+    """Clear API call log for a session."""
+    with api_call_log_lock:
+        if session_id in api_call_log:
+            del api_call_log[session_id]
+
 
 def update_progress(session_id: str, data: Dict):
     """Update progress for a session."""
@@ -536,6 +566,10 @@ def analyze_document_with_llm(
     """
     start_time = time.time()
 
+    # Clear any previous API call logs for this session
+    if session_id:
+        clear_api_calls(session_id)
+
     # Use ContentFilter to pre-filter non-substantive content
     content_filter = ContentFilter(include_exhibits=include_exhibits)
 
@@ -585,11 +619,23 @@ def analyze_document_with_llm(
                 'status': 'analyzing',
                 'current_action': 'Performing initial document analysis (this establishes context for parallel batch processing)...',
                 'stage': 'initial_analysis',
+                'stage_started_at': time.time(),
                 'percent': 5
             })
 
         try:
             api_key = get_anthropic_api_key()
+
+            # Log API call for browser console
+            log_api_call(session_id, {
+                'api': 'anthropic',
+                'model': 'claude-opus-4-5-20251101',
+                'stage': 'initial_analysis',
+                'content': 'full_document',
+                'paragraphs': len(paragraphs),
+                'doc_chars': sum(len(p.get('text', '')) for p in paragraphs)
+            })
+
             initial_context = run_initial_analysis(
                 api_key=api_key,
                 paragraphs=paragraphs,
@@ -640,9 +686,16 @@ def analyze_document_with_llm(
     if use_forking and initial_context:
         # ===== FORKED PARALLEL PATH (fast, ~$6/doc, ~90 seconds) =====
         if session_id:
+            # Calculate initial analysis duration
+            progress = get_progress(session_id)
+            initial_started = progress.get('stage_started_at', time.time())
+            initial_duration = time.time() - initial_started
+
             update_progress(session_id, {
                 'current_action': f'Running {total_batches} parallel batch analyses (forked from initial context)...',
                 'stage': 'parallel_batches',
+                'stage_started_at': time.time(),
+                'initial_analysis_duration': initial_duration,
                 'percent': 20
             })
 
@@ -660,14 +713,39 @@ def analyze_document_with_llm(
                     'current_action': f'Completed batch {completed}/{total} ({progress_data["risks_found"]} risks found so far)'
                 })
 
+                # Log batch completion for browser console
+                if batch_result:
+                    batch_num = batch_result.get('batch_num', completed)
+                    para_ids = batch_result.get('paragraph_ids', [])
+                    log_api_call(session_id, {
+                        'api': 'gemini',
+                        'model': 'gemini-3-flash-preview',
+                        'stage': 'batch_complete',
+                        'batch': f'{batch_num}/{total}',
+                        'paragraphs': para_ids,
+                        'success': batch_result.get('success', False),
+                        'risks_found': len(batch_result.get('risks', [])),
+                        'error': batch_result.get('error') if not batch_result.get('success') else None
+                    })
+
                 # Add partial risks from completed batch for incremental display
                 if batch_result and batch_result.get('success') and batch_result.get('risks'):
                     add_partial_risks(session_id, batch_result['risks'])
 
-        # Run forked parallel analysis
-        api_key = get_anthropic_api_key()
+        # Log parallel analysis start for browser console
+        log_api_call(session_id, {
+            'api': 'gemini',
+            'model': 'gemini-3-flash-preview',
+            'stage': 'parallel_batches_start',
+            'total_batches': total_batches,
+            'paragraphs': len(paragraphs),
+            'batch_size': batch_size
+        })
+
+        # Run forked parallel analysis using Gemini (higher rate limits)
+        # Gemini API key is loaded from environment by parallel_analyzer
         parallel_result = run_forked_parallel_analysis(
-            api_key=api_key,
+            api_key=None,  # Will use GEMINI_API_KEY from environment
             paragraphs=paragraphs,
             initial_context=initial_context,
             batch_size=batch_size,
