@@ -1,5 +1,17 @@
 # Contract Redlining Project
 
+## CRITICAL: API Model Requirements
+
+**Gemini Models - USE ONLY THESE:**
+- `gemini-3-flash-preview` (primary - fast, cost-effective)
+- `gemini-3-pro-preview` (fallback - more capable)
+
+**DO NOT USE** deprecated models like `gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-1.5-pro`, or any other variants. These are outdated and will cause issues.
+
+When writing or modifying any code that calls the Gemini API, always use the models listed above. Check `app/services/gemini_service.py` and `app/services/parallel_analyzer.py` for the canonical model definitions.
+
+---
+
 ## Development Practices
 
 ### Feature Validation Before Shipping
