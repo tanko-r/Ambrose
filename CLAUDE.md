@@ -1,5 +1,38 @@
 # Contract Redlining Project
 
+## CRITICAL: API Model Requirements
+
+**Gemini Models - USE ONLY THESE:**
+- `gemini-3-flash-preview` (primary - fast, cost-effective)
+- `gemini-3-pro-preview` (fallback - more capable)
+
+**DO NOT USE** deprecated models like `gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-1.5-pro`, or any other variants. These are outdated and will cause issues.
+
+When writing or modifying any code that calls the Gemini API, always use the models listed above. Check `app/services/gemini_service.py` and `app/services/parallel_analyzer.py` for the canonical model definitions.
+
+---
+
+## Development Practices
+
+### Feature Validation Before Shipping
+- **Test all user-facing features** before committing. Don't assume code works just because it compiles.
+- **Check edge cases**: empty states, no selection, missing data, loading states.
+- **Verify state persistence**: features that save data must load that data correctly on refresh/reload.
+- **Test across views**: if data appears in multiple places (e.g., flags in sidebar AND document), verify consistency.
+- **Visual review**: check styling, spacing, and layout match the intended design pattern.
+
+### Common Bug Patterns to Avoid
+- **State not loading from session**: When adding new state (like flags), ensure it's included in API responses AND loaded in frontend.
+- **Conditional rendering hiding features**: Don't gate entire features on conditions that may not always be true (e.g., requiring a selection to view a list).
+- **Inconsistent data references**: If storing `para_id` in one place, make sure the same ID format is used everywhere.
+
+### Code Quality
+- Keep UI patterns consistent across similar features (e.g., all list views should have similar visual hierarchy).
+- When adding CSS, reference existing patterns for visual consistency.
+- Test with real data, not just happy-path scenarios.
+
+---
+
 ## Background \& Plan
 
 The user (you can call him David) intends to develop a comprehensive legal contract revision assistant tool. The tool will assist David, a lawyer, in reviewing and revising complex legal documents.  The tool should be general purpose - will review any contract type - but it has built in "skills" for certain contract types.  Since David is a real estate lawyer, it should have skills for:

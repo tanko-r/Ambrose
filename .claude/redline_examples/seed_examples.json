@@ -1,0 +1,74 @@
+{
+  "_schema_version": "1.0",
+  "_description": "User-provided examples of good redlining practice. Add your own examples below.",
+
+  "examples": [
+    {
+      "id": "example_surgical_edit",
+      "category": "surgical_edit",
+      "description": "Example of a good surgical edit - minimal change, maximum protection",
+      "context": {
+        "representation": "seller",
+        "section_type": "representations"
+      },
+      "before": {
+        "text": "Seller represents and warrants that there are no pending or threatened actions, suits, or proceedings affecting the Property.",
+        "issues": ["Unqualified representation - Seller cannot know for certain about 'threatened' actions"]
+      },
+      "after": {
+        "text": "Seller represents and warrants that, to Seller's knowledge, there are no pending or threatened actions, suits, or proceedings affecting the Property.",
+        "changes": ["Added knowledge qualifier"],
+        "rationale": "Knowledge qualifier limits exposure for matters Seller cannot verify with certainty"
+      },
+      "notes": "This is a surgical edit - only adds 'to Seller's knowledge' without restructuring the sentence"
+    },
+    {
+      "id": "example_preserve_acceptable",
+      "category": "appropriate_preservation",
+      "description": "Example of appropriately leaving acceptable language unchanged",
+      "context": {
+        "representation": "seller",
+        "section_type": "authority"
+      },
+      "before": {
+        "text": "Seller is a limited liability company duly organized, validly existing, and in good standing under the laws of the State of Delaware.",
+        "issues": []
+      },
+      "after": {
+        "text": "NO CHANGE",
+        "changes": [],
+        "rationale": "This is a standard authority representation that Seller can verify. No knowledge qualifier needed because Seller knows its own organizational status."
+      },
+      "notes": "Not everything needs to change. Standard authority reps are fine as-is."
+    },
+    {
+      "id": "example_bad_wholesale",
+      "category": "bad_practice",
+      "description": "Example of BAD practice - unnecessary wholesale replacement",
+      "context": {
+        "representation": "seller",
+        "section_type": "due_diligence"
+      },
+      "before": {
+        "text": "Seller shall deliver to Purchaser copies of all leases, service contracts, and property management agreements within three (3) days after the Effective Date."
+      },
+      "bad_revision": {
+        "text": "Within five (5) business days following the Effective Date, Seller shall use commercially reasonable efforts to make available to Purchaser, via electronic data room or other reasonable means, true, correct and complete copies of all Leases (as defined herein), all Service Contracts (as defined herein), and all property management agreements affecting the Property, to the extent such documents are in Seller's possession or reasonable control.",
+        "problems": [
+          "Completely restructured the sentence unnecessarily",
+          "Added defined term references that may not exist",
+          "Changed 'deliver' to 'make available' which may not be what client wants",
+          "Creates more red ink than necessary"
+        ]
+      },
+      "good_revision": {
+        "text": "Seller shall deliver to Purchaser copies of all leases, service contracts, and property management agreements within five (5) business days after the Effective Date.",
+        "changes": ["Extended deadline from 3 days to 5 business days"],
+        "rationale": "Only changed what was problematic (tight deadline). Preserved the rest."
+      },
+      "notes": "The bad revision creates negotiation friction over things that didn't need changing."
+    }
+  ],
+
+  "add_your_examples_below": []
+}

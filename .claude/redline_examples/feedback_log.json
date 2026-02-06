@@ -1,0 +1,35 @@
+{
+  "_schema_version": "1.0",
+  "_description": "Log of user corrections to system-generated redlines. Used for learning and improvement.",
+
+  "entries": [
+    {
+      "_comment": "Example entry structure - actual entries will be added by the system",
+      "id": "feedback_001",
+      "timestamp": "2024-01-01T00:00:00Z",
+      "document": "example_contract.docx",
+      "section": "Section 7 - Representations",
+      "paragraph_id": "p_45",
+      "system_suggestion": {
+        "text": "To Seller's knowledge, Seller represents that...",
+        "rationale": "Added knowledge qualifier"
+      },
+      "user_correction": {
+        "text": "Seller represents that...",
+        "action": "reverted",
+        "user_reason": "This is an authority rep - Seller knows its own facts"
+      },
+      "pattern_extracted": {
+        "rule": "Do not add knowledge qualifiers to authority/organization representations",
+        "confidence": "high",
+        "applies_to": ["duly organized", "validly existing", "authority", "power to execute"]
+      }
+    }
+  ],
+
+  "statistics": {
+    "total_corrections": 0,
+    "corrections_by_type": {},
+    "most_common_patterns": []
+  }
+}

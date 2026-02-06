@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Review - Collaborative Redlining</title>
+    <!-- Google Fonts - loaded via link tags for better performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <!-- App Menu (plain hamburger) -->
+            <div class="app-menu-container">
+                <button class="app-menu-btn hamburger-plain" id="app-menu-btn" title="Application menu">
+                    <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+                        <path d="M1 1h16M1 7h16M1 13h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <div class="app-menu-dropdown" id="app-menu-dropdown">
+                    <button class="app-menu-item" onclick="handleAppMenuItem('new-project')">
+                        <span class="app-menu-item-icon">&#128193;</span>
+                        <span>New Project</span>
+                    </button>
+                    <button class="app-menu-item" onclick="handleAppMenuItem('document-library')">
+                        <span class="app-menu-item-icon">&#128218;</span>
+                        <span>Document Library</span>
+                    </button>
+                    <div class="app-menu-divider"></div>
+                    <button class="app-menu-item" onclick="handleAppMenuItem('settings')">
+                        <span class="app-menu-item-icon">&#9881;</span>
+                        <span>Settings</span>
+                    </button>
+                    <button class="app-menu-item" onclick="handleAppMenuItem('help')">
+                        <span class="app-menu-item-icon">&#10067;</span>
+                        <span>Help</span>
+                    </button>
+                </div>
+            </div>
+            <h1>Contract Review</h1>
+        </div>
+        <!-- Center: Document Filename -->
+        <div class="header-center">
+            <span class="header-filename" id="header-filename"></span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary btn-sm" id="btn-new" onclick="showNewProjectModal()">New</button>
+            <!-- User Menu -->
+            <div class="user-menu-container">
+                <button class="user-menu-btn" id="user-menu-btn" title="User menu">
+                    <svg class="user-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
+                    </svg>
+                </button>
+                <div class="user-menu-dropdown" id="user-menu-dropdown">
+                    <button class="user-menu-item" onclick="handleUserMenuItem('profile')">
+                        <span class="user-menu-item-icon">&#128100;</span>
+                        <span>Profile</span>
+                    </button>
+                    <button class="user-menu-item" onclick="handleUserMenuItem('preferences')">
+                        <span class="user-menu-item-icon">&#9881;</span>
+                        <span>Preferences</span>
+                    </button>
+                    <div class="user-menu-divider"></div>
+                    <button class="user-menu-item" onclick="handleUserMenuItem('logout')">
+                        <span class="user-menu-item-icon">&#128682;</span>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Nav Panel Toggle (visible when collapsed) -->
+    <button class="nav-collapsed-toggle hidden" id="nav-collapsed-toggle" title="Show navigation panel" onclick="toggleNavPanel()">
+        <span>&#187;</span>
+    </button>
+
+    <!-- Main Container - Three Panel Layout -->
+    <div class="main-container">
+        <!-- Dashboard Screen -->
+        <div class="dashboard-screen" id="intake-screen">
+            <!-- Left Panel: Recent & Active -->
+            <div class="dashboard-panel dashboard-panel-left">
+                <div class="dashboard-section">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128337;</span>
+                        <span>Recent Projects</span>
+                    </div>
+                    <div class="dashboard-section-content" id="recent-projects-container">
+                        <p class="dashboard-empty">No recent projects</p>
+                    </div>
+                </div>
+                <div class="dashboard-section dashboard-section-muted">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128221;</span>
+                        <span>Active Reviews</span>
+                        <span class="dashboard-coming-soon">Coming Soon</span>
+                    </div>
+                    <div class="dashboard-section-content">
+                        <p class="dashboard-empty">In-progress reviews will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: New Review Form -->
+            <div class="dashboard-panel dashboard-panel-center">
+                <div class="dashboard-card">
+                    <h2 class="dashboard-card-title">New Contract Review</h2>
+
+                    <form id="intake-form" onsubmit="submitIntake(event)">
+                        <!-- File uploads row -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">Target Contract *</label>
+                                <div class="upload-area upload-area-compact" id="target-upload" onclick="document.getElementById('target-file').click()">
+                                    <span class="upload-icon-sm">&#128196;</span>
+                                    <span id="target-filename">Drop or click to upload</span>
+                                </div>
+                                <input type="file" id="target-file" accept=".docx" style="display:none" onchange="handleFileSelect(this, 'target')">
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Precedent (Optional)</label>
+                                <div class="upload-area upload-area-compact" id="precedent-upload" onclick="document.getElementById('precedent-file').click()">
+                                    <span class="upload-icon-sm">&#128203;</span>
+                                    <span id="precedent-filename">Drop or click to upload</span>
+                                </div>
+                                <input type="file" id="precedent-file" accept=".docx" style="display:none" onchange="handleFileSelect(this, 'precedent')">
+                            </div>
+                        </div>
+
+                        <!-- Settings row -->
+                        <div class="form-row">
+                            <div class="form-col">
+                                <label class="form-label">You represent</label>
+                                <select class="form-select" name="representation" required>
+                                    <option value="seller">Seller</option>
+                                    <option value="buyer">Buyer/Purchaser</option>
+                                    <option value="landlord">Landlord</option>
+                                    <option value="tenant">Tenant</option>
+                                    <option value="lender">Lender</option>
+                                    <option value="borrower">Borrower</option>
+                                    <option value="developer">Developer</option>
+                                    <option value="grantor">Grantor</option>
+                                    <option value="grantee">Grantee</option>
+                                </select>
+                            </div>
+                            <div class="form-col">
+                                <label class="form-label">Review Approach</label>
+                                <select class="form-select" name="approach">
+                                    <option value="quick-sale">Quick-Sale</option>
+                                    <option value="competitive-bid" selected>Competitive Bid</option>
+                                    <option value="relationship">Relationship Deal</option>
+                                    <option value="adversarial">Adversarial</option>
+                                </select>
+                            </div>
+                            <div class="form-col form-col-sm">
+                                <label class="form-label">Intensity: <span id="aggr-value">3</span></label>
+                                <input type="range" class="form-range" name="aggressiveness" min="1" max="5" value="3"
+                                       oninput="document.getElementById('aggr-value').textContent=this.value">
+                            </div>
+                        </div>
+
+                        <!-- Context row -->
+                        <div class="form-row">
+                            <div class="form-col form-col-full">
+                                <label class="form-label">Deal Context <span class="form-label-optional">(optional)</span></label>
+                                <input type="text" class="form-input" name="deal_context" placeholder="Key deal points, client concerns, special considerations...">
+                            </div>
+                        </div>
+
+                        <!-- Actions row -->
+                        <div class="form-row form-row-actions">
+                            <label class="form-checkbox">
+                                <input type="checkbox" name="include_exhibits">
+                                <span>Include exhibits</span>
+                            </label>
+                            <div class="form-actions-right">
+                                <button type="button" class="btn btn-link" onclick="loadTestSession()">Load Test Data</button>
+                                <button type="submit" class="btn btn-primary">Start Review</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Panel: Team & Library -->
+            <div class="dashboard-panel dashboard-panel-right">
+                <div class="dashboard-section dashboard-section-muted">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128101;</span>
+                        <span>Team Activity</span>
+                        <span class="dashboard-coming-soon">Coming Soon</span>
+                    </div>
+                    <div class="dashboard-section-content">
+                        <p class="dashboard-empty">Shared reviews and comments will appear here</p>
+                    </div>
+                </div>
+                <div class="dashboard-section dashboard-section-muted">
+                    <div class="dashboard-section-header">
+                        <span class="dashboard-section-icon">&#128218;</span>
+                        <span>Clause Library</span>
+                        <span class="dashboard-coming-soon">Coming Soon</span>
+                    </div>
+                    <div class="dashboard-section-content">
+                        <p class="dashboard-empty">Saved clauses and templates</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Panel (New) -->
+        <nav class="nav-panel hidden" id="nav-panel">
+            <!-- Edge Toggle Button -->
+            <button class="nav-edge-toggle" id="nav-edge-toggle" title="Toggle navigation panel">
+                <span class="nav-edge-toggle-icon">&#171;</span>
+            </button>
+            <div class="nav-header">
+                <h2 class="nav-title">Document Navigator</h2>
+                <div class="nav-header-controls">
+                    <button class="nav-control-btn" id="btn-light-mode" onclick="toggleLightMode()" title="Toggle light/dark mode">
+                        <span class="light-mode-icon">&#9728;</span>
+                    </button>
+                    <button class="nav-control-btn" id="btn-compact-mode" onclick="toggleCompactMode()" title="Toggle compact mode">
+                        <span class="compact-mode-icon">&#9783;</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Review Mode Selector -->
+            <div class="nav-section">
+                <div class="nav-section-title">Review Mode</div>
+                <div class="review-mode-selector">
+                    <button class="review-mode-btn active" data-mode="linear" onclick="setReviewMode('linear')">
+                        <span class="review-mode-icon">&#8597;</span>
+                        <span>Linear</span>
+                    </button>
+                    <button class="review-mode-btn" data-mode="by-risk" onclick="setReviewMode('by-risk')">
+                        <span class="review-mode-icon">&#9888;</span>
+                        <span>By Risk</span>
+                    </button>
+                    <button class="review-mode-btn" data-mode="by-category" onclick="setReviewMode('by-category')">
+                        <span class="review-mode-icon">&#9783;</span>
+                        <span>By Category</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Document Outline with Search -->
+            <div class="nav-section nav-outline-section">
+                <div class="nav-outline-search">
+                    <input type="text" class="nav-outline-search-input" id="nav-outline-search"
+                           placeholder="Search clauses..." oninput="filterOutline(this.value)">
+                </div>
+                <div class="nav-outline" id="nav-outline">
+                    <!-- Section hierarchy rendered here -->
+                    <div class="nav-outline-empty">Load a document to see outline</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Split Container for Document and Precedent -->
+        <div class="split-container hidden" id="split-container">
+            <!-- Main Document Pane -->
+            <div class="split-pane" id="main-document-pane">
+                <div class="document-panel" id="document-panel">
+                    <div class="document-wrapper" id="document-content">
+                        <!-- Document paragraphs will be rendered here -->
+                    </div>
+                </div>
+            </div>
+            <!-- Precedent Pane (hidden by default) -->
+            <div class="split-pane precedent-pane hidden" id="precedent-pane">
+                <div class="precedent-header" id="precedent-header">
+                    <!-- Header rendered by JS -->
+                </div>
+                <div class="precedent-body">
+                    <div class="precedent-content" id="precedent-content">
+                        <!-- Document content rendered by JS -->
+                    </div>
+                    <div class="precedent-navigator" id="precedent-navigator">
+                        <!-- Navigator content rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar (Clause Analysis) -->
+        <aside class="sidebar hidden" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title-row">
+                    <h2 class="sidebar-title">Clause Analysis</h2>
+                    <span class="sidebar-section-ref" id="sidebar-section-ref"></span>
+                </div>
+                <div class="sidebar-section-title" id="sidebar-section-title">Select a clause</div>
+                <div class="sidebar-precedent-ref" id="sidebar-precedent-ref">
+                    <span class="precedent-label">Precedent:</span>
+                    <span class="precedent-clause" id="precedent-clause-ref">None matched</span>
+                </div>
+            </div>
+
+            <!-- Tabbed Interface -->
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" data-tab="risks" onclick="switchSidebarTab('risks')">Risks</button>
+                <button class="sidebar-tab" data-tab="related" onclick="switchSidebarTab('related')">Related</button>
+                <button class="sidebar-tab" data-tab="definitions" onclick="switchSidebarTab('definitions')">Definitions</button>
+                <button class="sidebar-tab" data-tab="flags" onclick="switchSidebarTab('flags')">Flags</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="sidebar-tab-content">
+                <!-- Risks Tab -->
+                <div class="sidebar-tab-pane active" id="tab-risks">
+                    <div class="sidebar-content" id="sidebar-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">&#128269;</div>
+                            <p>Click on a clause in the document to see its analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Tab -->
+                <div class="sidebar-tab-pane" id="tab-related">
+                    <div class="related-clauses-content" id="related-clauses-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">&#128279;</div>
+                            <p>Related clauses will appear here when you select a clause.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Definitions Tab -->
+                <div class="sidebar-tab-pane" id="tab-definitions">
+                    <div class="definitions-content" id="definitions-content">
+                        <div class="definitions-search">
+                            <input type="text" class="form-input" id="definition-search" placeholder="Search defined terms...">
+                        </div>
+                        <div class="definitions-list" id="definitions-list">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">&#128218;</div>
+                                <p>Defined terms will appear here after analysis.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flags Tab -->
+                <div class="sidebar-tab-pane" id="tab-flags">
+                    <div class="flags-content" id="flags-content">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">&#128681;</div>
+                            <p>Flags for this clause will appear here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer" id="sidebar-footer">
+                <div class="sidebar-footer-info" id="sidebar-footer-info"></div>
+                <div class="sidebar-footer-actions">
+                    <button class="btn btn-primary" id="btn-generate-revision" disabled>Generate Revision</button>
+                    <button class="btn btn-warning" id="btn-flag-client">Flag</button>
+                </div>
+                <div class="sidebar-footer-secondary">
+                    <button class="btn btn-secondary btn-sm" id="btn-compare-precedent" onclick="comparePrecedent()" title="Compare with precedent document">
+                        <span>&#128203;</span> Compare Precedent
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Flag Modal -->
+    <div class="modal-overlay" id="flag-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="flag-type-tabs">
+                    <button class="flag-type-tab active" data-type="client" onclick="switchFlagType('client')">Client Review</button>
+                    <button class="flag-type-tab" data-type="attorney" onclick="switchFlagType('attorney')">Attorney Review</button>
+                </div>
+                <h2>Flag for Review</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Note for Client (included in transmittal):</label>
+                    <textarea class="form-textarea" id="flag-note" placeholder="Add a note explaining what should be reviewed..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeFlagModal()">Cancel</button>
+                <button class="btn btn-warning" onclick="submitFlag()">Add Flag</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finalize Modal (FIN-01..FIN-04) -->
+    <div class="modal-overlay" id="finalize-modal">
+        <div class="modal finalize-modal">
+            <div class="modal-header">
+                <h2>Finalize Redline</h2>
+                <button class="modal-close-btn" onclick="closeFinalizeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="finalize-summary">
+                    <p>You have <strong id="finalize-revision-count">0</strong> accepted revisions ready for export.</p>
+                </div>
+                <div class="finalize-revisions-container">
+                    <h3>Review Accepted Revisions</h3>
+                    <div class="finalize-revisions-list" id="finalize-revisions-list">
+                        <!-- Revisions will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer finalize-footer">
+                <div class="finalize-download-buttons">
+                    <button class="btn btn-primary" onclick="downloadTrackChanges()">
+                        <span class="btn-icon">&#128196;</span>
+                        Download with Track Changes
+                    </button>
+                    <button class="btn btn-secondary" onclick="downloadClean()">
+                        <span class="btn-icon">&#128195;</span>
+                        Download Clean Version
+                    </button>
+                </div>
+                <div class="finalize-action-buttons">
+                    <button class="btn btn-outline" onclick="generateTransmittal()">
+                        <span class="btn-icon">&#9993;</span>
+                        Generate Transmittal
+                    </button>
+                    <button class="btn btn-outline" onclick="closeFinalizeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transmittal Modal (TRANS-01..TRANS-04) -->
+    <div class="modal-overlay" id="transmittal-modal">
+        <div class="modal transmittal-modal">
+            <div class="modal-header">
+                <h2>Generate Transmittal Email</h2>
+                <button class="modal-close-btn" onclick="closeTransmittalModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="transmittal-field">
+                    <label class="form-label">Subject:</label>
+                    <div class="transmittal-subject" id="transmittal-subject"></div>
+                </div>
+                <div class="transmittal-field">
+                    <label class="form-label">Body:</label>
+                    <div class="transmittal-body" id="transmittal-body"></div>
+                </div>
+            </div>
+            <div class="modal-footer transmittal-footer">
+                <button class="btn btn-secondary" onclick="copyTransmittalToClipboard()">
+                    <span class="btn-icon">&#128203;</span>
+                    Copy to Clipboard
+                </button>
+                <button class="btn btn-primary" onclick="openTransmittalEmail()">
+                    <span class="btn-icon">&#9993;</span>
+                    Create Email
+                </button>
+                <button class="btn btn-outline" onclick="closeTransmittalModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Confirmation Modal (NEW-01) -->
+    <div class="modal-overlay" id="new-project-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Start New Project?</h2>
+            </div>
+            <div class="modal-body">
+                <div class="new-project-info">
+                    <p class="new-project-warning">You have unsaved changes in:</p>
+                    <p class="new-project-document" id="new-project-document-name">Document Name</p>
+                    <div class="new-project-stats" id="new-project-stats">
+                        <!-- Stats populated dynamically -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer new-project-footer">
+                <button class="btn btn-success" id="btn-new-project-save" onclick="handleNewProjectSave()">Save</button>
+                <button class="btn btn-danger" id="btn-new-project-discard" onclick="handleNewProjectDiscard()">Discard</button>
+                <button class="btn btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="bottom-bar hidden" id="bottom-bar">
+        <!-- Left: Progress & Risk Filters -->
+        <div class="bottom-bar-left">
+            <div class="bottom-bar-progress">
+                <span class="bottom-bar-progress-label">Reviewed:</span>
+                <span class="bottom-bar-progress-value" id="bottom-bar-reviewed">0/0</span>
+            </div>
+            <div class="bottom-bar-divider"></div>
+            <div class="bottom-bar-risk-filters">
+                <button class="risk-filter-btn severity-high" data-severity="high" onclick="toggleRiskFilter('high')">
+                    <span class="risk-filter-count" id="filter-high-count">0</span>
+                    <span class="risk-filter-label">HIGH</span>
+                </button>
+                <button class="risk-filter-btn severity-medium" data-severity="medium" onclick="toggleRiskFilter('medium')">
+                    <span class="risk-filter-count" id="filter-medium-count">0</span>
+                    <span class="risk-filter-label">MED</span>
+                </button>
+                <button class="risk-filter-btn severity-low" data-severity="low" onclick="toggleRiskFilter('low')">
+                    <span class="risk-filter-count" id="filter-low-count">0</span>
+                    <span class="risk-filter-label">LOW</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right: Navigation & Actions -->
+        <div class="bottom-bar-right">
+            <div class="skip-to-control">
+                <select class="skip-to-select" id="skip-to-select" onchange="setSkipMode(this.value)">
+                    <option value="risk">Next Risk</option>
+                    <option value="unreviewed">Next Unreviewed</option>
+                </select>
+            </div>
+            <div class="nav-arrows">
+                <button class="nav-arrow-btn" onclick="navigatePrev()" title="Previous">
+                    &#9664;
+                </button>
+                <button class="nav-arrow-btn" onclick="navigateNext()" title="Next">
+                    &#9654;
+                </button>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="finalizeRedline()">
+                Finalize
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Revision Bottom Sheet -->
+    <div class="bottom-sheet" id="revision-sheet">
+        <div class="bottom-sheet-handle" id="sheet-handle">
+            <div class="handle-bar"></div>
+            <span class="sheet-title">Proposed Revision</span>
+            <button class="sheet-close-btn" id="sheet-close">&times;</button>
+        </div>
+        <!-- Tabbed content for revision sheet -->
+        <div class="revision-sheet-tabs">
+            <button class="revision-sheet-tab active" data-tab="revision" onclick="switchRevisionTab('revision')">Revision</button>
+            <button class="revision-sheet-tab" data-tab="details" onclick="switchRevisionTab('details')">Details</button>
+        </div>
+        <div class="bottom-sheet-content" id="sheet-content">
+            <!-- Revision Tab -->
+            <div class="revision-tab-pane active" id="revision-tab-revision">
+                <div class="revision-diff" id="revision-diff"></div>
+                <div class="revision-rationale" id="revision-rationale"></div>
+            </div>
+            <!-- Details Tab (Prompt/Response) -->
+            <div class="revision-tab-pane" id="revision-tab-details">
+                <div class="revision-details-section">
+                    <div class="revision-details-header" onclick="toggleDetailsSection('prompt')">
+                        <span>Prompt Sent to Gemini</span>
+                        <span class="revision-details-toggle" id="toggle-prompt">&#9660;</span>
+                    </div>
+                    <div class="revision-details-content collapsed" id="details-prompt"></div>
+                </div>
+                <div class="revision-details-section">
+                    <div class="revision-details-header" onclick="toggleDetailsSection('response')">
+                        <span>Raw Response</span>
+                        <span class="revision-details-toggle" id="toggle-response">&#9660;</span>
+                    </div>
+                    <div class="revision-details-content collapsed" id="details-response"></div>
+                </div>
+                <div class="revision-details-section">
+                    <div class="revision-details-header" onclick="toggleDetailsSection('thinking')">
+                        <span>Model Thinking</span>
+                        <span class="revision-details-toggle" id="toggle-thinking">&#9660;</span>
+                    </div>
+                    <div class="revision-details-content collapsed" id="details-thinking"></div>
+                </div>
+            </div>
+            <div class="revision-actions" id="revision-actions">
+                <!-- Dynamically populated by updateRevisionActions() in revision.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Clause Viewer Bottom Sheet -->
+    <div class="bottom-sheet clause-viewer-sheet" id="clause-viewer-sheet">
+        <div class="bottom-sheet-handle">
+            <div class="handle-bar"></div>
+            <span class="sheet-title" id="clause-viewer-title">Related Clause</span>
+            <button class="sheet-close-btn" onclick="closeClauseViewer()">&times;</button>
+        </div>
+        <div class="clause-viewer-content">
+            <div class="clause-viewer-doc" id="clause-viewer-doc">
+                <!-- Scrollable document with clauses will be rendered here -->
+            </div>
+            <div class="clause-viewer-actions" id="clause-viewer-actions">
+                <span class="clause-viewer-edit-hint">Click on any clause to edit directly</span>
+                <button class="btn btn-success" id="btn-apply-clause-edits" disabled>Apply Edits</button>
+                <button class="btn btn-warning" id="btn-flag-clause">Flag for Review</button>
+                <button class="btn btn-secondary" onclick="closeClauseViewer()">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Overlay -->
+    <div class="analysis-overlay" id="analysis-overlay">
+        <div class="analysis-panel">
+            <div class="analysis-icon">&#9878;</div>
+            <div class="analysis-title">Analyzing Contract</div>
+            <div class="analysis-verb" id="analysis-verb">Reviewing document structure...</div>
+            <div class="analysis-progress-container">
+                <div class="analysis-progress-bar" id="analysis-progress"></div>
+            </div>
+            <div class="analysis-status" id="analysis-status">Initializing...</div>
+            <div class="analysis-detail" id="analysis-detail">Preparing to analyze clauses with Claude Opus 4.5</div>
+            <div class="analysis-batch-info" id="analysis-batch-info"></div>
+        </div>
+    </div>
+
+    <!-- Split.js for resizable split panes -->
+    <script src="https://unpkg.com/split.js@1.6.5/dist/split.min.js"></script>
+
+    <!-- JavaScript modules (order matters for dependencies) -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/state.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/toast.js"></script>
+    <script src="/static/js/menu.js"></script>
+    <script src="/static/js/views.js"></script>
+    <script src="/static/js/navigation.js"></script>
+    <script src="/static/js/bottombar.js"></script>
+    <script src="/static/js/analysis.js"></script>
+    <script src="/static/js/sidebar.js"></script>
+    <script src="/static/js/precedent.js"></script>
+    <script src="/static/js/document.js"></script>
+    <script src="/static/js/revision.js"></script>
+    <script src="/static/js/flag.js"></script>
+    <script src="/static/js/intake.js"></script>
+    <script src="/static/js/new-project.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
