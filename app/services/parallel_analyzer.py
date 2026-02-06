@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 """
-Forked Parallel Analyzer for Batch Document Analysis (Gemini Version)
+Forked Parallel Analyzer for Batch Document Analysis (v3 - Category Framework)
 
-Performs parallel batch analysis using Gemini for higher rate limits.
-Each batch includes full document context from the initial Claude analysis,
-enabling true parallelism with shared understanding.
+Performs parallel batch analysis using Gemini with condensed context from initial analysis.
+Each batch receives:
+- Paragraph context (obligations, rights, conditions, party info)
+- Risk categories implicated in the batch
+- Cross-referenced paragraphs
+- Full defined term text
 
 Architecture:
-- Initial analysis (Plan 02) uses Claude Opus for full document understanding
-- This class creates N parallel Gemini calls for batch analysis
-- Each call includes the full document context + specific paragraphs to analyze
+- Initial analysis (Plan 02) uses Gemini 3 Pro Preview for category-based framework
+- This class creates N parallel Gemini 3 Flash Preview calls for granular risk finding
+- Each call includes condensed context + specific paragraphs to analyze
 - Results are aggregated into unified risk list
-
-Why Gemini for batches:
-- Claude Opus has 30K input tokens/minute rate limit
-- Each batch with full context is ~29K tokens, limiting to ~1 request/minute
-- Gemini has much higher rate limits, allowing true parallel execution
-- Initial Claude analysis provides document understanding context
 
 Part of Phase 6: Analysis Acceleration
 """
@@ -28,7 +25,7 @@ import re
 import time
 import random
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional, Callable, Set
 
 # Try to import required packages
 try:
@@ -52,48 +49,20 @@ try:
 except ImportError:
     pass
 
-
-def get_gemini_api_key() -> Optional[str]:
-    """Get Gemini API key from various sources."""
-    # Try environment variables
-    key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if key:
-        return key
-
-    # Try api.txt file in project root
-    api_txt_paths = [
-        Path(__file__).parent.parent.parent / 'api.txt',
-        Path(__file__).parent.parent.parent / '.env',
-        Path.home() / '.gemini_api_key'
-    ]
-
-    for path in api_txt_paths:
-        if path.exists():
-            content = path.read_text().strip()
-            if path.suffix == '.txt':
-                return content
-            # Parse .env format
-            for line in content.split('\n'):
-                if line.startswith('GEMINI_API_KEY=') or line.startswith('GOOGLE_API_KEY='):
-                    return line.split('=', 1)[1].strip().strip('"\'')
-
-    return None
+# Import shared utilities from initial_analyzer
+from app.services.initial_analyzer import normalize_contract_type, get_gemini_api_key
 
 
 class ForkedParallelAnalyzer:
     """
-    Performs parallel batch analysis using Gemini for higher rate limits.
+    Performs parallel batch analysis using Gemini with condensed context (v3).
 
-    Architecture:
-    - Initial analysis (Plan 02) uses Claude Opus for full document understanding
-    - This class creates N parallel Gemini calls for batch analysis
-    - Each call includes initial context + specific paragraphs to analyze
-    - Results are aggregated into unified risk list
-
-    Why Gemini:
-    - Claude Opus has 30K tokens/minute rate limit (each batch is ~29K tokens)
-    - Gemini has much higher limits, enabling true parallel execution
-    - Cost is lower per batch while maintaining quality for structured extraction
+    v3 Changes:
+    - Batch prompts include paragraph context (obligations, rights, conditions)
+    - Shows which risk categories are implicated in the batch
+    - Includes cross-referenced paragraphs
+    - Full defined term text (no truncation)
+    - Requests granular risks within category framework
     """
 
     def __init__(
@@ -130,76 +99,191 @@ class ForkedParallelAnalyzer:
         self.primary_model = "gemini-3-flash-preview"
         self.fallback_model = "gemini-3-pro-preview"
 
-    def build_batch_fork_prompt(
+    def build_batch_prompt_v3(
         self,
         batch: List[Dict],
+        all_paragraphs: List[Dict],
         batch_num: int,
-        total_batches: int
+        total_batches: int,
+        initial_context: Dict,
+        representation: str,
+        contract_type: str
     ) -> str:
         """
-        Build the fork prompt for analyzing a specific batch of paragraphs.
+        Build the v3 batch prompt with condensed context.
 
         Args:
-            batch: List of paragraph dicts with 'id' and 'text'
+            batch: List of paragraph dicts to analyze
+            all_paragraphs: All paragraphs in document (for cross-ref lookup)
             batch_num: Current batch number (1-indexed)
             total_batches: Total number of batches
+            initial_context: Context from initial analysis (paragraph_map, risk_category_map, defined_terms)
+            representation: Who we represent
+            contract_type: Type of contract
 
         Returns:
             Formatted prompt string for this batch
         """
+        # Normalize contract type to full name
+        contract_type_full = normalize_contract_type(contract_type)
+
+        paragraph_map = initial_context.get('paragraph_map', {})
+        risk_category_map = initial_context.get('risk_category_map', {})
+        defined_terms = initial_context.get('defined_terms', [])
+
+        batch_para_ids = set(p.get('id') for p in batch)
+
+        # Find cross-referenced paragraphs
+        cross_ref_ids: Set[str] = set()
+        for para_id in batch_para_ids:
+            para_info = paragraph_map.get(para_id, {})
+            cross_refs = para_info.get('cross_refs', [])
+            cross_ref_ids.update(cross_refs)
+        cross_ref_ids -= batch_para_ids
+
+        # Get cross-referenced paragraph objects
+        para_lookup = {p.get('id'): p for p in all_paragraphs}
+        cross_ref_paragraphs = [para_lookup[pid] for pid in cross_ref_ids if pid in para_lookup]
+
+        # Find which risk categories are implicated in this batch
+        relevant_categories = {}
+        for cat_name, cat_info in risk_category_map.items():
+            cat_para_ids = set(cat_info.get('para_ids', []))
+            if cat_para_ids & batch_para_ids:
+                relevant_categories[cat_name] = cat_info
+
+        # Find relevant defined terms (full text)
+        batch_text = " ".join([p.get('text', '') for p in batch]).lower()
+        relevant_terms = [
+            t for t in defined_terms
+            if t.get('term', '').lower() in batch_text
+        ]
+
+        # Build the prompt
         paragraphs_text = "\n\n".join([
             f"[{p.get('id', f'para_{i}')}] {p.get('text', '')}"
             for i, p in enumerate(batch)
         ])
 
-        return f"""Based on your comprehensive understanding of this document from the initial analysis, now perform detailed risk/opportunity analysis on these specific paragraphs (batch {batch_num} of {total_batches}):
+        # Paragraph context from map
+        para_context_text = ""
+        for para_id in batch_para_ids:
+            info = paragraph_map.get(para_id, {})
+            if info:
+                para_context_text += f"\n[{para_id}] {info.get('caption', 'No caption')}\n"
+                if info.get('obligations'):
+                    para_context_text += f"  Obligations: {', '.join(info['obligations'][:3])}\n"
+                if info.get('rights'):
+                    para_context_text += f"  Rights: {', '.join(info['rights'][:3])}\n"
+                if info.get('party_bound'):
+                    para_context_text += f"  Binds: {info['party_bound']}, Benefits: {info.get('party_benefits', 'N/A')}\n"
 
+        # Cross-referenced paragraphs
+        cross_ref_text = ""
+        if cross_ref_paragraphs:
+            cross_ref_text = "\n═══════════════════════════════════════════════════════════════════════════════\nCROSS-REFERENCED PARAGRAPHS\n═══════════════════════════════════════════════════════════════════════════════\n"
+            for p in cross_ref_paragraphs[:8]:
+                info = paragraph_map.get(p.get('id'), {})
+                text = p.get('text', '')
+                cross_ref_text += f"\n[{p.get('id')}] ({info.get('caption', 'No caption')})\n{text[:500]}{'...' if len(text) > 500 else ''}\n"
+
+        # Risk categories implicated
+        risk_cats_text = ""
+        if relevant_categories:
+            risk_cats_text = "\n═══════════════════════════════════════════════════════════════════════════════\nRISK CATEGORIES IMPLICATED IN THIS BATCH\n═══════════════════════════════════════════════════════════════════════════════\n"
+            for cat_name, cat_info in relevant_categories.items():
+                risk_cats_text += f"\n• {cat_name} [{cat_info.get('exposure', 'medium')} exposure]\n"
+                risk_cats_text += f"  {cat_info.get('note', '')}\n"
+
+        # Defined terms (full text)
+        terms_text = ""
+        if relevant_terms:
+            terms_text = "\n".join([
+                f"• \"{t.get('term')}\": {t.get('definition', 'N/A')}"
+                for t in relevant_terms[:15]
+            ])
+        else:
+            terms_text = "(No defined terms found in this batch)"
+
+        return f"""You are analyzing batch {batch_num} of {total_batches} for a {contract_type_full} review.
+
+REPRESENTATION: {representation}
+
+═══════════════════════════════════════════════════════════════════════════════
+PARAGRAPH CONTEXT FROM INITIAL ANALYSIS
+═══════════════════════════════════════════════════════════════════════════════
+{para_context_text}
+{risk_cats_text}
+═══════════════════════════════════════════════════════════════════════════════
+DEFINED TERMS (FULL TEXT)
+═══════════════════════════════════════════════════════════════════════════════
+{terms_text}
+
+═══════════════════════════════════════════════════════════════════════════════
+PARAGRAPHS TO ANALYZE (Batch {batch_num}/{total_batches})
+═══════════════════════════════════════════════════════════════════════════════
 {paragraphs_text}
+{cross_ref_text}
+═══════════════════════════════════════════════════════════════════════════════
+TASK: GRANULAR RISK ANALYSIS
+═══════════════════════════════════════════════════════════════════════════════
+For each paragraph, identify SPECIFIC risks within the categories noted above.
+Focus on provisions that need CONTRACT CHANGES to protect the {representation}.
 
-For each paragraph, identify:
-1. RISKS: Provisions that could harm our client's interests
-2. OPPORTUNITIES: Ways to strengthen our client's position
-3. CROSS_REFERENCES: How this paragraph relates to other document sections you analyzed
+For each risk found:
+1. Identify the exact problematic language
+2. Explain why it's a problem for {representation}
+3. Provide specific revision language
 
 Return as JSON:
 {{
-  "risks": [
+  "batch_analysis": [
     {{
-      "risk_id": "unique_id",
-      "para_id": "paragraph_id",
-      "severity": "high|medium|low",
-      "category": "liability|termination|timing|etc",
-      "title": "brief_title",
-      "description": "detailed explanation",
-      "affected_text": "the specific problematic language",
-      "recommendation": "suggested revision or action"
+      "para_id": "...",
+      "risks": [
+        {{
+          "risk_id": "B{batch_num}_R1",
+          "category": "One of the risk categories above",
+          "severity": "high|medium|low",
+          "title": "Brief title",
+          "description": "Why this is problematic for {representation}",
+          "affected_text": "Exact problematic language",
+          "recommendation": "Specific revision: 'Change X to Y'"
+        }}
+      ],
+      "review_flags": [
+        {{
+          "flag_id": "B{batch_num}_F1",
+          "title": "...",
+          "action": "What to verify (no contract change needed)"
+        }}
+      ],
+      "observations": "Other notes"
     }}
-  ],
-  "opportunities": [...]
+  ]
 }}"""
 
     async def analyze_batch_fork(
         self,
         batch: List[Dict],
+        all_paragraphs: List[Dict],
         batch_num: int,
         total_batches: int,
-        initial_context: Dict
+        initial_context: Dict,
+        representation: str = "Seller",
+        contract_type: str = "Purchase and Sale Agreement"
     ) -> Dict[str, Any]:
         """
-        Analyze a batch using Gemini with full document context.
-
-        Each batch includes:
-        - System prompt with initial analysis context
-        - Full conversation history (document + initial analysis)
-        - Batch-specific analysis request
-
-        Uses Gemini for higher rate limits than Claude Opus.
+        Analyze a batch using Gemini with v3 condensed context.
 
         Args:
             batch: List of paragraph dicts to analyze
+            all_paragraphs: All paragraphs (for cross-ref lookup)
             batch_num: Current batch number (1-indexed)
             total_batches: Total number of batches
-            initial_context: Context from Plan 02 initial analysis
+            initial_context: Context from initial analysis
+            representation: Who we represent
+            contract_type: Type of contract
 
         Returns:
             Dict with success status, batch_num, response or error, paragraph_ids
@@ -207,39 +291,20 @@ Return as JSON:
         async with self.semaphore:
             async with self.rate_limiter:
                 try:
-                    # Build the full prompt for Gemini
-                    # Include initial analysis context in system instruction
-                    system_prompt = initial_context.get('system_prompt', '')
-
-                    # Build conversation context from initial messages
-                    conversation_context = ""
-                    for msg in initial_context.get('conversation_messages', []):
-                        role = msg.get('role', 'user')
-                        content = msg.get('content', '')
-                        # Handle content that might be a list (with cache_control blocks)
-                        if isinstance(content, list):
-                            text_parts = []
-                            for block in content:
-                                if isinstance(block, dict) and block.get('type') == 'text':
-                                    text_parts.append(block.get('text', ''))
-                            content = '\n'.join(text_parts)
-                        conversation_context += f"\n\n[{role.upper()}]:\n{content}"
-
-                    # Build batch-specific prompt
-                    batch_prompt = self.build_batch_fork_prompt(batch, batch_num, total_batches)
-
-                    # Combine everything into a single prompt for Gemini
-                    full_prompt = f"""DOCUMENT ANALYSIS CONTEXT:
-{conversation_context}
-
----
-
-NEW TASK:
-{batch_prompt}"""
+                    # Build the v3 prompt with condensed context
+                    full_prompt = self.build_batch_prompt_v3(
+                        batch=batch,
+                        all_paragraphs=all_paragraphs,
+                        batch_num=batch_num,
+                        total_batches=total_batches,
+                        initial_context=initial_context,
+                        representation=representation,
+                        contract_type=contract_type
+                    )
 
                     # Configure Gemini generation
                     config = types.GenerateContentConfig(
-                        system_instruction=system_prompt,
+                        system_instruction="You are a contract risk analyst specializing in identifying specific risks and providing actionable revision recommendations.",
                         candidate_count=1,
                         max_output_tokens=8000,
                         temperature=0.1,
@@ -257,9 +322,11 @@ NEW TASK:
                         "stage": "batch_analysis",
                         "api": "gemini",
                         "model": self.primary_model,
+                        "version": "v3_condensed_context",
                         "batch": f"{batch_num}/{total_batches}",
                         "paragraphs": para_ids,
-                        "prompt_chars": len(full_prompt)
+                        "prompt_chars": len(full_prompt),
+                        "prompt_tokens": len(full_prompt) // 4
                     }
                     print(f"[GEMINI API] {json.dumps(prompt_summary)}", flush=True)
                     response = await self._call_gemini_with_retry(full_prompt, config)
@@ -350,15 +417,21 @@ NEW TASK:
     async def analyze_all_batches(
         self,
         batches: List[List[Dict]],
+        all_paragraphs: List[Dict],
         initial_context: Dict,
+        representation: str = "Seller",
+        contract_type: str = "Purchase and Sale Agreement",
         on_batch_complete: Optional[Callable] = None
     ) -> List[Dict]:
         """
-        Analyze all batches in parallel via conversation forking.
+        Analyze all batches in parallel with v3 condensed context.
 
         Args:
             batches: List of paragraph batches (each batch is ~5 paragraphs)
-            initial_context: From Plan 02 initial analysis
+            all_paragraphs: All document paragraphs (for cross-ref lookup)
+            initial_context: From initial analysis (paragraph_map, risk_category_map, defined_terms)
+            representation: Who we represent
+            contract_type: Type of contract
             on_batch_complete: Optional async callback for progress updates
 
         Returns:
@@ -372,6 +445,7 @@ NEW TASK:
             "stage": "parallel_analysis_start",
             "api": "gemini",
             "model": self.primary_model,
+            "version": "v3_condensed_context",
             "total_batches": len(batches),
             "max_concurrent": self.semaphore._value,
             "total_paragraphs": sum(len(b) for b in batches)
@@ -380,7 +454,13 @@ NEW TASK:
 
         async def process_batch(batch_idx: int, batch: List[Dict]):
             result = await self.analyze_batch_fork(
-                batch, batch_idx + 1, len(batches), initial_context
+                batch=batch,
+                all_paragraphs=all_paragraphs,
+                batch_num=batch_idx + 1,
+                total_batches=len(batches),
+                initial_context=initial_context,
+                representation=representation,
+                contract_type=contract_type
             )
 
             async with self.progress_lock:
@@ -434,7 +514,7 @@ NEW TASK:
 
     def _parse_batch_response(self, response) -> List[Dict]:
         """
-        Parse risks from a batch response.
+        Parse risks from a v3 batch response.
 
         Args:
             response: Gemini API response object
@@ -454,45 +534,51 @@ NEW TASK:
                 # Try direct JSON parse
                 data = json.loads(text)
 
-            risks = data.get('risks', [])
-            opportunities = data.get('opportunities', [])
+            # v3 format: batch_analysis array with per-paragraph results
+            batch_analysis = data.get('batch_analysis', [])
 
-            # Normalize risk fields
             normalized_risks = []
-            for risk in risks:
-                normalized_risks.append({
-                    'risk_id': risk.get('risk_id', ''),
-                    'para_id': risk.get('para_id', ''),
-                    'severity': risk.get('severity', 'medium'),
-                    'type': risk.get('category', risk.get('type', 'general')),
-                    'title': risk.get('title', 'Risk Identified'),
-                    'description': risk.get('description', ''),
-                    'problematic_text': risk.get('affected_text', risk.get('problematic_text', '')),
-                    'user_recommendation': risk.get('recommendation', risk.get('user_recommendation', '')),
-                    'model_instructions': risk.get('model_instructions', ''),
-                    'related_para_ids': risk.get('related_para_id', ''),
-                    'mitigated_by': risk.get('mitigated_by', []),
-                    'amplified_by': risk.get('amplified_by', []),
-                    'triggers': risk.get('triggers', [])
-                })
+            for para_result in batch_analysis:
+                para_id = para_result.get('para_id', '')
+                risks = para_result.get('risks', [])
+                review_flags = para_result.get('review_flags', [])
+                observations = para_result.get('observations', '')
 
-            # Treat opportunities as risks with type='opportunity'
-            for opp in opportunities:
-                normalized_risks.append({
-                    'risk_id': opp.get('risk_id', ''),
-                    'para_id': opp.get('para_id', ''),
-                    'severity': 'info',  # Opportunities are informational
-                    'type': 'opportunity',
-                    'title': opp.get('title', 'Opportunity Identified'),
-                    'description': opp.get('description', ''),
-                    'problematic_text': opp.get('affected_text', ''),
-                    'user_recommendation': opp.get('recommendation', ''),
-                    'model_instructions': opp.get('model_instructions', ''),
-                    'related_para_ids': opp.get('related_para_id', ''),
-                    'mitigated_by': [],
-                    'amplified_by': [],
-                    'triggers': []
-                })
+                # Process risks
+                for risk in risks:
+                    normalized_risks.append({
+                        'risk_id': risk.get('risk_id', ''),
+                        'para_id': para_id,
+                        'severity': risk.get('severity', 'medium'),
+                        'type': risk.get('category', risk.get('type', 'general')),
+                        'title': risk.get('title', 'Risk Identified'),
+                        'description': risk.get('description', ''),
+                        'problematic_text': risk.get('affected_text', risk.get('problematic_text', '')),
+                        'user_recommendation': risk.get('recommendation', risk.get('user_recommendation', '')),
+                        'model_instructions': risk.get('model_instructions', ''),
+                        'related_para_ids': risk.get('related_para_id', ''),
+                        'mitigated_by': risk.get('mitigated_by', []),
+                        'amplified_by': risk.get('amplified_by', []),
+                        'triggers': risk.get('triggers', [])
+                    })
+
+                # Process review flags as informational risks
+                for flag in review_flags:
+                    normalized_risks.append({
+                        'risk_id': flag.get('flag_id', ''),
+                        'para_id': para_id,
+                        'severity': 'info',
+                        'type': 'review_flag',
+                        'title': flag.get('title', 'Review Flag'),
+                        'description': flag.get('action', ''),
+                        'problematic_text': '',
+                        'user_recommendation': flag.get('action', ''),
+                        'model_instructions': '',
+                        'related_para_ids': '',
+                        'mitigated_by': [],
+                        'amplified_by': [],
+                        'triggers': []
+                    })
 
             return normalized_risks
 
@@ -505,17 +591,21 @@ def run_forked_parallel_analysis(
     api_key: str = None,
     paragraphs: List[Dict] = None,
     initial_context: Dict = None,
+    representation: str = "Seller",
+    contract_type: str = "Purchase and Sale Agreement",
     batch_size: int = 5,
     on_progress: Optional[Callable] = None
 ) -> Dict:
     """
-    Synchronous wrapper for forked parallel analysis using Gemini.
+    Synchronous wrapper for forked parallel analysis using Gemini (v3).
 
     Args:
         api_key: Gemini API key (optional, will try to load from env)
         paragraphs: List of paragraph dicts to analyze
-        initial_context: Context from Plan 02 initial analysis (must include
-            conversation_messages and system_prompt)
+        initial_context: Context from initial analysis (must include
+            paragraph_map, risk_category_map, defined_terms)
+        representation: Who we represent
+        contract_type: Type of contract
         batch_size: Number of paragraphs per batch (default 5)
         on_progress: Optional callback for progress updates (progress_dict, batch_result)
 
@@ -540,7 +630,14 @@ def run_forked_parallel_analysis(
 
     # Run async
     results = asyncio.run(
-        analyzer.analyze_all_batches(batches, initial_context, on_progress)
+        analyzer.analyze_all_batches(
+            batches=batches,
+            all_paragraphs=paragraphs,
+            initial_context=initial_context,
+            representation=representation,
+            contract_type=contract_type,
+            on_batch_complete=on_progress
+        )
     )
 
     # Aggregate results

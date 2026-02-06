@@ -624,12 +624,10 @@ def analyze_document_with_llm(
             })
 
         try:
-            api_key = get_anthropic_api_key()
-
             # Log API call for browser console
             log_api_call(session_id, {
-                'api': 'anthropic',
-                'model': 'claude-opus-4-5-20251101',
+                'api': 'gemini',
+                'model': 'gemini-3-pro-preview',
                 'stage': 'initial_analysis',
                 'content': 'full_document',
                 'paragraphs': len(paragraphs),
@@ -637,7 +635,6 @@ def analyze_document_with_llm(
             })
 
             initial_context = run_initial_analysis(
-                api_key=api_key,
                 paragraphs=paragraphs,
                 contract_type=contract_type,
                 representation=representation
@@ -744,10 +741,13 @@ def analyze_document_with_llm(
 
         # Run forked parallel analysis using Gemini (higher rate limits)
         # Gemini API key is loaded from environment by parallel_analyzer
+        # v3: Pass representation and contract_type for category-based risk finding
         parallel_result = run_forked_parallel_analysis(
             api_key=None,  # Will use GEMINI_API_KEY from environment
             paragraphs=paragraphs,
             initial_context=initial_context,
+            representation=representation,
+            contract_type=contract_type,
             batch_size=batch_size,
             on_progress=progress_callback
         )

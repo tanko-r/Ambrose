@@ -479,8 +479,8 @@ def generate_revision(
     )
 
     # Call API with retry logic
-    primary_model = "gemini-3-flash-preview"
-    fallback_model = "gemini-3-pro-preview"
+    primary_model = "gemini-3-pro-preview"
+    fallback_model = "gemini-3-flash-preview"
 
     def call_with_retry(model_name: str, max_retries: int = 3):
         initial_delay = 2
