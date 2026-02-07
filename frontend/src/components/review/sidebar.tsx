@@ -13,6 +13,9 @@ import {
   Flag,
 } from "lucide-react";
 import { RiskAccordion } from "./risk-accordion";
+import { DefinitionsTab } from "./definitions-tab";
+import { RelatedClausesTab } from "./related-clauses-tab";
+import { FlagsTab } from "./flags-tab";
 
 type SidebarTab = "risks" | "related" | "definitions" | "flags";
 
@@ -41,6 +44,7 @@ const TABS: { value: SidebarTab; label: string; icon: React.ReactNode }[] = [
 
 export function Sidebar() {
   const {
+    sessionId,
     selectedParaId,
     paragraphs,
     risks,
@@ -149,11 +153,11 @@ export function Sidebar() {
             paraId={selectedParaId}
           />
         ) : activeTab === "related" ? (
-          <EmptyState message="Related clauses — coming in Phase 3." />
+          <RelatedClausesTab sessionId={sessionId} paraId={selectedParaId} />
         ) : activeTab === "definitions" ? (
-          <EmptyState message="Defined terms — coming in Phase 3." />
+          <DefinitionsTab paraId={selectedParaId} />
         ) : (
-          <EmptyState message="Flags — coming in Phase 6." />
+          <FlagsTab paraId={selectedParaId} />
         )}
       </div>
 
