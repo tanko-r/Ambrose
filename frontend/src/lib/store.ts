@@ -85,6 +85,8 @@ interface UIState {
   precedentPanelOpen: boolean;
   reviewMode: ReviewMode;
   compactMode: boolean;
+  hoveredRiskId: string | null;
+  focusedRiskId: string | null;
 }
 
 // --- Combined Store ---
@@ -120,6 +122,8 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   togglePrecedentPanel: () => void;
   setReviewMode: (mode: ReviewMode) => void;
   toggleCompactMode: () => void;
+  setHoveredRiskId: (riskId: string | null) => void;
+  setFocusedRiskId: (riskId: string | null) => void;
 }
 
 const initialSessionState: SessionState = {
@@ -170,6 +174,8 @@ const initialUIState: UIState = {
   precedentPanelOpen: false,
   reviewMode: 'linear',
   compactMode: false,
+  hoveredRiskId: null,
+  focusedRiskId: null,
 };
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -233,4 +239,9 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => ({ precedentPanelOpen: !state.precedentPanelOpen })),
   setReviewMode: (mode) => set({ reviewMode: mode }),
   toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
+  setHoveredRiskId: (riskId) => set({ hoveredRiskId: riskId }),
+  setFocusedRiskId: (riskId) =>
+    set((state) => ({
+      focusedRiskId: state.focusedRiskId === riskId ? null : riskId,
+    })),
 }));
