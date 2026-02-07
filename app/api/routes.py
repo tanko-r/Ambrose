@@ -459,8 +459,9 @@ def get_analysis_progress(session_id):
 
     Returns real-time progress data for the analysis overlay.
     Optionally includes incremental risks found so far when include_risks=true.
+    Includes API calls for browser console logging.
     """
-    from app.services.claude_service import get_progress, get_partial_risks
+    from app.services.claude_service import get_progress, get_partial_risks, get_api_calls
 
     progress = get_progress(session_id)
     if not progress:
@@ -482,14 +483,37 @@ def get_analysis_progress(session_id):
     if include_risks and progress.get('status') == 'analyzing':
         progress['incremental_risks'] = get_partial_risks(session_id)
 
+    # Calculate stage elapsed time
+    import time
+    stage_started = progress.get('stage_started_at')
+    if stage_started:
+        stage_elapsed = int(time.time() - stage_started)
+        if stage_elapsed > 60:
+            progress['stage_elapsed_display'] = f"{stage_elapsed // 60}m {stage_elapsed % 60}s"
+        else:
+            progress['stage_elapsed_display'] = f"{stage_elapsed}s"
+
+    # Include initial analysis duration if available
+    if progress.get('initial_analysis_duration'):
+        dur = int(progress['initial_analysis_duration'])
+        if dur > 60:
+            progress['initial_analysis_duration_display'] = f"{dur // 60}m {dur % 60}s"
+        else:
+            progress['initial_analysis_duration_display'] = f"{dur}s"
+
     # Add human-readable stage description
     stage = progress.get('stage')
     if stage == 'initial_analysis':
-        progress['stage_display'] = 'Analyzing full document structure...'
+        elapsed_str = progress.get('stage_elapsed_display', '')
+        progress['stage_display'] = f'Analyzing full document structure... ({elapsed_str})' if elapsed_str else 'Analyzing full document structure...'
     elif stage == 'parallel_batches':
         batch = progress.get('current_batch', 0)
         total = progress.get('total_batches', 0)
-        progress['stage_display'] = f'Running parallel analysis ({batch}/{total} batches)'
+        elapsed_str = progress.get('stage_elapsed_display', '')
+        initial_dur = progress.get('initial_analysis_duration_display', '')
+        time_info = f' [{elapsed_str}]' if elapsed_str else ''
+        initial_info = f' (Initial: {initial_dur})' if initial_dur else ''
+        progress['stage_display'] = f'Parallel analysis: {batch}/{total} batches{time_info}{initial_info}'
     elif stage == 'complete':
         progress['stage_display'] = 'Analysis complete'
     else:
@@ -502,6 +526,11 @@ def get_analysis_progress(session_id):
             progress['elapsed_display'] = f"{elapsed // 60}m {elapsed % 60}s"
         else:
             progress['elapsed_display'] = f"{elapsed}s"
+
+    # Include API calls for browser console logging
+    # Frontend tracks last_api_call_id to only show new calls
+    last_call_id = request.args.get('last_api_call_id', 0, type=int)
+    progress['api_calls'] = get_api_calls(session_id, since_id=last_call_id)
 
     return jsonify(progress)
 
@@ -1334,10 +1363,6 @@ def get_related_precedent_clauses(session_id, para_id):
     Uses TF-IDF vectorization with cosine similarity for improved concept-based
     matching. Addresses UAT #5: clause matching quality.
 
-    User correlations (UAT #6) are applied on top of automatic matches:
-    - User-added correlations are included with score=1.0
-    - Automatic matches still appear unless explicitly removed by user
-
     PREC-03: System highlights clauses in precedent that relate to current paragraph
     """
     from app.services.matching_service import find_related_clauses
@@ -1374,163 +1399,14 @@ def get_related_precedent_clauses(session_id, para_id):
         max_results=10
     )
 
-    # Apply user correlation overrides (UAT #6)
-    user_correlations = session.get('user_correlations', {}).get(para_id, [])
-    has_user_correlations = len(user_correlations) > 0
-
-    if has_user_correlations:
-        # Build set of auto-matched IDs
-        auto_matched_ids = {c['id'] for c in related_clauses}
-
-        # Add user-correlated clauses that aren't already in auto matches
-        precedent_content = parsed_precedent.get('content', [])
-        precedent_by_id = {
-            item.get('id'): item
-            for item in precedent_content
-            if item.get('type') == 'paragraph'
-        }
-
-        for prec_id in user_correlations:
-            if prec_id not in auto_matched_ids and prec_id in precedent_by_id:
-                prec_item = precedent_by_id[prec_id]
-                related_clauses.insert(0, {
-                    'id': prec_id,
-                    'text': prec_item.get('text', ''),
-                    'section_ref': prec_item.get('section_ref', ''),
-                    'caption': prec_item.get('caption'),
-                    'hierarchy': prec_item.get('section_hierarchy', []),
-                    'score': 1.0,  # User correlations get max score
-                    'base_score': 0.0,
-                    'user_correlated': True  # Flag for UI
-                })
-
-        # Sort by score (user correlations first, then by score)
-        related_clauses.sort(key=lambda x: (not x.get('user_correlated', False), -x.get('score', 0)))
-
     return jsonify({
         'session_id': session_id,
         'para_id': para_id,
         'target_section_ref': target_section_ref,
         'related_clauses': related_clauses,
-        'total_matches': len(related_clauses),
-        'has_user_correlations': has_user_correlations
+        'total_matches': len(related_clauses)
     })
 
-
-@api_bp.route('/correlations/<session_id>', methods=['POST'])
-def save_correlations(session_id):
-    """
-    Save user-defined clause correlations.
-
-    Allows users to manually create or modify correlations between
-    target document paragraphs and precedent clauses (UAT #6).
-
-    Expects JSON:
-    {
-        "para_id": "p_123",
-        "precedent_ids": ["prec_456", "prec_789"],  // List of correlated precedent IDs
-        "action": "add" | "remove" | "replace"  // Optional, defaults to "replace"
-    }
-
-    Returns the updated correlations for the paragraph.
-    """
-    session = get_session(session_id)
-    if not session:
-        return jsonify({'error': 'Session not found'}), 404
-
-    data = request.get_json()
-    para_id = data.get('para_id')
-    precedent_ids = data.get('precedent_ids', [])
-    action = data.get('action', 'replace')
-
-    if not para_id:
-        return jsonify({'error': 'para_id is required'}), 400
-
-    # Initialize correlations storage if not present
-    if 'user_correlations' not in session:
-        session['user_correlations'] = {}
-
-    current_correlations = session['user_correlations'].get(para_id, [])
-
-    if action == 'add':
-        # Add new correlations without duplicates
-        for pid in precedent_ids:
-            if pid not in current_correlations:
-                current_correlations.append(pid)
-    elif action == 'remove':
-        # Remove specified correlations
-        current_correlations = [c for c in current_correlations if c not in precedent_ids]
-    else:  # replace
-        current_correlations = precedent_ids
-
-    session['user_correlations'][para_id] = current_correlations
-    save_session(session_id, session)
-
-    return jsonify({
-        'status': 'saved',
-        'para_id': para_id,
-        'correlations': current_correlations
-    })
-
-
-@api_bp.route('/correlations/<session_id>/<para_id>', methods=['GET'])
-def get_correlations(session_id, para_id):
-    """
-    Get user-defined correlations for a paragraph.
-
-    Returns list of precedent IDs the user has correlated with this paragraph.
-    """
-    session = get_session(session_id)
-    if not session:
-        return jsonify({'error': 'Session not found'}), 404
-
-    correlations = session.get('user_correlations', {}).get(para_id, [])
-
-    return jsonify({
-        'para_id': para_id,
-        'correlations': correlations,
-        'has_user_correlations': len(correlations) > 0
-    })
-
-
-@api_bp.route('/correlations/<session_id>/<para_id>', methods=['DELETE'])
-def delete_correlation(session_id, para_id):
-    """
-    Delete a specific correlation or all correlations for a paragraph.
-
-    Query param: precedent_id (optional) - if provided, removes only that correlation
-    If no precedent_id provided, removes all correlations for the paragraph.
-    """
-    session = get_session(session_id)
-    if not session:
-        return jsonify({'error': 'Session not found'}), 404
-
-    precedent_id = request.args.get('precedent_id')
-
-    if 'user_correlations' not in session:
-        return jsonify({'status': 'no_correlations', 'para_id': para_id})
-
-    if para_id not in session['user_correlations']:
-        return jsonify({'status': 'no_correlations', 'para_id': para_id})
-
-    if precedent_id:
-        # Remove specific correlation
-        session['user_correlations'][para_id] = [
-            c for c in session['user_correlations'][para_id]
-            if c != precedent_id
-        ]
-    else:
-        # Remove all correlations for this paragraph
-        del session['user_correlations'][para_id]
-
-    save_session(session_id, session)
-
-    return jsonify({
-        'status': 'deleted',
-        'para_id': para_id,
-        'precedent_id': precedent_id,
-        'remaining': session['user_correlations'].get(para_id, [])
-    })
 
 
 @api_bp.route('/version', methods=['GET'])

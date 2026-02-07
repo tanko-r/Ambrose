@@ -152,20 +152,22 @@ function resetToNewProject() {
     // Reset file upload displays
     const targetFilename = document.getElementById('target-filename');
     if (targetFilename) {
-        targetFilename.textContent = 'Click or drag to upload .docx file';
+        targetFilename.textContent = 'Drop or click to upload';
     }
     const targetUpload = document.getElementById('target-upload');
     if (targetUpload) {
         targetUpload.style.borderColor = '';
+        targetUpload.classList.remove('has-file');
     }
 
     const precedentFilename = document.getElementById('precedent-filename');
     if (precedentFilename) {
-        precedentFilename.textContent = 'Click or drag to upload .docx file';
+        precedentFilename.textContent = 'Drop or click to upload';
     }
     const precedentUpload = document.getElementById('precedent-upload');
     if (precedentUpload) {
         precedentUpload.style.borderColor = '';
+        precedentUpload.classList.remove('has-file');
     }
 
     // Reset aggressiveness display
@@ -231,32 +233,32 @@ async function loadRecentProjects() {
 
         if (sessions.length === 0) {
             recentProjectsContainer.innerHTML = `
-                <p class="recent-projects-empty">No saved projects yet.</p>
+                <p class="dashboard-empty">No saved projects yet</p>
             `;
             return;
         }
 
-        // Show up to 5 most recent
-        const recentSessions = sessions.slice(0, 5);
+        // Show up to 6 most recent
+        const recentSessions = sessions.slice(0, 6);
         const listHtml = recentSessions.map(session => {
             const filename = session.target_filename || 'Unknown Document';
-            const displayName = filename.length > 40 ? filename.substring(0, 37) + '...' : filename;
+            const displayName = filename.length > 35 ? filename.substring(0, 32) + '...' : filename;
             const dateStr = formatRelativeDate(session.last_modified || session.created_at);
             const status = session.status || 'unknown';
             const revCount = session.revisions_count || 0;
             const flagCount = session.flags_count || 0;
 
             return `
-                <div class="recent-project-item" onclick="resumeProject('${session.session_id}')">
-                    <div class="recent-project-icon">&#128196;</div>
+                <div class="recent-project-item" onclick="resumeProject('${session.session_id}')" title="${filename}">
+                    <span class="recent-project-icon">&#128196;</span>
                     <div class="recent-project-info">
-                        <div class="recent-project-name" title="${filename}">${displayName}</div>
+                        <div class="recent-project-name">${displayName}</div>
                         <div class="recent-project-meta">
                             <span class="recent-project-date">${dateStr}</span>
-                            <span class="recent-project-stats">${revCount} revision${revCount !== 1 ? 's' : ''}, ${flagCount} flag${flagCount !== 1 ? 's' : ''}</span>
+                            <span class="recent-project-stats">${revCount} rev, ${flagCount} flags</span>
                         </div>
                     </div>
-                    <div class="recent-project-status status-${status}">${status}</div>
+                    <span class="recent-project-status status-${status}">${status}</span>
                 </div>
             `;
         }).join('');
@@ -269,7 +271,7 @@ async function loadRecentProjects() {
     } catch (error) {
         console.warn('Failed to load recent projects:', error);
         recentProjectsContainer.innerHTML = `
-            <p class="recent-projects-empty">Could not load recent projects.</p>
+            <p class="dashboard-empty">Could not load recent projects</p>
         `;
     }
 }

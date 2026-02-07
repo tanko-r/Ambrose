@@ -9,7 +9,7 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Analysis acceleration with conversation forking architecture
+**Current focus:** Completing remaining v1.0 placeholder features (Phases 1, 2, 3, 4)
 
 ## Current Milestone
 
@@ -77,6 +77,7 @@ Phase 6 complete. Next options:
 | 06-03 | 150 RPM rate limit with AsyncLimiter | Conservative rate limit for Tier 1 accounts; prevents 429 errors |
 | 06-03 | Max 30 concurrent forks | Matches typical batch count for 150-paragraph document at batch_size=5 |
 | 06-03 | Keep sequential as fallback | Ensures robustness when forking fails; future "economical" mode for Phase 7 |
+| 06-03 | Prompt caching on assistant response | 60% cost reduction ($6 → $2.50) using cache_control: ephemeral |
 | 06-04 | CSS-only completion | Backend and JavaScript for incremental results already implemented in prior work |
 | 06-04 | Two-stage indicator with active/complete states | Visual distinction between initial analysis and parallel batch phases |
 | 06-04 | Fade-in animation at 0.4s | Smooth appearance of incremental risks without being distracting |
@@ -88,7 +89,7 @@ Phase 6 complete. Next options:
 - Phase 6 complete: Full analysis acceleration pipeline operational
   - Plan 01: Content pre-filtering (skip non-substantive paragraphs)
   - Plan 02: Initial full-document analysis with extended thinking
-  - Plan 03: Forked parallel batch analysis (30 concurrent forks, 90s total)
+  - Plan 03: Forked parallel batch analysis (30 concurrent forks, 90s total, $2.50/doc with caching)
   - Plan 04: Real-time progress UI with incremental results
 
 ## Session Continuity

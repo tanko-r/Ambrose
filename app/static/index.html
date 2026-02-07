@@ -42,6 +42,7 @@
                 </div>
             </div>
             <h1>Contract Review</h1>
+            <span class="version-info" id="version-info" style="font-size: 10px; color: #888; margin-left: 12px; font-family: monospace;"></span>
         </div>
         <!-- Center: Document Filename -->
         <div class="header-center">
@@ -268,6 +269,7 @@
         <div class="split-container hidden" id="split-container">
             <!-- Main Document Pane -->
             <div class="split-pane" id="main-document-pane">
+                <div class="pane-title-tag" id="target-title-tag"></div>
                 <div class="document-panel" id="document-panel">
                     <div class="document-wrapper" id="document-content">
                         <!-- Document paragraphs will be rendered here -->
@@ -276,9 +278,8 @@
             </div>
             <!-- Precedent Pane (hidden by default) -->
             <div class="split-pane precedent-pane hidden" id="precedent-pane">
-                <div class="precedent-header" id="precedent-header">
-                    <!-- Header rendered by JS -->
-                </div>
+                <div class="pane-title-tag" id="precedent-title-tag"></div>
+                <button class="precedent-close-btn" id="precedent-close-btn" onclick="closePrecedentPanel()" title="Close Precedent Compare">&times;</button>
                 <div class="precedent-body">
                     <div class="precedent-content" id="precedent-content">
                         <!-- Document content rendered by JS -->
@@ -286,6 +287,9 @@
                     <div class="precedent-navigator" id="precedent-navigator">
                         <!-- Navigator content rendered by JS -->
                     </div>
+                </div>
+                <div class="precedent-status-bar" id="precedent-status-bar">
+                    <!-- Status info for precedent pane -->
                 </div>
             </div>
         </div>
@@ -616,11 +620,24 @@
             <div class="analysis-icon">&#9878;</div>
             <div class="analysis-title">Analyzing Contract</div>
             <div class="analysis-verb" id="analysis-verb">Reviewing document structure...</div>
+            <!-- Two-stage progress indicator -->
+            <div class="analysis-stages" id="analysis-stages">
+                <div class="analysis-stage" data-stage="initial" id="stage-initial">
+                    <div class="stage-indicator"></div>
+                    <span class="stage-label">Initial Analysis</span>
+                </div>
+                <div class="analysis-stage-connector"></div>
+                <div class="analysis-stage" data-stage="parallel" id="stage-parallel">
+                    <div class="stage-indicator"></div>
+                    <span class="stage-label">Parallel Batches</span>
+                </div>
+            </div>
             <div class="analysis-progress-container">
                 <div class="analysis-progress-bar" id="analysis-progress"></div>
             </div>
-            <div class="analysis-status" id="analysis-status">Initializing...</div>
-            <div class="analysis-detail" id="analysis-detail">Preparing to analyze clauses with Claude Opus 4.5</div>
+            <div class="analysis-stage-display" id="analysis-stage-display">Initializing...</div>
+            <div class="analysis-status" id="analysis-status">Preparing to analyze clauses with Claude Opus 4.5</div>
+            <div class="analysis-detail" id="analysis-detail"></div>
             <div class="analysis-batch-info" id="analysis-batch-info"></div>
         </div>
     </div>

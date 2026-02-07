@@ -5,54 +5,61 @@
 ## Test Framework
 
 **Runner:**
-- `pytest` (inferred from test file organization and import pattern)
-- Config: Not explicitly configured; uses pytest defaults
+- pytest (implicitly used; test file imports `pytest`)
+- Config file: Not found (no `pytest.ini`, `setup.cfg`, or `pyproject.toml`)
+- Tests located in: `tests/` directory at project root
 
 **Assertion Library:**
-- `assert` statements (Python built-in); no third-party assertion library
+- Python `assert` statements (standard library)
+- Custom assertions may use simple comparisons: `assert 'CONCEPT MAP' in prompt`
 
 **Run Commands:**
 ```bash
-pytest                      # Run all tests
-pytest -v                   # Verbose output
-pytest tests/test_*.py      # Run specific test file
-pytest -k test_prompt       # Run tests matching pattern
+pytest tests/                      # Run all tests
+pytest tests/test_claude_service.py  # Run specific test file
+pytest tests/ -v                   # Verbose mode
+pytest tests/ --tb=short           # Short traceback format
 ```
-
-Note: No test runner configured in `pytest.ini`, `setup.cfg`, or `pyproject.toml`. Tests located in `tests/` directory.
 
 ## Test File Organization
 
 **Location:**
-- Co-located in separate `tests/` directory (not alongside source code)
-- Path: `/c/Users/david/Documents/claude-redlining/tests/`
+- Co-located in separate `tests/` directory
+- Parallel structure to `app/` (not src-based layout)
+- One test file per major service module
 
 **Naming:**
-- Test modules: `test_*.py` (e.g., `test_claude_service.py`)
-- Test functions: `test_*` (e.g., `test_prompt_includes_concept_extraction`)
-- Test classes: Not used (functions preferred)
+- `test_<service>.py` pattern: `test_claude_service.py`
+- Individual test functions: `test_<functionality>()`
+- Example: `test_prompt_includes_concept_extraction()`
 
 **Structure:**
 ```
-tests/
-├── __init__.py
-└── test_claude_service.py
+claude-redlining/
+├── tests/
+│   ├── __init__.py
+│   └── test_claude_service.py
+└── app/
+    ├── services/
+    │   └── claude_service.py
+    └── ...
 ```
 
 ## Test Structure
 
-**Test Organization Pattern (`tests/test_claude_service.py`):**
-
+**Suite Organization:**
+From `tests/test_claude_service.py`:
 ```python
 import pytest
 import sys
 from pathlib import Path
 
-# Add app to path
+# Setup: Add app to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.services.claude_service import build_risk_analysis_prompt
 
+# Test functions follow
 def test_prompt_includes_concept_extraction():
     """Test that the prompt includes concept map extraction instructions."""
     prompt = build_risk_analysis_prompt(
@@ -67,141 +74,159 @@ def test_prompt_includes_concept_extraction():
 ```
 
 **Patterns:**
+- **Setup**: Import system path modification to access app modules
+- **Test naming**: `test_<what_is_tested>()` format with docstrings
+- **Arrange-Act-Assert**: Call function, verify output, assert expectations
+- **No explicit teardown**: Tests are stateless (analyze prompts, not state)
 
-- **Setup:** Path addition at module level to allow imports from project root
-- **Assertion:** Simple `assert` statements with conditions checked
-- **Docstrings:** Single-line descriptions of what the test validates
-- **No teardown:** No cleanup needed for pure function tests
-- **No fixtures:** Tests use direct function calls with hardcoded parameters
+## Mocking
+
+**Framework:** No mocking framework observed (no `unittest.mock` or `pytest-mock` imports)
+
+**Patterns:**
+- Tests call actual functions (`build_risk_analysis_prompt()`) without mocking dependencies
+- No database calls or external API mocking
+- Tests are unit-level but rely on real implementations (testing prompt output, not API calls)
+
+**What to Mock (should be):**
+- Anthropic API calls in `analyze_clauses_with_claude()` - currently not tested
+- File I/O in `generate_final_output()` - currently not tested
+- Flask request/response in routes - currently not tested
+
+**What NOT to Mock:**
+- Pure functions like `build_risk_analysis_prompt()` - test actual output
+- Data transformation functions - test actual behavior
+- Configuration loading - can test with real config files
+
+## Fixtures and Factories
+
+**Test Data:**
+No fixtures observed in current tests. Manual test data construction:
+```python
+prompt = build_risk_analysis_prompt(
+    contract_type='psa',
+    representation='seller',
+    aggressiveness=3
+)
+```
+
+**Factories/Builders (not implemented but could be):**
+- Could create `create_test_parsed_doc()` factory for document test data
+- Could create risk/concept map builders for analysis testing
+- Could create session fixtures for route testing
+
+**Location (current):**
+- Test data constructed inline in each test function
+- No shared fixtures file
+- No factory module
+
+## Coverage
+
+**Requirements:** Not enforced (no coverage threshold found)
+
+**View Coverage:**
+```bash
+# If coverage.py were installed:
+coverage run -m pytest tests/
+coverage report
+coverage html
+```
+
+**Current state:** No coverage configuration; coverage not measured
 
 ## Test Types
 
 **Unit Tests:**
-- Scope: Test individual functions in isolation
-- Current coverage: Claude service prompt building functions
-- Pattern: Call function → assert output properties
-- Example: `test_prompt_includes_risk_relationships()` validates that LLM prompt contains relationship mapping instructions
-
-**Example Unit Test Structure (`test_claude_service.py`):**
-```python
-def test_prompt_output_format_includes_relationships():
-    """Test that the output format section includes relationship fields."""
-    prompt = build_risk_analysis_prompt(
-        contract_type='development',
-        representation='developer',
-        aggressiveness=5
-    )
-
-    # Check that output format mentions the relationship fields
-    assert '"mitigated_by"' in prompt or 'mitigated_by' in prompt
-    assert '"amplified_by"' in prompt or 'amplified_by' in prompt
-    assert '"triggers"' in prompt or 'triggers' in prompt
-```
+Observed in `test_claude_service.py`:
+- **Scope**: Test individual function output (prompt building)
+- **Approach**: Call function with known inputs, verify output contains expected sections
+- **Examples**:
+  - `test_prompt_includes_concept_extraction()` - Verifies prompt structure
+  - `test_prompt_includes_risk_relationships()` - Verifies prompt fields
+  - `test_prompt_includes_concept_map_categories()` - Verifies all categories present
+  - `test_prompt_output_format_includes_relationships()` - Verifies JSON format fields
 
 **Integration Tests:**
-- Not found in codebase; could test API endpoints with Flask test client
-- Would test session management, document parsing, analysis workflows
-- Likely candidates: `/tests/test_routes.py`, `/tests/test_end_to_end.py`
+Not observed in current codebase. Would be needed for:
+- Full document parsing and analysis pipeline
+- Session creation through finalization
+- Revision generation and acceptance flow
 
 **E2E Tests:**
-- Not currently implemented
-- Would test full workflow: intake → analysis → revision → finalization
-- Would require mock or test documents
+Not present. Manual testing appears to be primary approach (reference to "test output" in README/CLAUDE.md suggests manual verification).
 
-## Test Coverage
+## Common Patterns
 
-**Current Coverage:**
-- Only `test_claude_service.py` exists
-- 5 test functions covering prompt generation
-- Focus: Validates that risk analysis prompt includes required sections
+**Async Testing:**
+Not applicable (no async/await in codebase).
 
-**Coverage Areas:**
-1. Concept map extraction instructions present
-2. Risk relationship instructions (mitigated_by, amplified_by, triggers)
-3. All concept map categories included
-4. Risk relationship examples provided
-5. Output format section complete
+**Error Testing:**
+Not observed in current tests. Should test:
+- Missing API keys (fallback behavior)
+- Invalid JSON responses (parsing fallback)
+- File not found (error handling)
 
-**Gaps:**
-- No tests for API endpoints (`app/api/routes.py`)
-- No tests for document parsing (`app/services/document_service.py`)
-- No tests for Gemini redline generation (`app/services/gemini_service.py`)
-- No tests for model classes (`ConceptMap`, `RiskMap`)
-- No tests for analysis service fallback logic (`app/services/analysis_service.py`)
-- No integration tests for full workflow
-- No tests for error handling paths
+## Current Test Examples
 
-**High-Priority Test Areas:**
-1. Session management (`get_session`, `save_session`) in `app/api/routes.py` - critical for data persistence
-2. Contract type detection (`detect_contract_type`) in `app/api/routes.py` - impacts prompt selection
-3. Risk parsing from LLM response (`parse_risk_response`) in `claude_service.py` - handles JSON extraction
-4. Document parsing (`parse_document`) in `document_service.py` - handles .docx format conversion
-5. Concept map and risk map construction in models - core data structures
-
-## Testing Approach
-
-**Philosophy (inferred):**
-- Lightweight testing of prompt construction (pure functions)
-- Avoid mocking external APIs (Anthropic, Gemini) in tests
-- Test deterministic behavior (prompt presence, output format)
-
-**Assertions Used:**
-- Membership checks: `assert 'CONCEPT MAP' in prompt`
-- Multiple conditions: `assert 'CONCEPT MAP' in prompt or 'concept map' in prompt.lower()`
-- Case-insensitive checking: `.lower()` for flexible string matching
-
-## Recommended Test Patterns
-
-**For New Tests (align with existing patterns):**
-
-**Unit Test Template:**
+**Test from `test_claude_service.py:12-22`:**
 ```python
-def test_function_behavior():
-    """One-line description of what is tested."""
-    # Arrange
-    input_data = {'key': 'value'}
+def test_prompt_includes_concept_extraction():
+    """Test that the prompt includes concept map extraction instructions."""
+    prompt = build_risk_analysis_prompt(
+        contract_type='psa',
+        representation='seller',
+        aggressiveness=3
+    )
 
-    # Act
-    result = function_to_test(input_data)
-
-    # Assert
-    assert result.get('expected_field') is not None
-    assert 'expected_string' in str(result)
+    assert 'CONCEPT MAP' in prompt or 'concept map' in prompt.lower()
+    assert 'liability_limitations' in prompt or 'LIABILITY LIMITATIONS' in prompt
+    assert 'mitigated_by' in prompt
 ```
 
-**For Async/API Tests (if needed):**
+**Pattern**: Direct string verification in prompt output. Simple but effective for prompt engineering validation.
+
+**Test from `test_claude_service.py:37-50`:**
 ```python
-def test_api_endpoint(self):
-    """Test API response structure."""
-    with app.test_client() as client:
-        response = client.post('/api/intake', data={...})
-        assert response.status_code == 200
-        assert 'session_id' in response.get_json()
+def test_prompt_includes_concept_map_categories():
+    """Test that all concept map categories are present."""
+    prompt = build_risk_analysis_prompt(
+        contract_type='lease',
+        representation='landlord',
+        aggressiveness=4
+    )
+
+    # Check for all required concept map categories
+    assert 'KNOWLEDGE STANDARDS' in prompt or 'knowledge_standards' in prompt
+    assert 'TERMINATION TRIGGERS' in prompt or 'termination_triggers' in prompt
+    assert 'DEFAULT REMEDIES' in prompt or 'default_remedies' in prompt
+    assert 'KEY DEFINED TERMS' in prompt or 'key_defined_terms' in prompt
 ```
 
-**For Mocking External Calls (pattern):**
-```python
-from unittest.mock import patch
+**Pattern**: Parametrized checks (case-insensitive) for flexibility in prompt changes.
 
-def test_with_mock_api():
-    """Test function that calls external API."""
-    with patch('anthropic.Anthropic') as mock_client:
-        mock_client.return_value.messages.create.return_value = mock_response
-        result = analyze_clauses_with_claude(...)
-        assert result['risks'] == expected_risks
+## Test Gaps
+
+**Areas not tested:**
+- `analyze_clauses_with_claude()` - Would require mocking Anthropic API
+- Document parsing (`parse_document()`) - Would need test .docx files
+- Route handlers - Would need Flask test client
+- Error conditions - Missing API keys, malformed JSON responses
+- Document services - File operations, track changes generation
+
+## Running Tests
+
+Currently only basic prompt tests exist. To expand testing:
+
+```bash
+# Run existing tests
+python -m pytest tests/ -v
+
+# Run with more verbose output
+python -m pytest tests/ -vv
+
+# Run specific test
+python -m pytest tests/test_claude_service.py::test_prompt_includes_concept_extraction
 ```
-
-## Known Test Gaps
-
-| Component | Gap | Priority | Why Test |
-|-----------|-----|----------|----------|
-| `parse_document()` | No tests | High | Fundamental to doc processing; format-specific edge cases |
-| `analyze_clauses_with_claude()` | No tests (calls external API) | Medium | Would need mocking; test JSON parsing logic separately |
-| `generate_revision()` | No tests | High | Redline generation is core feature; edge cases in diff generation |
-| Session management | No tests | High | In-memory + disk persistence; data loss risk |
-| `ConceptMap`, `RiskMap` | No tests | Medium | Object construction, serialization (to_dict, from_dict) |
-| Error handling paths | No tests | High | API fallback logic untested; graceful degradation unclear |
-| Contract type detection | No tests | Medium | Impacts prompt selection and analysis approach |
 
 ---
 

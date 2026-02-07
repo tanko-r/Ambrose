@@ -24,10 +24,21 @@ venv/
 api.txt
 anthropic_api.txt
 *.key
+.env
 
 # Working directories
 output/
 Other Files/
+
+# Session and upload data
+app/data/sessions/
+app/data/uploads/
+
+# Logs
+*.log
+
+# Misc
+nul
 
 # OS
 .DS_Store
