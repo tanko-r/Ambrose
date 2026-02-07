@@ -22,26 +22,27 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 0 | Scaffolding + Foundation | Complete | 100% |
 | 1 | Core Layout + Intake | Complete | 100% |
 | 2 | Document Viewer + Navigation | Complete | 100% |
-| 3 | Sidebar + Risk Analysis | In progress | 25% (plan 1/4) |
+| 3 | Sidebar + Risk Analysis | In progress | 50% (plan 2/4) |
 | 4 | Revision Bottom Sheet + Track Changes | Pending | 0% |
 | 5 | Precedent Split View | Pending | 0% |
 | 6 | Dialogs + Finalization | Pending | 0% |
 | 7 | Polish + Validation | Pending | 0% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
-**Overall:** 5/11 phases complete, Phase 3 in progress (plan 1 of 4 done)
+**Overall:** 5/11 phases complete, Phase 3 in progress (plan 2 of 4 done)
 
-Progress: [##########          ] 48%
+Progress: [##########          ] 50%
 
 ## Next Action
 
-Continue Phase 3: Sidebar + Risk Analysis (plan 02)
-- Build risk-accordion.tsx and risk-card.tsx components
-- Wire hoveredRiskId/focusedRiskId from store into sidebar interaction
-- Next: analysis-overlay.tsx (plan 03), document highlighting (plan 04)
+Continue Phase 3: Sidebar + Risk Analysis (plan 03)
+- Build analysis-overlay.tsx full-screen modal with two-stage progress
+- Wire use-analysis.ts hook into review page
+- Next: document highlighting + wiring hover/focus (plan 04)
 
 ## Recent Activity
 
+- 2026-02-07: Phase 3 Plan 02 complete — risk-card, risk-accordion, sidebar refactor
 - 2026-02-07: Phase 3 Plan 01 complete — store state + CSS + analysis hook
 - 2026-02-07: Unified roadmap — consolidated GSD v1.0 + Next.js migration
 - 2026-02-07: Created `nextjs-migration` branch, committed Phases 0-2
@@ -62,6 +63,8 @@ Continue Phase 3: Sidebar + Risk Analysis (plan 02)
 | 3 | Toggle behavior for focusedRiskId | Click same risk to unfocus, matching old sidebar.js pattern |
 | 3 | getAnalysis as authoritative completion signal | Polling provides incremental UX; getAnalysis hydrates full results |
 | 3 | Silent polling on transient errors | Prevents flaky network from killing analysis UX |
+| 3 | Button toggle for include/exclude (no Switch installed) | Simpler; avoids adding new shadcn component for one toggle |
+| 3 | No-op hover/focus handlers in Plan 02 | Plan 04 Wave 2 wires real store connections; avoids Wave 1 conflicts |
 | A | docx-parser-converter for HTML | Pure Python, ~100ms, preserves all formatting |
 | B | Conversation forking for parallelism | 30 concurrent forks, ~90s analysis, $2.50/doc |
 | — | Unified roadmap | v1.0 features built in Next.js phases, not separately |
@@ -69,7 +72,7 @@ Continue Phase 3: Sidebar + Risk Analysis (plan 02)
 ## Session Continuity
 
 Last session: 2026-02-07
-Stopped at: Completed 03-01-PLAN.md (store state + CSS + analysis hook)
+Stopped at: Completed 03-02-PLAN.md (risk-card + risk-accordion + sidebar refactor)
 Resume file: None
 
 ---
