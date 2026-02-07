@@ -4,356 +4,273 @@
 
 ## Tech Debt
 
-**In-Memory Session Storage Without Persistence:**
-- Issue: Sessions stored only in Python memory (global `sessions` dict at `app/api/routes.py:25`)
-- Files: `app/api/routes.py:24-25`, `app/api/routes.py:35-46`
-- Impact: Sessions lost on server restart, no recovery mechanism, multiple workers/processes cannot share state
-- Fix approach: Migrate to persistent session storage (Redis, SQLite, or database). Implement session serialization/deserialization with proper TTL management.
+**Session Storage - In-Memory Only:**
+- Issue: Sessions are stored in-memory Python dictionary with disk persistence as fallback. No distributed persistence or error handling if server crashes.
+- Files: `app/api/routes.py` (lines 24-45), `app/services/claude_service.py` (lines 18-43)
+- Impact: User session data lost on server restart. Concurrent requests to same session may have consistency issues. Not suitable for production workloads.
+- Fix approach: Implement Redis or database session backend with atomic operations. Currently using dual in-memory + disk sync pattern that can diverge.
 
-**Bare Exception Handling Masks Errors:**
-- Issue: Multiple catch-all `except Exception` blocks without type-specific handling or proper logging
-- Files: `app/api/routes.py:144, 152, 365, 387, 527, 696, 805, 854, 881`, `app/services/claude_service.py:579-587`, `app/services/gemini_service.py:507-512, 531-534`
-- Impact: Difficulty debugging issues, hides API failures and partial successes, users see generic error messages
-- Fix approach: Replace generic exception catches with specific exception types; add structured logging with error context; distinguish between recoverable and fatal errors.
+**Dual LLM Implementation - Incomplete Convergence:**
+- Issue: Codebase supports both Claude and Gemini APIs but implementations differ significantly. Gemini service appears more mature with TF-IDF retrieval, but Claude service is primary for analysis.
+- Files: `app/services/claude_service.py`, `app/services/gemini_service.py`, `WSL_Files/` directory (contains parallel implementations)
+- Impact: Code duplication, maintenance burden, different behavior between services. WSL_Files suggests legacy Windows-specific versions that should be removed.
+- Fix approach: Consolidate to single LLM abstraction layer. Remove WSL_Files legacy code. Unify prompt strategies and output formats.
 
-**API Key Management Via Plain Text Files:**
-- Issue: API keys read from `api.txt`, `.env`, and home directory without encryption
-- Files: `app/services/claude_service.py:68-83`, `app/services/gemini_service.py:43-57`, `run.py:69-72`
-- Impact: Risk of credential exposure in logs, backups, and repository history; no key rotation strategy
-- Fix approach: Use only environment variables with clear documentation; remove `.env` from logic; implement secure credential manager; add pre-commit hooks to prevent key commits.
+**Loose Session Validation:**
+- Issue: File paths are saved directly from request without validation. No checks for path traversal or other injection attacks.
+- Files: `app/api/routes.py` (lines 131-139 for file.save(), line 132 directly uses user-provided filename)
+- Impact: Arbitrary file writes possible via crafted uploads. User-provided `target_file.filename` stored directly without sanitization.
+- Fix approach: Sanitize all uploaded filenames. Use UUID-based naming only. Validate file types on upload.
 
-**Debug Mode Enabled in Production Configuration:**
-- Issue: `app.run(host='0.0.0.0', port=port, debug=True)` at `app/server.py:68`
-- Files: `app/server.py:50-68`
-- Impact: Exposes full stack traces and interactive debugger to clients; allows code execution on remote machine
-- Fix approach: Make debug mode conditional on environment variable; use separate production and development configurations.
+**Serialization Bypass in Session Persistence:**
+- Issue: Session persistence explicitly skips `parsed_doc` object during JSON serialization (line 42), using only path instead. But `parsed_doc` is accessed directly from in-memory dict, creating consistency risk.
+- Files: `app/api/routes.py` (lines 40-45)
+- Impact: If disk is updated but process crashes before in-memory update, next request reads inconsistent state. Cross-service requests may see stale data.
+- Fix approach: Either fully serialize all data or implement proper transaction semantics with timestamps/checksums.
 
-**Incomplete Fallback Analysis Path:**
-- Issue: When Claude analysis fails, falls back to regex-based analysis but fallback may also fail
-- Files: `app/api/routes.py:365-388`
-- Impact: No analysis available at all if both LLM and fallback fail; cascade failure with poor user feedback
-- Fix approach: Implement graceful degradation with partial results; provide analysis status indicating which components succeeded/failed; implement circuit breaker pattern.
+**Unqualified Exception Handling:**
+- Issue: Broad `except Exception` catches in critical paths with only string logging. No differentiation between recoverable and fatal errors.
+- Files: `app/api/routes.py` (lines 144, 365, 527, 696, 805), `app/services/claude_service.py` (lines 360, 441, 579, 739)
+- Impact: Silent failures on unexpected errors. Incomplete error recovery leaves sessions in ambiguous states. Rate limits and API errors treated identically.
+- Fix approach: Use specific exception types. Implement retry logic with exponential backoff for transient errors. Log full stack traces for investigation.
 
-**Large File Upload Without Size/Type Validation:**
-- Issue: File type validation missing; relies on Flask's MAX_CONTENT_LENGTH (50MB)
-- Files: `app/api/routes.py:97-200`, `app/server.py:27`
-- Impact: Could accept non-DOCX files causing downstream parsing failures; 50MB limit enforced only at Flask level
-- Fix approach: Add explicit MIME type validation and file extension checking; validate DOCX structure before processing; add per-file timeout for parsing.
+**Hardcoded Model References:**
+- Issue: Claude model version hardcoded as 'claude-opus-4-5-20251101' in analysis_service.py line 622. Will break when model is deprecated.
+- Files: `app/services/claude_service.py` (line 622)
+- Impact: No version negotiation. Forced migration required when Anthropic deprecates model.
+- Fix approach: Read model version from environment/config with fallback to latest available.
 
----
+**Missing Conversation Memory Between Requests:**
+- Issue: Each revision request to Gemini is independent with no conversation context. Risk analysis learned in analysis phase not carried forward to redline generation phase.
+- Files: `app/services/gemini_service.py` (lines 347-400 for redline generation)
+- Impact: Gemini may miss context-dependent risks when generating revisions. Inconsistent recommendations across phases.
+- Fix approach: Build shared context object passed between analysis and revision phases. Store conversation history.
 
 ## Known Bugs
 
-**Word Automatic Numbering Not Rendered:**
-- Symptoms: Auto-generated paragraph numbering (e.g., "1.3", "iv") from Word documents not displayed in UI
-- Files: `NOTES.md:7`
-- Trigger: Upload any DOCX with auto-numbering, render in web UI
-- Workaround: None currently - display shows extracted text but missing numbering context
-- Fix approach: Update document parser to preserve Word numbering format metadata; render numbering in document display panel.
+**Risk ID Numbering Reset on Reruns:**
+- Symptoms: Running analysis multiple times on same session renumbers all risks (line 600 in claude_service.py: `risk['risk_id'] = f'R{i+1}'`). User-selected inclusions/exclusions for R5 become invalid when R5 changes identity.
+- Files: `app/services/claude_service.py` (lines 598-600), `app/static/js/sidebar.js` (lines 9-10 riskSelectionState uses risk_id as key)
+- Trigger: Call /analysis twice on same session. First run creates R1-R20, user selects some. Second run creates different R1-R20, old selections orphaned.
+- Workaround: Delete session and restart if reanalysis needed. Never update analysis once risks are selected.
 
-**Loading Overlay Elapsed Time Not Updating:**
-- Symptoms: Elapsed time counter on analysis progress modal stays at initial value or jumps inconsistently
-- Files: `NOTES.md:11`
-- Trigger: Start document analysis, observe elapsed time display
-- Workaround: Remaining time estimate still updates correctly
-- Fix approach: Fix JavaScript timer update logic; synchronize with server-side elapsed time; clarify what "elapsed" means vs "remaining".
+**Sidebar Risk State Lost on Navigation:**
+- Symptoms: Risk inclusion/exclusion selections (stored in riskSelectionState object) are in-memory JavaScript only. Navigating to different paragraph and back forgets selections.
+- Files: `app/static/js/sidebar.js` (line 10: `const riskSelectionState = {}`)
+- Trigger: Select risks to exclude, click different paragraph, click back to original. Previous selections are reset.
+- Workaround: Complete all risk selections for a paragraph before moving to next. Save to server immediately.
 
-**Concept Change Detection Limited to Simple Patterns:**
-- Symptoms: Complex concept changes not detected if text is rephrased; only detects if exact keywords appear
-- Files: `app/services/map_updater.py:58-117`, especially `CONCEPT_PATTERNS:18-55`
-- Trigger: User revises clause but uses different terminology for same concept (e.g., "liability ceiling" vs "cap")
-- Workaround: None - concept map not updated, risk map severities may be incorrect
-- Fix approach: Use semantic similarity matching; add concept synonym dictionary; implement LLM-based concept extraction.
+**Missing API Key Fallback Chaining:**
+- Symptoms: Gemini service checks for API key in specific order but may fail silently if key exists but is invalid (empty string, wrong format).
+- Files: `app/services/gemini_service.py` (lines 35-59), `app/services/claude_service.py` (lines 60-84)
+- Trigger: api.txt contains whitespace-only key or malformed .env entry.
+- Workaround: Verify api.txt is not empty and .env ANTHROPIC_API_KEY= has actual value, not quotes.
 
-**Session Data Loading from Disk Incomplete:**
-- Symptoms: Re-loading a session from disk may lose concept_map or risk_map if they weren't serialized
-- Files: `app/api/routes.py:237-245`, `app/api/routes.py:39-45`
-- Trigger: Restart server with existing session, try to access analysis
-- Workaround: Re-run analysis
-- Fix approach: Ensure all complex objects (ConceptMap, RiskMap) are properly serialized in save_session; implement schema versioning.
-
----
+**Batch Processing Error Recovery Incomplete:**
+- Symptoms: When batch analysis fails (line 579-587), error is logged and loop continues, but failed batch risks are silently dropped. No marker indicating which paragraphs were not analyzed.
+- Files: `app/services/claude_service.py` (lines 579-587)
+- Trigger: Temporary API error during batch 3 of 5. Batches 1-2 and 4-5 analyzed, batch 3 skipped. Report shows 80% analyzed but doesn't flag gap.
+- Workaround: Check analysis for unexpected gaps in risk counts. Manually request reanalysis of suspicious sections.
 
 ## Security Considerations
 
-**API Key Exposure in Error Messages:**
-- Risk: Error messages from Claude/Gemini API calls might contain sanitized request data including API key if not properly handled
-- Files: `app/services/claude_service.py:360-361`, `app/services/gemini_service.py:494-501, 507-512`
-- Current mitigation: Basic exception message truncation
-- Recommendations:
-  - Never include request bodies in error logs
-  - Sanitize all exception messages to remove key material
-  - Log API errors with hashed keys for debugging
-  - Add request/response interceptor to scrub sensitive data
+**Exposed Session IDs in URLs:**
+- Risk: Session ID used in URL path for download and analysis endpoints (line 809: `/download/<session_id>/<file_type>`). Session ID is UUID but could be guessed or harvested from logs.
+- Files: `app/api/routes.py` (lines 809, 262, and throughout)
+- Current mitigation: UUIDs are 128-bit, cryptographically unlikely to guess. No access control check beyond session existence.
+- Recommendations: (1) Add Bearer token authentication. (2) Use secure session cookies instead of URL parameters. (3) Log all session accesses. (4) Implement session timeout (15-30 min idle). (5) Add CORS restrictions.
 
-**No Authentication for API Endpoints:**
-- Risk: All endpoints are publicly accessible; anyone with server URL can access sessions and generate revisions
-- Files: `app/api/routes.py` - all route handlers lack auth checks
-- Current mitigation: None
-- Recommendations:
-  - Add authentication layer (JWT, OAuth2, or simple API key)
-  - Implement per-session access control
-  - Add rate limiting to prevent API abuse
-  - Log all access for audit trails
+**API Keys in File Paths:**
+- Risk: API keys read from multiple locations including project root directory (line 69 in claude_service.py: `Path(__file__).parent.parent.parent / 'anthropic_api.txt'`). Keys may be committed to git or world-readable.
+- Files: `app/services/claude_service.py` (lines 68-72), `app/services/gemini_service.py` (lines 43-47)
+- Current mitigation: .gitignore should exclude api.txt, but many users won't know to create it.
+- Recommendations: (1) Only read from environment variables in production. (2) Document .gitignore in setup. (3) Add .gitignore pre-commit hook. (4) Never allow fallback to plaintext files. (5) Use AWS Secrets Manager / Azure Key Vault.
 
-**Unvalidated File Reconstruction:**
-- Risk: Documents are reconstructed from user-supplied JSON revision data without validation
-- Files: `app/services/document_service.py` (rebuild_docx.py wrapper)
-- Current mitigation: None explicit
-- Recommendations:
-  - Validate all revision data before applying to document
-  - Implement checksums for document integrity
-  - Implement rollback mechanism for malformed revisions
-  - Add document scan for embedded content risks
+**Unvalidated File Type Assumptions:**
+- Risk: Files uploaded as .docx are parsed directly with `python-docx` without magic number validation. Zip bomb or malicious DOCX could crash parser.
+- Files: `app/api/routes.py` (line 143 calls `parse_document(target_path)` without validation), `app/services/document_service.py` (line 461+ opens with python-docx)
+- Current mitigation: Python-docx has some safety, but no explicit validation.
+- Recommendations: (1) Check file magic bytes (DOCX is ZIP, starts with PK). (2) Set file size limits per file type. (3) Scan with antivirus/sandboxing. (4) Set timeout on parse operations.
 
-**Precedent Document Trust:**
-- Risk: Precedent documents uploaded by users are parsed and used as reference without validation
-- Files: `app/api/routes.py:149-154`, `app/services/gemini_service.py` (precedent retrieval)
-- Current mitigation: None
-- Recommendations:
-  - Validate precedent documents before processing
-  - Implement document provenance tracking
-  - Add warnings when using user-supplied precedent
-  - Quarantine suspicious documents
+**Verbose Error Messages Exposing Structure:**
+- Risk: API errors return full exception messages revealing internal file paths, function names, and structure (line 145: `f'Failed to parse document: {str(e)}'`).
+- Files: `app/api/routes.py` (lines 145, 500, 806), throughout
+- Current mitigation: Only visible to authenticated user, but error logs may be collected.
+- Recommendations: (1) Log full error internally. (2) Return generic user message. (3) Include request ID for support. (4) Implement structured logging with sensitive data masking.
 
----
+**Precedent File Parser May Load Arbitrary JSON:**
+- Risk: If precedent DOCX parsing fails, `parsed_precedent = None` (line 154) but downstream code may assume it's hydrated. Mixing null with object access.
+- Files: `app/api/routes.py` (lines 150-154)
+- Current mitigation: Code checks `precedent_path` before use, but defensive coding is inconsistent.
+- Recommendations: (1) Use TypedDict or dataclass for parsed_precedent. (2) Implement strict schema validation on all parsed content. (3) Add assertion guards.
 
 ## Performance Bottlenecks
 
-**LLM Analysis Batch Processing Without Timeout:**
-- Problem: Processing large documents with many clauses may take very long, no timeout per batch
-- Files: `app/services/claude_service.py:527-587`, `analyze_clauses_with_claude()` not shown but called at line 554
-- Cause: Batches sent sequentially to Claude with no per-batch timeout; large documents (100+ clauses) could take hours
-- Improvement path:
-  - Implement per-batch timeout with fallback
-  - Add ability to pause/resume analysis
-  - Cache analysis results for re-runs
-  - Implement client-side cancellation
+**Batch Analysis with Fixed Batch Size:**
+- Problem: Batch size hardcoded to 5 (line 298 in routes.py). For 100-paragraph contracts, requires 20 API calls. Each call has 30-60 second latency. Total 10-20 minutes for single document.
+- Files: `app/api/routes.py` (line 298), `app/services/claude_service.py` (lines 527-561)
+- Cause: Paragraph-level analysis chosen for granularity, but no parallelization or adaptive sizing.
+- Improvement path: (1) Increase batch size dynamically based on token budget. (2) Implement parallel requests with connection pooling. (3) Cache common risk patterns to skip repeated analysis. (4) Implement streaming response to show progress.
 
-**Full Document Parsing Into Memory:**
-- Problem: Entire DOCX parsed into memory before analysis; large documents (500+ pages) consume significant memory
-- Files: `app/services/document_service.py` (parse_docx implementation), `app/api/routes.py:141-143`
-- Cause: No streaming parser; complete JSON representation kept in session memory
-- Improvement path:
-  - Implement streaming/chunked parsing
-  - Use disk-based caching for parsed documents
-  - Implement garbage collection of old sessions
-  - Add memory usage monitoring
+**Full TF-IDF Recalculation on Every Search:**
+- Problem: SimpleRetriever in gemini_service.py recalculates TF-IDF vectors for every search query.
+- Files: `app/services/gemini_service.py` (lines 102-147)
+- Cause: Retriever instantiated fresh per request with no caching.
+- Improvement path: (1) Cache SimpleRetriever as session attribute. (2) Implement LSH approximate nearest neighbor search. (3) Pre-compute embeddings using sentence-transformers instead of TF-IDF.
 
-**No Rate Limiting on Gemini/Claude API Calls:**
-- Problem: Revision generation calls Gemini without rate limiting; concurrent requests could hit API limits
-- Files: `app/services/gemini_service.py:425-530`
-- Cause: Simple sequential API calls without queue management
-- Improvement path:
-  - Implement request queue with rate limiting
-  - Add exponential backoff for API failures
-  - Batch revision requests where possible
-  - Monitor API usage and costs
+**Synchronous File I/O in Request Path:**
+- Problem: Session save writes to disk synchronously (line 40 in routes.py: `json.dump(serializable, f, indent=2)`). For large sessions with full analysis, 1-3MB JSON write blocks request.
+- Files: `app/api/routes.py` (lines 35-45)
+- Cause: Simple implementation, no async queue.
+- Improvement path: (1) Use `asyncio` for file I/O. (2) Implement write queue with background worker. (3) Use compression (gzip) for session persistence.
 
-**Paragraph Search Linear Over All Content:**
-- Problem: Finding paragraphs by ID iterates through all content items multiple times
-- Files: `app/api/routes.py:449-454, 474-485, 636-639`, `app/api/routes.py:723-729`
-- Cause: No indexing of paragraphs; O(n) lookup on every revision
-- Improvement path:
-  - Build paragraph ID index during parsing
-  - Cache frequently accessed paragraphs
-  - Use dict instead of list for content when possible
+**Frontend Render of Large Document (1267-line sidebar.js):**
+- Problem: sidebar.js is 1267 lines with complex risk relationship rendering. Full rerender on each paragraph click triggers cascading DOM updates.
+- Files: `app/static/js/sidebar.js` (entire file, especially buildRiskRelationshipsHtml)
+- Cause: jQuery-style full replacement instead of virtual DOM or delta updates.
+- Improvement path: (1) Migrate to React/Vue for efficient diffing. (2) Implement virtualization for risk lists. (3) Lazy-load risk details on expand.
 
-**Concept Map and Risk Map JSON Serialization On Every Save:**
-- Problem: Full concept/risk maps serialized to JSON on each save_session call
-- Files: `app/api/routes.py:35-45`, `app/services/map_updater.py:195-198`
-- Cause: No delta updates; entire state serialized even if only one field changed
-- Improvement path:
-  - Implement delta serialization (only changed fields)
-  - Use binary serialization (pickle, protobuf) for complex objects
-  - Lazy-load maps only when needed
-
----
+**Session Data Loaded Entirely into Memory:**
+- Problem: Full parsed document with all paragraphs and analysis kept in RAM (sessions dict, line 25 in routes.py). For 10 concurrent users with large contracts, hundreds of MB RAM.
+- Files: `app/api/routes.py` (line 25: `sessions = {}` stores full parsed docs)
+- Cause: Python dict holds everything in memory; no database.
+- Improvement path: (1) Move to database with lazy loading. (2) Implement LRU cache with eviction. (3) Stream large responses instead of buffering.
 
 ## Fragile Areas
 
-**Concept Map Category Assumptions Hard-coded:**
-- Files: `app/services/map_updater.py:146-153`
-- Why fragile: If new concept types added without updating type_to_category mapping, they silently map to 'other'
-- Safe modification: Add validation that all detected concept types have corresponding categories; raise error if unmapped
-- Test coverage: Very limited - only checks prompt includes categories, doesn't test actual detection
+**Concept Map Aggregation Across Batches:**
+- Files: `app/services/claude_service.py` (lines 564-570)
+- Why fragile: Later batches override earlier concept_map entries with same key. If batch 1 identifies "Definition of Closing" as important and batch 3 redefines it differently, batch 3 wins silently. No merge strategy or conflict detection.
+- Safe modification: (1) Add batch number to keys to preserve all definitions. (2) Implement explicit conflict resolution (e.g., pick most severe). (3) Validate concept_map schema after each batch.
+- Test coverage: No test for multi-batch concept_map merging. Risk relationships could be lost.
 
-**RiskMap Severity Calculation Simplistic:**
-- Files: `app/models/risk_map.py:61-74`
-- Why fragile: Severity adjusted by count of mitigators/amplifiers, not their strength; a weak mitigator counts same as strong one
-- Safe modification: Add 'weight' field to mitigations; normalize by total weight not count
-- Test coverage: No unit tests for severity recalculation
+**Risk Relationship Cross-Referencing Between Batches:**
+- Files: `app/services/claude_service.py` (lines 330-347), `app/models/risk_map.py` (if exists)
+- Why fragile: Risk R5 may reference risk R20 as a mitigator. If they're in different batches analyzed at different times, relationship may not be resolved correctly.
+- Safe modification: (1) Store relationships as references (risk_id pairs) not resolved objects. (2) Post-process all risks to resolve references after all batches complete. (3) Add validation that all referenced risks exist.
+- Test coverage: No test for cross-batch relationships. Dangling references possible.
 
-**Batch Analysis Continues on Error:**
-- Files: `app/services/claude_service.py:579-587`
-- Why fragile: If one batch fails, analysis continues with remaining batches but downstream may assume complete coverage
-- Safe modification: Track which batches failed; mark analysis as partial; clearly communicate coverage gaps to user
-- Test coverage: No tests for failure scenarios
+**Parsed Document Consistency Between Disk and Memory:**
+- Files: `app/api/routes.py` (lines 40-45, 172-183), multiple route handlers
+- Why fragile: Session saved to disk only during save_session(), but parsed_doc accessed directly from in-memory sessions dict. If memory corrupted but disk still valid, no recovery path.
+- Safe modification: (1) Always reconstruct parsed_doc from JSON on read. (2) Implement write-ahead logging. (3) Add checksum validation. (4) Use SQLite for transactional safety.
+- Test coverage: No test for concurrent reads/writes or crash recovery.
 
-**Regex Pattern Matching for Section Extraction:**
-- Files: `app/services/document_service.py:52-87`
-- Why fragile: 18 different regex patterns for section numbering; order matters and false positives possible
-- Safe modification: Add validation of matched section numbers against document hierarchy; fallback to string matching if patterns too ambiguous
-- Test coverage: No tests with malformed or unusual section numbering
+**Large JavaScript Files Without Module Boundaries:**
+- Files: `app/static/js/sidebar.js` (1267 lines), `app/static/js/revision.js` (1015 lines), `app/static/js/navigation.js` (515 lines)
+- Why fragile: Global variables (expandedRiskId, riskSelectionState, AppState). No encapsulation. Changes to sidebar affect revision and navigation unpredictably.
+- Safe modification: (1) Refactor into modules using ES6 import/export. (2) Use Webpack/Rollup for bundling. (3) Implement proper state management (Redux, Vuex). (4) Add TypeScript for type safety.
+- Test coverage: No JavaScript unit tests. E2E testing only via UI.
 
-**Floating Point Calculation in Similarity Search:**
-- Files: `app/services/gemini_service.py:98-146` (SimpleRetriever.search)
-- Why fragile: Cosine similarity calculated with floating point; threshold hardcoded at 0.15
-- Safe modification: Use integer arithmetic or Decimal; make threshold configurable; add sanity checks for NaN
-- Test coverage: No unit tests for retriever
-
----
+**Contract Type Detection with Regex Patterns:**
+- Files: `app/api/routes.py` (likely calls `detect_contract_type()` on line 157)
+- Why fragile: Contract type inferred from document content using pattern matching. Contracts with uncommon naming conventions will misclassify, leading to wrong analysis prompts.
+- Safe modification: (1) Let user explicitly specify contract type. (2) Implement multi-class classifier with confidence scores. (3) Add manual override UI. (4) Log misclassifications for retraining.
+- Test coverage: No test data with various contract formats.
 
 ## Scaling Limits
 
+**In-Memory Session Dictionary Growth:**
+- Current capacity: ~100 concurrent sessions with 5MB analysis each = 500MB. Single server instance RAM typically 4-8GB.
+- Limit: 1000 sessions before OOM crash. At 50 users/day running 2 analyses each, hits limit in 10 days if sessions never purged.
+- Scaling path: (1) Implement Redis with TTL (24 hour expiry). (2) Archive completed sessions to S3/GCS. (3) Implement session cleanup endpoint. (4) Add monitoring/alerting for memory usage.
+
 **Single-Threaded Flask Development Server:**
-- Current capacity: 1 concurrent request, ~100 paragraphs per analysis
-- Limit: Blocks entire application while analyzing large document (15+ minutes for 500-clause contract)
-- Scaling path: Deploy with production WSGI server (Gunicorn) with multiple workers; implement async analysis with job queue
+- Current capacity: 1 request at a time. Batch analysis blocks for 10-20 minutes, queuing all other users.
+- Limit: More than 2-3 concurrent users experience 5+ minute waits.
+- Scaling path: (1) Deploy with Gunicorn/uWSGI with worker pool. (2) Implement background job queue (Celery + Redis). (3) Move analysis to async endpoints that return immediately with job ID. (4) Implement WebSocket for live progress updates instead of polling.
 
-**Session Storage Unbounded Growth:**
-- Current capacity: Depends on available Python heap memory, typically 1-5GB with modest upload folder
-- Limit: Server memory exhausted after ~10-20 concurrent sessions with large documents
-- Scaling path: Move sessions to external store (Redis/PostgreSQL); implement session TTL (30 min idle); add memory limits per session
+**API Rate Limits (Claude and Gemini):**
+- Current capacity: Claude API has quota limits (typically 100K tokens/min for standard tier). Analysis job uses 50-100K tokens per document.
+- Limit: 1 concurrent analysis, maybe 3-4 queued before hitting quota.
+- Scaling path: (1) Implement request throttling and backoff. (2) Add multiple API key rotation (if different projects). (3) Cache common risks to reduce reanalysis. (4) Batch multiple documents into single API call if possible.
 
-**Document Parsing Memory Explosion:**
-- Current capacity: Safe up to ~100MB DOCX files
-- Limit: Parsing 200MB+ DOCX causes memory spike; no cleanup between parses
-- Scaling path: Implement streaming parser; add memory pooling; parse in separate process with memory limit
-
-**Single Claude/Gemini API Key:**
-- Current capacity: API key rate limits (requests per minute)
-- Limit: Multiple simultaneous users will hit rate limits; no queuing or backoff
-- Scaling path: Support multiple API keys; implement queue with smart batching; add telemetry for usage monitoring
-
----
+**Document Size Limits:**
+- Current capacity: python-docx loads entire document into memory. 50MB+ documents cause memory spike during parse.
+- Limit: Documents over 100 pages (10+ MB) slow down significantly. Over 500 pages may OOM.
+- Scaling path: (1) Implement streaming parser. (2) Implement document chunking (analyze sections separately). (3) Add file size limits to intake form. (4) Implement preprocessing to extract exhibits separately.
 
 ## Dependencies at Risk
 
-**python-docx 0.8.11 (potentially outdated):**
-- Risk: Library may lack modern Word format support; no active maintenance confirmation
-- Impact: Complex DOCX documents may parse incorrectly; Track Changes features may break
-- Migration plan: Upgrade to latest python-docx if available; test with real contract docs; consider python-pptx or alternative if needed
+**python-docx Library Maintenance:**
+- Risk: Last major version 0.8.11 released 2022. No recent updates. Standard library for DOCX parsing but may have bugs/security issues.
+- Impact: DOCX format changes or legacy format handling may break. No built-in track changes support (using redlines library as workaround).
+- Migration plan: (1) Evaluate LibreOffice UNO API as alternative. (2) Use DocumentFormat.OpenXml (.NET) via subprocess. (3) Contribute fixes upstream or maintain fork. (4) Document known limitations and edge cases.
 
-**google-genai SDK (Early/Preview Status):**
-- Risk: API surface may change; library may be unstable; unclear support timeline
-- Impact: Breaking changes between library versions; potential unavailability
-- Migration plan: Pin specific version; monitor Google announcements; have fallback to REST API calls
+**Anthropic SDK 0.40.0 - Pre-Stable:**
+- Risk: SDK version 0.40.0 is pre-1.0. API may change significantly.
+- Impact: Code using anthropic.APIError (line 360 in claude_service.py) may break if exception hierarchy changes.
+- Migration plan: (1) Pin to specific version. (2) Implement adapter layer for SDK calls. (3) Monitor changelog. (4) Create tests for API changes.
 
-**anthropic SDK Dependency on Newer Versions:**
-- Risk: `anthropic>=0.40.0` allows very wide range; major API changes possible
-- Impact: Unexpected behavior changes with dependency updates
-- Migration plan: Pin to specific known-good version (e.g., `anthropic==0.40.5`); test before updating
+**google-genai Pre-Release Status:**
+- Risk: Google Gemini API SDK version 0.1.0 is pre-release. Function calling API (line 521 in gemini_service.py) has TODO comment indicating incomplete implementation.
+- Impact: Gemini revision generation may break or produce invalid output.
+- Migration plan: (1) Wait for stable v1.0 release. (2) Implement fallback to simple text generation if function calling unavailable. (3) Test with production Gemini API regularly.
 
----
+**diff-match-patch Library (No Maintenance):**
+- Risk: Library used for HTML diff visualization (line 43 in run.py). Last update 2021.
+- Impact: May not handle all Unicode or complex HTML structures.
+- Migration plan: (1) Replace with unified-diff for text-based approach. (2) Use Quill Delta format for collaborative editing. (3) Implement custom diff renderer matching legal document conventions.
 
 ## Missing Critical Features
 
-**No Model Selection Interface:**
-- Problem: Code assumes Claude Opus 4.5 and Gemini Flash hardcoded; no way for users to choose models
-- Blocks: Cannot optimize cost/speed tradeoff; cannot use smaller models for faster analysis
-- Fix path: Add model selection in intake form; parameterize all API calls; implement model provider abstraction
+**No User Authentication:**
+- Problem: Any user with session ID can access and modify anyone's session data. No concept of "user owns this session."
+- Blocks: Multi-user deployment, client-facing app, compliance (SOC 2, etc.).
 
-**No Document Versioning/History:**
-- Problem: Only current revision stored; cannot see previous revisions or revert
-- Blocks: Users cannot compare iterations or undo accepted revisions
-- Fix path: Implement revision history; add diff view between versions; add undo/redo
+**No Session Persistence Across Server Restarts:**
+- Problem: Server restart loses all active sessions. Users must restart review.
+- Blocks: Production deployment, long-running analysis jobs.
 
-**No Cross-Clause Relationship Visualization:**
-- Problem: Risk map tracks relationships but UI doesn't show them
-- Blocks: Users cannot understand how changes in one clause affect others
-- Fix path: Implement relationship graph visualization; add "related clauses" panel; show risk cascades
+**Incomplete Track Changes Integration:**
+- Problem: Finalization endpoint mentions track changes (line 777 in routes.py) but document_service.py shows redlines library as optional (line 23: HAS_REDLINES flag). If library missing, output will be plain text without change markup.
+- Blocks: Final Word document may not show changes properly in Microsoft Word.
 
-**No Batch Processing for Multiple Documents:**
-- Problem: One session = one document; analyzing related docs (side letter, exhibit) requires separate sessions
-- Blocks: Cannot compare or cross-reference across documents
-- Fix path: Extend session to support document collections; implement cross-document risk analysis
+**No Audit Logging:**
+- Problem: No record of which revisions user accepted/rejected. No way to audit decision trail for later disputes.
+- Blocks: Professional services, legal compliance, client billing.
 
-**No User Preferences Persistence:**
-- Problem: Aggressiveness, representation, approach reset on each session
-- Blocks: Users must reconfigure for each document
-- Fix path: Implement user accounts or at least browser storage for preferences
-
----
+**No Conflict Resolution for Concurrent Edits:**
+- Problem: If two instances of same session run in parallel, last write wins. No merge strategy.
+- Blocks: Team-based reviews, cloud deployment.
 
 ## Test Coverage Gaps
 
-**No Unit Tests for Claude/Gemini Services:**
-- What's not tested: API error handling, prompt building, response parsing
-- Files: `app/services/claude_service.py` (740 lines), `app/services/gemini_service.py` (592 lines)
-- Risk: Prompt injection, malformed API responses, API errors silently fail
-- Priority: HIGH - core analysis functionality untested
+**No API Integration Tests:**
+- Untested area: Full intake → analysis → revision → finalize workflow. Each endpoint tested in isolation.
+- Files: `tests/test_claude_service.py` has only 5 tests of prompt building, no end-to-end tests.
+- Risk: Integration points may fail silently. Session state consistency not verified. File I/O errors not caught.
+- Priority: High - workflow is core value proposition.
 
-**No Integration Tests for Session Workflow:**
-- What's not tested: Full intake → analysis → revise → finalize flow
-- Files: `app/api/routes.py` (928 lines)
-- Risk: Regressions in workflow hard to catch; session persistence bugs hidden
-- Priority: HIGH - main user flow untested
+**No Parsing Edge Cases:**
+- Untested area: Complex numbering (Roman numerals, nested parentheses), merged cells, headers/footers, revision tracking in source DOCX.
+- Files: `app/services/document_service.py` lines 52-87 handle pattern matching but no test data.
+- Risk: Real-world contracts with unusual formatting cause parsing failures or data loss.
+- Priority: High - parser is critical path.
 
-**No Document Parsing Tests:**
-- What's not tested: Section extraction, numbering detection, exhibit detection with real malformed documents
-- Files: `app/services/document_service.py` (614 lines)
-- Risk: Parsing silently corrupts or loses document structure
-- Priority: MEDIUM - parsing fragile but some tests exist for prompt building
+**No Risk Map Relationship Validation:**
+- Untested area: Risk A mitigates risk B, but B is in different batch. Relationships may not resolve or may reference non-existent risks.
+- Files: `app/models/risk_map.py` (untested), `app/services/claude_service.py` lines 330-347.
+- Risk: Silent relationship failures lead to incomplete analysis shown to user.
+- Priority: Medium - affects analysis quality but not functionality.
 
-**No Tests for Concept Detection:**
-- What's not tested: detect_concept_changes, pattern matching edge cases
-- Files: `app/services/map_updater.py` (230 lines)
-- Risk: Concept map updated incorrectly; risk severity calculations wrong
-- Priority: MEDIUM - affects analysis correctness
+**No Concurrent Session Access:**
+- Untested area: Two requests for same session ID running simultaneously.
+- Files: `app/api/routes.py` sessions dict, no locking.
+- Risk: Race conditions, lost updates to revisions/flags.
+- Priority: High - deployment will encounter this.
 
-**No Tests for Model Serialization:**
-- What's not tested: RiskMap/ConceptMap to_dict/from_dict round-tripping
-- Files: `app/models/risk_map.py` (209 lines), `app/models/concept_map.py` (92 lines)
-- Risk: Data loss when saving/loading sessions
-- Priority: MEDIUM - affects data persistence
+**No Large Document Performance Tests:**
+- Untested area: Contracts with 200+ paragraphs, 100+ risks. Analysis latency, memory usage, UI responsiveness.
+- Files: `app/services/claude_service.py` batch processing, all JavaScript frontend code.
+- Risk: Scaling issues discovered in production by user testing.
+- Priority: Medium - impacts user experience but not functionality.
 
----
-
-## Architecture Issues
-
-**Circular Dependency Risk in Services:**
-- Issue: map_updater imports ConceptMap and RiskMap; routes imports map_updater; could create import cycles if not careful
-- Files: `app/services/map_updater.py:15`, `app/api/routes.py:540`
-- Fix approach: Review import structure; ensure clear dependency direction; extract shared models to separate module
-
-**Missing Context Propagation:**
-- Issue: When re-analyzing with `reanalyze_clause`, context retrieved from `session.get('context')` but context stored as top-level keys like 'representation'
-- Files: `app/api/routes.py:676-678` (accessing `session.get('context')` which doesn't exist; should be `session.get('representation')`)
-- Fix approach: Normalize context structure; use consistent path for all context keys
-
-**Incomplete Error Recovery from API Failures:**
-- Issue: If Claude API returns empty/malformed response, batch analysis continues with empty result, polluting risk inventory
-- Files: `app/services/claude_service.py:554-577`
-- Fix approach: Validate API responses before using; skip batch if response invalid; track skipped batches
-
----
-
-## Deployment Issues
-
-**No Environment Configuration System:**
-- Issue: Configuration scattered across code (hardcoded paths, env var names) with no .env.example
-- Files: `app/server.py:27, 54-55`, `run.py:65`, multiple service files
-- Impact: Difficult to set up for new developers; unclear what env vars are required
-- Fix approach: Create .env.example with all required variables; use pydantic Settings or python-dotenv for centralized config
-
-**Upload Folder Path Not Configurable:**
-- Issue: Hardcoded to `app/data/uploads` regardless of where app runs
-- Files: `app/server.py:28`
-- Impact: Permissions issues if run from different user; no separation of dev/prod uploads
-- Fix approach: Make configurable via env var with fallback
-
-**Logging Not Configured:**
-- Issue: Only print() statements used; no structured logging, no log levels
-- Files: Throughout services
-- Impact: Hard to debug production issues; cannot filter error logs; no audit trail
-- Fix approach: Add Python logging module with JSON output for production
-
-**No Health Check/Readiness Endpoints Beyond Basic:**
-- Issue: `/health` returns static 'ok' without checking database/API connectivity
-- Files: `app/server.py:43-45`
-- Impact: Load balancers cannot detect if app is truly healthy (e.g., Claude API unreachable)
-- Fix approach: Implement true health check with dependency verification
+**No API Error Simulation:**
+- Untested area: Claude/Gemini API timeout, rate limit, 500 error responses. Batch analysis error recovery.
+- Files: `app/services/claude_service.py` lines 553-587, `app/services/gemini_service.py` all redline generation.
+- Risk: Error handling code path rarely executed, may contain bugs.
+- Priority: Medium - production will hit these errors.
 
 ---
 

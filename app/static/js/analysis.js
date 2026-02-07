@@ -1,6 +1,13 @@
 /**
  * Analysis overlay and progress tracking
+ * Plan 06-04: Enhanced with incremental results display
  */
+
+// Track which risks have already been displayed to avoid duplicates
+let displayedRiskIds = new Set();
+
+// Track last API call ID to only log new calls
+let lastApiCallId = 0;
 
 // Legal-themed analysis verbs (cheeky, Anthropic-style)
 const analysisVerbs = [
@@ -77,35 +84,192 @@ function updateAnalysisProgress(percent, status, detail, batchInfo) {
     if (batchInfo) document.getElementById('analysis-batch-info').textContent = batchInfo;
 }
 
-// Poll for real analysis progress
+/**
+ * Update the two-stage progress indicator
+ * @param {string} stage - 'initial_analysis', 'parallel_batches', or 'complete'
+ */
+function updateStageIndicator(stage) {
+    const initialStage = document.getElementById('stage-initial');
+    const parallelStage = document.getElementById('stage-parallel');
+
+    if (!initialStage || !parallelStage) return;
+
+    // Reset all stages
+    initialStage.classList.remove('active', 'complete');
+    parallelStage.classList.remove('active', 'complete');
+
+    if (stage === 'initial_analysis') {
+        initialStage.classList.add('active');
+    } else if (stage === 'parallel_batches') {
+        initialStage.classList.add('complete');
+        parallelStage.classList.add('active');
+    } else if (stage === 'complete') {
+        initialStage.classList.add('complete');
+        parallelStage.classList.add('complete');
+    }
+}
+
+/**
+ * Update the stage display text from progress data
+ * @param {Object} progress - Progress data from API
+ */
+function updateProgressDisplay(progress) {
+    // Update stage display
+    const stageDisplay = document.getElementById('analysis-stage-display');
+    if (stageDisplay && progress.stage_display) {
+        stageDisplay.textContent = progress.stage_display;
+    }
+
+    // Update stage indicator
+    if (progress.stage) {
+        updateStageIndicator(progress.stage);
+    }
+
+    // Build detail text
+    let details = [];
+
+    // Stage-specific info
+    if (progress.stage === 'initial_analysis') {
+        if (progress.defined_terms_count) {
+            details.push(`${progress.defined_terms_count} defined terms found`);
+        }
+    } else if (progress.stage === 'parallel_batches') {
+        if (progress.current_batch && progress.total_batches) {
+            details.push(`Batch ${progress.current_batch}/${progress.total_batches}`);
+        }
+        if (progress.risks_found) {
+            details.push(`${progress.risks_found} risks found`);
+        }
+    }
+
+    // Elapsed time
+    if (progress.elapsed_display) {
+        details.push(`Elapsed: ${progress.elapsed_display}`);
+    }
+
+    // Skip stats
+    if (progress.skip_stats) {
+        const skipped = Object.values(progress.skip_stats).reduce((a, b) => a + b, 0);
+        if (skipped > 0) {
+            details.push(`${skipped} paragraphs filtered`);
+        }
+    }
+
+    const detailEl = document.getElementById('analysis-detail');
+    if (detailEl) {
+        detailEl.textContent = details.join(' | ');
+    }
+}
+
+/**
+ * Display incremental risks in the sidebar as they arrive
+ * @param {Array} risks - Array of risk objects from incremental results
+ */
+function displayIncrementalRisks(risks) {
+    if (!risks || risks.length === 0) return;
+
+    // Find or create risk container in sidebar
+    const sidebar = document.getElementById('sidebar-content');
+    if (!sidebar) return;
+
+    risks.forEach(risk => {
+        const riskId = risk.risk_id || risk.id || `${risk.para_id}_${risk.type}`;
+        if (displayedRiskIds.has(riskId)) return;
+        displayedRiskIds.add(riskId);
+
+        // Create risk card element
+        const riskElement = createIncrementalRiskCard(risk);
+        if (riskElement) {
+            sidebar.appendChild(riskElement);
+        }
+    });
+}
+
+/**
+ * Create a risk card element for incremental display
+ * @param {Object} risk - Risk object
+ * @returns {HTMLElement|null}
+ */
+function createIncrementalRiskCard(risk) {
+    const card = document.createElement('div');
+    card.className = 'risk-card risk-item-new';
+    card.setAttribute('data-risk-id', risk.risk_id || '');
+    card.setAttribute('data-para-id', risk.para_id || '');
+
+    const severityClass = `severity-${risk.severity || 'medium'}`;
+
+    card.innerHTML = `
+        <div class="risk-header ${severityClass}">
+            <span class="risk-severity">${(risk.severity || 'medium').toUpperCase()}</span>
+            <span class="risk-title">${escapeHtml(risk.title || 'Risk Identified')}</span>
+        </div>
+        <div class="risk-body">
+            <p class="risk-description">${escapeHtml((risk.description || '').substring(0, 150))}${(risk.description || '').length > 150 ? '...' : ''}</p>
+            <div class="risk-para-ref">Para: ${risk.para_id || 'Unknown'}</div>
+        </div>
+    `;
+
+    // Remove animation class after animation completes
+    setTimeout(() => card.classList.remove('risk-item-new'), 500);
+
+    return card;
+}
+
+// Poll for real analysis progress with incremental results
 async function pollProgress() {
     try {
-        const response = await fetch(`/api/analysis/${AppState.sessionId}/progress`);
+        // Request incremental risks along with progress, include last API call ID
+        const response = await fetch(`/api/analysis/${AppState.sessionId}/progress?include_risks=true&last_api_call_id=${lastApiCallId}`);
         const progress = await response.json();
 
+        // Log any new API calls to browser console
+        if (progress.api_calls && progress.api_calls.length > 0) {
+            progress.api_calls.forEach(call => {
+                // Update last seen ID
+                if (call.id >= lastApiCallId) {
+                    lastApiCallId = call.id + 1;
+                }
+                // Log to browser console with nice formatting
+                const apiLabel = call.api === 'anthropic' ? '🟣 ANTHROPIC' : '🔵 GEMINI';
+                console.log(`${apiLabel} API Call:`, {
+                    timestamp: call.timestamp,
+                    model: call.model,
+                    stage: call.stage,
+                    ...(call.batch && { batch: call.batch }),
+                    ...(call.paragraphs && { paragraphs: Array.isArray(call.paragraphs) ? call.paragraphs.join(', ') : call.paragraphs }),
+                    ...(call.content && { content: call.content }),
+                    ...(call.success !== undefined && { success: call.success }),
+                    ...(call.risks_found !== undefined && { risks_found: call.risks_found }),
+                    ...(call.error && { error: call.error })
+                });
+            });
+        }
+
         if (progress.status === 'complete') {
+            // Clear displayed risks tracker for next analysis
+            displayedRiskIds.clear();
+            lastApiCallId = 0;
             return true; // Signal completion
         }
 
         const percent = progress.percent || 0;
-        const elapsed = progress.elapsed_seconds || 0;
-        const remaining = progress.estimated_remaining_seconds;
 
-        let timeInfo = `Elapsed: ${formatTime(elapsed)}`;
-        if (remaining) {
-            timeInfo += ` | Est. remaining: ${formatTime(remaining)}`;
+        // Update progress bar
+        document.getElementById('analysis-progress').style.width = percent + '%';
+
+        // Update stage display and indicator
+        updateProgressDisplay(progress);
+
+        // Update current action/status
+        const statusEl = document.getElementById('analysis-status');
+        if (statusEl) {
+            statusEl.textContent = progress.current_action || 'Analyzing...';
         }
 
-        const batchInfo = progress.total_batches
-            ? `Batch ${progress.current_batch || 0} of ${progress.total_batches} | ${progress.risks_found || 0} risks found`
-            : '';
-
-        updateAnalysisProgress(
-            percent,
-            progress.current_action || 'Analyzing...',
-            progress.current_clause_preview || 'Processing clauses with Claude Opus 4.5',
-            `${batchInfo}${batchInfo ? ' | ' : ''}${timeInfo}`
-        );
+        // Display incremental risks as they arrive
+        if (progress.incremental_risks && progress.incremental_risks.length > 0) {
+            displayIncrementalRisks(progress.incremental_risks);
+        }
 
         return false; // Not complete yet
     } catch (e) {
@@ -117,6 +281,10 @@ async function pollProgress() {
 // Load analysis with real progress tracking
 async function loadAnalysis() {
     showAnalysisOverlay();
+    // Reset API call tracking for new analysis
+    lastApiCallId = 0;
+    console.log('%c=== Starting Contract Analysis ===', 'color: #4CAF50; font-weight: bold; font-size: 14px');
+    console.log('Session:', AppState.sessionId);
     updateAnalysisProgress(2, 'Starting analysis...', 'Connecting to Claude Opus 4.5', '');
 
     // Start polling for real progress

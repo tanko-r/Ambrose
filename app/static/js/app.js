@@ -39,7 +39,7 @@ async function loadVersionInfo() {
         const response = await fetch('/api/version');
         if (response.ok) {
             const data = await response.json();
-            const versionEl = document.getElementById('header-version');
+            const versionEl = document.getElementById('version-info');
             if (versionEl) {
                 versionEl.textContent = `${data.branch} @ ${data.commit}`;
                 versionEl.title = `Branch: ${data.branch}\nCommit: ${data.commit}`;

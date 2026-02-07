@@ -14,7 +14,7 @@
 | 3 | Compare Precedent | Side-by-side precedent viewing | PREC-01, PREC-02, PREC-03, PREC-04 | Pending |
 | 4 | New Project | Session management and reset | NEW-01, NEW-02, NEW-03, NEW-04 | Pending |
 | 5 | High-Fidelity Document Rendering | Exact Word formatting in both panels | RENDER-01, RENDER-02, RENDER-03, RENDER-04 | Complete |
-| 6 | Analysis Acceleration | Reduce analysis time from 30+ min to <2 min | ACCEL-01, ACCEL-02, ACCEL-03, ACCEL-04 | Pending |
+| 6 | Analysis Acceleration | Reduce analysis time from 30+ min to <2 min | ACCEL-01, ACCEL-02, ACCEL-03, ACCEL-04 | Complete |
 
 ## Phase Details
 
@@ -180,10 +180,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Content pre-filtering service (ACCEL-01, ACCEL-02)
-- [ ] 06-02-PLAN.md — Initial full-document analysis (establishes context for forking)
-- [ ] 06-03-PLAN.md — Forked parallel batch analysis (30 concurrent batches)
-- [ ] 06-04-PLAN.md — Progress streaming and incremental UI updates (ACCEL-04)
+- [x] 06-01-PLAN.md — Content pre-filtering service (ACCEL-01, ACCEL-02)
+- [x] 06-02-PLAN.md — Initial full-document analysis (establishes context for forking)
+- [x] 06-03-PLAN.md — Forked parallel batch analysis (30 concurrent batches)
+- [x] 06-04-PLAN.md — Progress streaming and incremental UI updates (ACCEL-04)
 
 **Wave Structure:**
 ```
@@ -197,7 +197,7 @@ Wave 3: 06-04 (progress UI) — depends on 03
 2. **Forked Batches (06-03):** 30 parallel "forks" from initial conversation, each inheriting full document context
 
 **Cost/Speed Tradeoff:**
-- Fast mode (this phase): ~$6/document, ~90 seconds
+- Fast mode (this phase): ~$2.50/document, ~90 seconds (with prompt caching)
 - Economical mode (Phase 7): ~$2/document, ~15 minutes (sequential with document map)
 
 **Implementation Notes:**
@@ -242,4 +242,4 @@ Each agent:
 
 ---
 *Roadmap created: 2026-02-01*
-*Updated: 2026-02-03 (Phase 6 revised for conversation forking architecture)*
+*Updated: 2026-02-03 (Phase 6 complete - conversation forking with prompt caching)*

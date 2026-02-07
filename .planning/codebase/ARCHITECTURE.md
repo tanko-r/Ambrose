@@ -4,204 +4,295 @@
 
 ## Pattern Overview
 
-**Overall:** Layered client-server architecture with collaborative web interface, following a 4-phase contract analysis pipeline.
+**Overall:** Layered client-server web application with Flask backend and HTML/JS frontend, orchestrating a collaborative contract review workflow across four distinct phases.
 
 **Key Characteristics:**
-- Phase-based workflow: Intake → Analysis → Collaborative Review → Finalization
-- Dual LLM capability: Claude Opus 4.5 (analysis) and Gemini 3 Flash (revision generation)
-- Concept-driven risk mapping with inter-clause relationship awareness
-- Real-time progress tracking for long-running analysis operations
-- Session-based stateful operations with disk persistence
+- Session-based architecture for maintaining state across multi-step workflows
+- Service-oriented backend with clear separation between parsing, analysis, and revision generation
+- Real-time progress tracking for long-running LLM operations
+- Document concept and risk mapping to support intelligent cross-clause analysis
+- Dual LLM integration (Claude for analysis, Gemini for revision generation)
 
 ## Layers
 
 **Presentation Layer (Frontend):**
-- Purpose: Interactive document rendering and collaborative review UI
-- Location: `app/static/js/`, `app/static/css/`, `app/static/index.html`
-- Contains: Vue-style module system (app.js, sidebar.js, document.js, revision.js, analysis.js, etc.)
-- Depends on: REST API endpoints, Session state
-- Used by: End users (attorneys)
+- Purpose: Provide interactive UI for intake, document browsing, risk review, and revision acceptance
+- Location: `C:\Users\david\Documents\claude-redlining\app\static\`
+- Contains: Single-page application (index.html, analysis.js, main.css)
+- Depends on: Flask backend API endpoints
+- Used by: End users (legal professionals)
 
-**API Layer (Flask):**
-- Purpose: RESTful endpoints orchestrating the contract review workflow
-- Location: `app/api/routes.py`
-- Contains: 15+ endpoints handling intake, analysis, revision, finalization, flags
-- Depends on: Service layer, Models, Persistence
-- Used by: Frontend via HTTP, Session management
+**API/Routing Layer:**
+- Purpose: Expose HTTP endpoints for all application workflows
+- Location: `C:\Users\david\Documents\claude-redlining\app\api\routes.py`
+- Contains: Blueprint with endpoints for intake, analysis, revisions, flagging, finalization
+- Depends on: Service layer (document, claude, gemini, analysis services)
+- Used by: Frontend, session management
 
 **Service Layer:**
-- Purpose: Business logic encapsulation for document processing, LLM interaction, revision generation
-- Location: `app/services/`
+- Purpose: Encapsulate business logic and external integrations
+- Location: `C:\Users\david\Documents\claude-redlining\app\services\`
 - Contains:
-  - `document_service.py`: Parse/rebuild Word documents, generate final outputs with track changes
-  - `claude_service.py`: Deep risk analysis using Claude Opus 4.5 with batch processing
-  - `gemini_service.py`: Revision generation using Gemini 3 Flash with context awareness
-  - `analysis_service.py`: Regex-based fallback analysis for contract structure
-  - `map_updater.py`: Concept map and risk map updates on revision acceptance
-- Depends on: Models, External APIs (Anthropic, Google), Document parsing
-- Used by: API routes, Orchestration logic
+  - `claude_service.py`: Claude Opus integration for deep document analysis and risk identification
+  - `gemini_service.py`: Gemini API integration for surgical redline generation
+  - `document_service.py`: DOCX parsing, rebuilding with track changes
+  - `analysis_service.py`: Regex-based fallback analysis when LLM fails
+  - `map_updater.py`: Updates concept and risk maps when revisions are accepted
+- Depends on: External APIs (Anthropic, Google), python-docx library
+- Used by: API routing layer
 
 **Model Layer:**
-- Purpose: Domain-specific data structures for legal analysis
-- Location: `app/models/`
+- Purpose: Define data structures for complex document relationships
+- Location: `C:\Users\david\Documents\claude-redlining\app\models\`
 - Contains:
-  - `concept_map.py`: Document-wide provisions grouped by legal concept (liability, knowledge, termination, defaults, defined terms)
-  - `risk_map.py`: Risk hierarchy with severity calculation considering mitigators/amplifiers
-- Depends on: Nothing (pure data structures)
-- Used by: Services, API responses
+  - `concept_map.py`: ConceptMap class organizing provisions by legal concept (liability_limitations, knowledge_standards, termination_triggers, default_remedies, defined_terms)
+  - `risk_map.py`: RiskMap class with Risk objects tracking relationships (mitigated_by, amplified_by, triggers)
+- Depends on: None (pure data structures)
+- Used by: API routes for analysis, Claude service for building prompts
 
-**Data Layer:**
-- Purpose: Persistence and document parsing
-- Location: `app/data/`, file system
-- Contains: Session JSON files, uploaded documents (target + precedent), parsed document JSONs
-- Depends on: python-docx library for parsing
-- Used by: Document service, API layer for session loading
+**Data Storage Layer:**
+- Purpose: Persist documents, session state, and analysis results
+- Location: `C:\Users\david\Documents\claude-redlining\app\data\`
+- Contains: Filesystem-based storage (JSON files for sessions, uploaded DOCX files)
+- Depends on: Flask app config
+- Used by: API routes for session retrieval
+
+**Entry Point:**
+- Location: `C:\Users\david\Documents\claude-redlining\app\server.py`
+- Creates Flask app, registers API blueprint, configures upload/session folders, serves static files
 
 ## Data Flow
 
 **Intake Phase:**
-1. User uploads target contract + optional precedent via `/api/intake`
-2. `document_service.parse_document()` extracts structure: paragraphs, sections, exhibits, defined terms
-3. Session created with parsed_doc, contract_type (detected), user context (representation, aggressiveness, deal_context)
-4. Session stored in-memory and persisted to disk at `app/data/sessions/{session_id}.json`
-5. Frontend receives session_id and document metadata
+
+1. User submits form via frontend intake screen with:
+   - Target contract (DOCX file)
+   - Optional precedent/preferred form (DOCX file)
+   - Representation (seller/buyer/landlord/tenant/lender/borrower/developer/grantor/grantee/other)
+   - Deal context (free text)
+   - Review approach (quick-sale/competitive-bid/relationship/adversarial)
+   - Aggressiveness level (1-5 scale)
+   - Exhibit handling preference
+
+2. `POST /api/intake` endpoint in `routes.py` handles upload:
+   - Creates session directory in `app/data/uploads/{session_id}/`
+   - Saves uploaded files
+   - Calls `document_service.parse_document()` to extract structure
+
+3. Document parsing (`document_service.py`):
+   - Extracts paragraphs with IDs, section hierarchy, numbering
+   - Identifies section structure (Articles, Sections, subsections)
+   - Detects defined terms
+   - Returns JSON with content, sections, exhibits, metadata
+
+4. Contract type detection (routes.py):
+   - Regex-based detection of PSA, lease, easement, development, loan, general
+   - Stored in session for later context
+
+5. Session created and stored:
+   - In-memory in `sessions` dict
+   - Persisted to disk in `app/data/sessions/{session_id}.json`
+   - Status: "initialized"
 
 **Analysis Phase:**
-1. User requests analysis via `/api/analysis/<session_id>`
-2. `claude_service.analyze_document_with_llm()` batches paragraphs (5 per call) for efficiency
-3. Claude Opus 4.5 analyzes with context: contract type, representation, aggressiveness
-4. Analysis produces: risk_inventory (array of per-paragraph risks), concept_map, document_map
-5. ConceptMap and RiskMap objects built from analysis, stored in session
-6. Progress updates sent via `/api/analysis/<session_id>/progress` during execution
-7. Analysis persisted to session; used for sidebar rendering
+
+1. Frontend requests `GET /api/analysis/{session_id}`
+2. If analysis not cached, routes.py calls `claude_service.analyze_document_with_llm()`:
+   - Sends parsed document to Claude Opus 4.5 (thinking model)
+   - Provides contract type, representation, aggressiveness level
+   - Requests: document structure overview, risk inventory, concept map, triggers
+   - Batches clauses (5 per API call for efficiency)
+   - Real-time progress tracking via `update_progress()` function
+
+3. Analysis result includes:
+   - risk_inventory: Array of risks with risk_id, para_id, title, description, severity
+   - concept_map: Grouped provisions by category
+   - document_map: Structure overview
+
+4. Routes.py builds in-memory data structures:
+   - `ConceptMap` object from analysis['concept_map']
+   - `RiskMap` object from risk_inventory, with relationships calculated
+   - Both stored in session for later use
+
+5. Fallback: If Claude fails, `analysis_service.analyze_document()` runs regex-based patterns
+   - Identifies common risks (uncapped liability, no term expiration, etc.)
+   - Stores with flag `analysis_method: 'regex_fallback'`
 
 **Revision Phase:**
-1. User clicks risk/opportunity in sidebar → requests revision via `/api/revise`
-2. Revision request includes: para_id, risk_id(s), include_related_ids, custom_instruction
-3. `gemini_service.generate_revision()` called with:
+
+1. User clicks on paragraph, sidebar loads risk/opportunity analysis
+2. User selects specific risk to address, clicks "Revise"
+3. Frontend sends `POST /api/revise`:
+   - session_id, para_id, risk_ids, optional custom_instruction
+   - Optional related paragraph IDs for context
+
+4. Routes.py collects context:
    - Original paragraph text
-   - Risk context from analysis
-   - Related clause texts (for context)
-   - Concept map (to reference defined terms)
-   - Precedent document (if available)
-4. Gemini 3 Flash returns: revised_text, rationale, diff_html (HTML track changes)
-5. Revision stored in session['revisions'][para_id] with accepted=False
-6. User accepts/rejects via `/api/accept` or `/api/reject`
-7. On accept: `map_updater.detect_concept_changes()` identifies concept shifts, updates concept_map and risk_map
-8. Affected paragraph IDs returned for potential re-analysis
+   - Matching risks from cached analysis
+   - Related clauses (if revised, shows revised text)
+   - Representation, aggressiveness, deal context
+   - Concept map and risk map for broader context
+
+5. `gemini_service.generate_revision()` called:
+   - Sends original text + risks to Gemini API
+   - Provides chain-of-thought prompting for materiality analysis
+   - Returns revised text with track-changes style diff (HTML)
+   - Returns rationale explaining the change
+
+6. Revision stored in session['revisions'][para_id]:
+   - original, revised, rationale, thinking, diff_html
+   - accepted: False initially
+
+**Revision Acceptance:**
+
+1. User accepts revision via `POST /api/accept`
+2. Routes.py calls `map_updater.detect_concept_changes()`:
+   - Compares original vs revised text
+   - Identifies changes in: defined terms, conditions, liability scope, etc.
+
+3. If changes detected and maps exist, `update_maps_on_revision()` recalculates:
+   - Updates concept map with new/modified provisions
+   - Recalculates risk map severities based on changed relationships
+   - Returns list of affected paragraph IDs that may need re-analysis
+
+4. Revision marked `accepted: True`
+
+**Optional Re-analysis:**
+
+1. User can click "Re-analyze clause" after accepting related revisions
+2. `POST /api/reanalyze` sends para_id
+3. Routes.py collects revised context from accepted revisions of related clauses
+4. Calls `claude_service.analyze_single_paragraph()`:
+   - Analyzes paragraph with updated relationship context
+   - Updates `analysis['risk_by_paragraph'][para_id]`
 
 **Finalization Phase:**
-1. User completes review, requests finalization via `/api/finalize`
-2. `document_service.generate_final_output()` reconstructs Word document:
-   - Loads original document structure
-   - Applies accepted revisions with track changes (using python-docx)
-   - Preserves original formatting, numbering, styles
-3. Generates transmittal email (summary of key changes, flags)
-4. Generates manifest (hierarchical list of all changes with rationale)
-5. Returns paths to: revised.docx, transmittal.txt, manifest.md
-6. User downloads outputs
 
-**State Management:**
-- Session object as single source of truth: { session_id, parsed_doc, analysis, concept_map, risk_map, revisions, flags, status }
-- In-memory storage via global dict `sessions` in `routes.py`
-- Disk persistence: JSON files at `app/data/sessions/` and `app/data/uploads/{session_id}/`
-- Loaded on-demand if not in memory (e.g., after server restart)
+1. User clicks "Finalize" and submits `POST /api/finalize`
+2. Routes.py calls `document_service.generate_final_output()`:
+   - Reads original DOCX
+   - Applies accepted revisions with track changes
+   - Generates manifest listing all changes with rationale
+   - Compiles transmittal email summary
+   - Returns paths to: docx_path, transmittal_path, manifest_path
 
-## Key Abstractions
+3. User can download files via `GET /api/download/{session_id}/{file_type}`
 
-**Session:**
-- Purpose: Encapsulate a single contract review workflow
-- Examples: `routes.py` line 25 (sessions dict), `document_service.parse_document()` output
-- Pattern: Mutable state object following state machine: initialized → analyzed → reviewed → finalized
+## State Management
 
-**Paragraph:**
-- Purpose: Atomic unit of contract content with metadata
-- Examples: `app/static/js/document.js` rendering, `routes.py` /revise endpoint lookup
-- Pattern: Dictionary with keys: id, type, text, section_ref, section_hierarchy, style info
+**Session State (routes.py):**
+```python
+session = {
+    'session_id': str,
+    'created_at': ISO8601,
+    'status': 'initialized|analyzed|finalized',
+    'representation': 'seller|buyer|...',
+    'contract_type': 'psa|lease|...',
+    'aggressiveness': int (1-5),
+    'deal_context': str,
+    'parsed_doc': dict (full parsed content),
+    'parsed_precedent': dict (optional),
+    'analysis': dict (risk_inventory, concept_map, etc.),
+    'concept_map': dict (ConceptMap.to_dict()),
+    'risk_map': dict (RiskMap.to_dict()),
+    'revisions': {
+        'para_id': {
+            'original': str,
+            'revised': str,
+            'rationale': str,
+            'accepted': bool,
+            'diff_html': str
+        }
+    },
+    'flags': [
+        {
+            'para_id': str,
+            'section_ref': str,
+            'note': str,
+            'flag_type': 'client|attorney',
+            'timestamp': ISO8601
+        }
+    ]
+}
+```
 
-**Risk:**
-- Purpose: Document single identified risk or opportunity
-- Examples: `app/models/risk_map.py`, `routes.py` line 330-347 (building RiskMap)
-- Pattern: risk_id, clause/para_id, title, description, severity, mitigators, amplifiers, triggers
-
-**Revision:**
-- Purpose: Track proposed change to a paragraph
-- Examples: `routes.py` line 506-515, `/revise` endpoint response
-- Pattern: original text, revised text, rationale, diff_html, related_revisions, accepted flag, timestamp
-
-**ConceptMap:**
-- Purpose: Document-wide view of key legal provisions by category
-- Examples: `app/models/concept_map.py`, `routes.py` line 305-326
-- Pattern: Nested dict grouped by category (liability_limitations, knowledge_standards, termination_triggers, default_remedies, defined_terms)
-
-**RiskMap:**
-- Purpose: Risk hierarchy with relationship-aware severity calculation
-- Examples: `app/models/risk_map.py`, `routes.py` line 329-350
-- Pattern: Risks stored with mitigators/amplifiers; recalculate_all_severities() adjusts based on relationships
-
-## Entry Points
-
-**Application Start:**
-- Location: `run.py`
-- Triggers: `python run.py`
-- Responsibilities: Dependency check, API key validation, Flask app startup
-
-**Flask Application:**
-- Location: `app/server.py` create_app()
-- Triggers: Import in `run.py`
-- Responsibilities: Configure Flask (50MB upload limit, static folder, session folders), register blueprint, serve index.html
-
-**API Blueprint:**
-- Location: `app/api/routes.py`
-- Triggers: Flask initialization
-- Responsibilities: Define all endpoints, session management, orchestrate services
-
-**Frontend Initialization:**
-- Location: `app/static/js/app.js`
-- Triggers: DOMContentLoaded event
-- Responsibilities: Setup drag-drop, risk events, bottom sheet, navigation, sidebar tabs, show intake screen
-
-**Intake Endpoint:**
-- Location: `app/api/routes.py` /intake (line 97)
-- Triggers: User form submission in frontend
-- Responsibilities: Parse document, detect contract type, initialize session, return session_id
-
-**Analysis Endpoint:**
-- Location: `app/api/routes.py` /analysis/<session_id> (line 261)
-- Triggers: User clicks "Analyze" in frontend
-- Responsibilities: Invoke claude_service analysis, build concept/risk maps, store in session, return full analysis
-
-**Revision Endpoint:**
-- Location: `app/api/routes.py` /revise (line 417)
-- Triggers: User selects risk and clicks "Suggest Revision"
-- Responsibilities: Call gemini_service, return revised text with diff, store in session
+**Progress Tracking (claude_service.py):**
+```python
+analysis_progress = {
+    'session_id': {
+        'status': 'analyzing|complete',
+        'percent': int (0-100),
+        'current_clause': str,
+        'updated_at': timestamp
+    }
+}
+```
 
 ## Error Handling
 
-**Strategy:** Graceful degradation with fallback paths
+**Strategy:** Graceful degradation with fallbacks
 
 **Patterns:**
-- LLM API failures: `/api/analysis` catches Claude errors, falls back to regex-based analysis_service (line 369-388)
-- Missing files: Check file existence before loading, return 404 if not found (line 239-245)
-- Invalid session: Return 404 with error message for non-existent sessions (line 233-235)
-- Parse errors: Wrap document_service.parse_document() in try-catch, return 500 with error (line 142-145)
-- Incomplete revisions: Check for None/empty, validate before persisting (line 506-515)
+
+1. **LLM Analysis Failures:**
+   - Primary: Claude Opus analysis via `claude_service`
+   - Secondary: Regex-based analysis via `analysis_service`
+   - Result: Analysis completes with flag `analysis_method: 'regex_fallback'`
+
+2. **API Key Issues:**
+   - Claude: Checks ANTHROPIC_API_KEY env var, then anthropic_api.txt
+   - Gemini: Checks GEMINI_API_KEY env var, then api.txt
+   - Missing keys don't crash app, only block specific features
+
+3. **File Operations:**
+   - Try/except on document parsing with 400/500 status codes
+   - Invalid DOCX files return 400 Bad Request
+   - Server errors return 500 with error message
+
+4. **Session Not Found:**
+   - All endpoints check `get_session()` first
+   - Return 404 if session_id invalid
 
 ## Cross-Cutting Concerns
 
-**Logging:** Console logging via Python print() and JavaScript console.log(); no centralized logging framework
+**Logging:** Console output via Flask debug mode; no persistent logging layer
 
 **Validation:**
-- Frontend: Form validation in intake.js (file presence, representation selection)
-- Backend: Session existence check before operations, file path validation with Path.exists()
+- File uploads: Restricted to .docx files only
+- Session existence: Checked before all operations
+- Aggressiveness: Coerced to int(1-5) with default 3
 
-**Authentication:** None (application assumes single-user local deployment)
+**Authentication:** Not detected - no auth layer in current implementation
 
-**Rate Limiting:** None (relies on LLM API rate limits for Gemini/Claude)
+## Data Transformation Pipeline
 
-**CORS:** Not implemented (assumes same-origin; static files and API on same domain)
-
-**Session Timeout:** No explicit timeout; sessions persist on disk indefinitely until manually cleared
+```
+DOCX File
+    ↓
+document_service.parse_document()
+    ↓
+Parsed JSON (content[], sections[], exhibits[], defined_terms[])
+    ↓
+Sent to Claude Opus
+    ↓
+Analysis JSON (risk_inventory[], concept_map, document_map)
+    ↓
+ConceptMap & RiskMap objects (in-memory models)
+    ↓
+Displayed in UI
+    ↓
+User selects risks → Sent to Gemini
+    ↓
+Revised text + rationale
+    ↓
+User accepts → map_updater recalculates relationships
+    ↓
+Finalization sends all accepted revisions + original DOCX
+    ↓
+document_service.generate_final_output()
+    ↓
+Final DOCX with track changes + manifest + transmittal email
+```
 
 ---
 

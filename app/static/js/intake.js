@@ -6,8 +6,14 @@
 function handleFileSelect(input, type) {
     const file = input.files[0];
     if (file) {
-        document.getElementById(`${type}-filename`).textContent = file.name;
-        document.getElementById(`${type}-upload`).style.borderColor = 'var(--success)';
+        const filenameEl = document.getElementById(`${type}-filename`);
+        const uploadEl = document.getElementById(`${type}-upload`);
+        // Truncate filename if too long
+        const displayName = file.name.length > 28 ? file.name.substring(0, 25) + '...' : file.name;
+        filenameEl.textContent = displayName;
+        filenameEl.title = file.name;
+        uploadEl.style.borderColor = 'var(--success)';
+        uploadEl.classList.add('has-file');
     }
 }
 
