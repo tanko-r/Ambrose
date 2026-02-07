@@ -17,7 +17,7 @@ Unified roadmap consolidating the Next.js frontend migration with remaining v1.0
 | 0 | Scaffolding + Foundation | Next.js app, types, API client, store, design tokens | Complete |
 | 1 | Core Layout + Intake | Header, intake form, recent projects, new project dialog | Complete |
 | 2 | Document Viewer + Navigation | HTML rendering, nav panel, sidebar shell, bottom bar | Complete |
-| 3 | Sidebar + Risk Analysis | Risk accordion, analysis overlay, hover highlights | Pending |
+| 3 | Sidebar + Risk Analysis | Risk accordion, analysis overlay, hover highlights | Planned |
 | 4 | Revision Bottom Sheet + Track Changes | Diff display, accept/reject, inline editing | Pending |
 | 5 | Precedent Split View | Precedent panel, resizable panes, related clauses | Pending |
 | 6 | Dialogs + Finalization | Flag, finalize (Word export), transmittal, new project | Pending |
@@ -46,14 +46,15 @@ Conversation forking architecture: initial full-document analysis with Claude Op
 
 **Goal:** Full risk display with analysis progress feedback and document-risk interaction.
 
-**Tasks:**
-- risk-accordion.tsx + risk-card.tsx (enhance sidebar risk display)
-- related-clauses.tsx, definitions-tab.tsx, flags-tab.tsx
-- analysis-overlay.tsx — full-screen progress during analysis
-- use-analysis.ts hook — poll progress, update store
-- Risk hover highlighting in document viewer
+**Plans:** 4 plans
 
-**Verification:** Start review, see analysis progress, click paragraphs to see risks in sidebar
+Plans:
+- [ ] 03-01-PLAN.md — Store + CSS + analysis polling hook (infrastructure)
+- [ ] 03-02-PLAN.md — Risk accordion + risk card components
+- [ ] 03-03-PLAN.md — Analysis overlay + page wiring
+- [ ] 03-04-PLAN.md — Document highlighting + sidebar tabs (definitions, related, flags)
+
+**Verification:** Start review, see analysis progress, click paragraphs to see risks in sidebar, hover risks to see text highlighted in document
 
 ---
 
