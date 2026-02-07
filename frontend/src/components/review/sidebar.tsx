@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
-import type { Risk } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
   BookOpen,
   Flag,
 } from "lucide-react";
+import { RiskAccordion } from "./risk-accordion";
 
 type SidebarTab = "risks" | "related" | "definitions" | "flags";
 
@@ -44,6 +44,7 @@ export function Sidebar() {
     selectedParaId,
     paragraphs,
     risks,
+    riskMap,
     sidebarOpen,
     toggleSidebar,
   } = useAppStore();
@@ -142,7 +143,11 @@ export function Sidebar() {
         {!selectedParaId ? (
           <EmptyState message="Click a paragraph in the document to see analysis." />
         ) : activeTab === "risks" ? (
-          <RisksTabContent risks={paraRisks} />
+          <RiskAccordion
+            risks={paraRisks}
+            riskMap={riskMap}
+            paraId={selectedParaId}
+          />
         ) : activeTab === "related" ? (
           <EmptyState message="Related clauses — coming in Phase 3." />
         ) : activeTab === "definitions" ? (
@@ -172,53 +177,6 @@ export function Sidebar() {
 }
 
 // --- Sub-components ---
-
-function RisksTabContent({ risks }: { risks: Risk[] }) {
-  if (risks.length === 0) {
-    return <EmptyState message="No risks identified for this clause." />;
-  }
-
-  return (
-    <div className="space-y-2">
-      {risks.map((risk) => (
-        <div
-          key={risk.risk_id}
-          className="rounded-lg border p-3 transition-colors hover:bg-accent/50"
-        >
-          <div className="flex items-start gap-2">
-            <SeverityBadge severity={risk.severity} />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium">{risk.title}</div>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                {risk.description}
-              </p>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SeverityBadge({ severity }: { severity: string }) {
-  const variants: Record<string, string> = {
-    critical: "bg-severity-critical text-white",
-    high: "bg-severity-high text-white",
-    medium: "bg-severity-medium text-foreground",
-    low: "bg-severity-low text-white",
-    info: "bg-severity-info text-white",
-  };
-
-  return (
-    <span
-      className={`inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-        variants[severity] || variants.info
-      }`}
-    >
-      {severity}
-    </span>
-  );
-}
 
 function EmptyState({ message }: { message: string }) {
   return (
