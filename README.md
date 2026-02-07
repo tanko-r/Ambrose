@@ -1,13 +1,6 @@
 # Contract Redlining Workflow for Claude Code
 
-A comprehensive system for automated contract redlining using Claude Code CLI.
-
-## Quick Start
-
-```bash
-# In Claude Code CLI:
-/redline path/to/contract.docx --represent seller
-```
+A legal contract redlining tool for AI-assisted reviewing and redlining of legal documents
 
 ## Project Structure
 
