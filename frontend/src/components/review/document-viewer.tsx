@@ -16,6 +16,8 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   const revisions = useAppStore((s) => s.revisions);
   const flags = useAppStore((s) => s.flags);
   const risks = useAppStore((s) => s.risks);
+  const hoveredRiskId = useAppStore((s) => s.hoveredRiskId);
+  const focusedRiskId = useAppStore((s) => s.focusedRiskId);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +71,119 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       el.classList.toggle("flagged", flaggedIds.has(paraId));
     });
   }, [selectedParaId, revisions, flags, risks]);
+
+  // Highlight risk text in the document when hovering/focusing a risk card
+  const highlightRiskText = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Remove all existing risk highlights
+    container
+      .querySelectorAll(".risk-highlight, .risk-highlight-active")
+      .forEach((mark) => {
+        const parent = mark.parentNode;
+        if (parent) {
+          parent.replaceChild(
+            document.createTextNode(mark.textContent || ""),
+            mark
+          );
+          parent.normalize(); // merge adjacent text nodes
+        }
+      });
+
+    // Determine which risk to highlight (focused takes priority over hovered)
+    const activeRiskId = focusedRiskId || hoveredRiskId;
+    if (!activeRiskId) return;
+
+    // Find the risk object to get highlight_text and para_id
+    const risk = risks.find((r) => r.risk_id === activeRiskId);
+    if (!risk?.highlight_text) return;
+
+    // Find the paragraph element
+    const paraEl = container.querySelector(
+      `[data-para-id="${risk.para_id}"]`
+    );
+    if (!paraEl) return;
+
+    // Use TreeWalker to find text nodes containing the highlight_text
+    const walker = document.createTreeWalker(paraEl, NodeFilter.SHOW_TEXT);
+    const textContent = risk.highlight_text;
+    let node: Text | null;
+    let found = false;
+
+    while ((node = walker.nextNode() as Text | null)) {
+      const idx = node.textContent?.indexOf(textContent) ?? -1;
+      if (idx !== -1 && node.textContent) {
+        // Split text node and wrap the matching part
+        const before = node.textContent.substring(0, idx);
+        const match = node.textContent.substring(
+          idx,
+          idx + textContent.length
+        );
+        const after = node.textContent.substring(idx + textContent.length);
+
+        const markEl = document.createElement("mark");
+        markEl.className =
+          focusedRiskId === activeRiskId
+            ? "risk-highlight-active"
+            : "risk-highlight";
+        markEl.textContent = match;
+
+        const parent = node.parentNode!;
+        if (before)
+          parent.insertBefore(document.createTextNode(before), node);
+        parent.insertBefore(markEl, node);
+        if (after)
+          parent.insertBefore(document.createTextNode(after), node);
+        parent.removeChild(node);
+
+        found = true;
+        break; // Only highlight first match
+      }
+    }
+
+    // Fallback: try matching first 50 chars if full text not found
+    if (!found && textContent.length > 50) {
+      const shortText = textContent.substring(0, 50);
+      const walker2 = document.createTreeWalker(paraEl, NodeFilter.SHOW_TEXT);
+      while ((node = walker2.nextNode() as Text | null)) {
+        const idx = node.textContent?.indexOf(shortText) ?? -1;
+        if (idx !== -1 && node.textContent) {
+          const markEl = document.createElement("mark");
+          markEl.className =
+            focusedRiskId === activeRiskId
+              ? "risk-highlight-active"
+              : "risk-highlight";
+          // Highlight from match start to end of text node (approximate)
+          const before = node.textContent.substring(0, idx);
+          const matchText = node.textContent.substring(idx);
+          markEl.textContent = matchText;
+
+          const parent = node.parentNode!;
+          if (before)
+            parent.insertBefore(document.createTextNode(before), node);
+          parent.insertBefore(markEl, node);
+          parent.removeChild(node);
+          break;
+        }
+      }
+    }
+
+    // Scroll highlighted text into view if focused (not just hovered)
+    if (focusedRiskId === activeRiskId) {
+      const highlighted = container.querySelector(".risk-highlight-active");
+      if (highlighted) {
+        highlighted.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [hoveredRiskId, focusedRiskId, risks]);
+
+  // Trigger risk highlighting when hover/focus changes
+  useEffect(() => {
+    if (documentHtml) {
+      requestAnimationFrame(() => highlightRiskText());
+    }
+  }, [documentHtml, highlightRiskText]);
 
   // Scroll selected paragraph into view
   useEffect(() => {

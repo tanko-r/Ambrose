@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { Risk, RiskMap } from "@/lib/types";
+import { useAppStore } from "@/lib/store";
 import { Accordion } from "@/components/ui/accordion";
 import { RiskCard } from "./risk-card";
 
@@ -20,6 +21,9 @@ interface RiskAccordionProps {
 // ---------------------------------------------------------------------------
 
 export function RiskAccordion({ risks, riskMap, paraId }: RiskAccordionProps) {
+  const setHoveredRiskId = useAppStore((s) => s.setHoveredRiskId);
+  const setFocusedRiskId = useAppStore((s) => s.setFocusedRiskId);
+
   // Local state: which risk is expanded (single-expand behavior)
   const [expandedRiskId, setExpandedRiskId] = useState<string | undefined>(
     undefined,
@@ -38,14 +42,28 @@ export function RiskAccordion({ risks, riskMap, paraId }: RiskAccordionProps) {
     }));
   }, []);
 
-  // No-op hover/focus handlers — Plan 04 (Wave 2) will wire these to the store
-  const handleHover = useCallback((_riskId: string | null) => {
-    // Will be connected to store.setHoveredRiskId in Plan 04
-  }, []);
+  // Hover handler — highlights risk text in document viewer
+  const handleHover = useCallback(
+    (riskId: string | null) => {
+      setHoveredRiskId(riskId);
+    },
+    [setHoveredRiskId],
+  );
 
-  const handleFocus = useCallback((_riskId: string) => {
-    // Will be connected to store.setFocusedRiskId in Plan 04
-  }, []);
+  // Focus handler — locks highlight on click (toggle behavior in store)
+  const handleFocus = useCallback(
+    (riskId: string) => {
+      setFocusedRiskId(riskId);
+    },
+    [setFocusedRiskId],
+  );
+
+  // Cleanup: clear hovered risk when paraId changes or component unmounts
+  useEffect(() => {
+    return () => {
+      setHoveredRiskId(null);
+    };
+  }, [paraId, setHoveredRiskId]);
 
   // Count included risks (default = included)
   const includedCount = useMemo(() => {
