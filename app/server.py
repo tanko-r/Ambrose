@@ -15,6 +15,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from flask import Flask, send_from_directory
+from flask_cors import CORS
 from app.api.routes import api_bp
 
 def create_app():
@@ -22,6 +23,9 @@ def create_app():
     app = Flask(__name__,
                 static_folder='static',
                 static_url_path='/static')
+
+    # Allow cross-origin requests from Next.js dev server
+    CORS(app, origins=["http://localhost:3000"])
 
     # Configuration
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
