@@ -35,6 +35,7 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
   const navigatorPosition = useAppStore((s) => s.navigatorPosition);
   const closePrecedentPanel = useAppStore((s) => s.closePrecedentPanel);
   const togglePrecedentPanel = useAppStore((s) => s.togglePrecedentPanel);
+  const setPrecedentScrollTarget = useAppStore((s) => s.setPrecedentScrollTarget);
 
   const contentRef = useRef<PrecedentContentHandle>(null);
 
@@ -115,8 +116,10 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
       requestAnimationFrame(() => {
         contentRef.current?.scrollToClause(initialScrollTarget);
       });
+      // Clear scroll target so it doesn't persist across reopens
+      setPrecedentScrollTarget(null);
     }
-  }, [initialScrollTarget]);
+  }, [initialScrollTarget, setPrecedentScrollTarget]);
 
   // =========================================================================
   // Navigator callbacks

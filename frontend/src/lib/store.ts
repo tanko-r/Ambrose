@@ -104,6 +104,7 @@ interface PrecedentState {
   precedentFilename: string | null;
   precedentParagraphs: Paragraph[];
   precedentSections: Section[];
+  precedentScrollTarget: string | null;
 }
 
 // --- Combined Store ---
@@ -152,6 +153,7 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   clearPrecedentSnippets: (targetParaId?: string) => void;
   setNavigatorPosition: (position: NavigatorPosition) => void;
   setPrecedentData: (data: { filename: string; paragraphs: Paragraph[]; sections: Section[] }) => void;
+  setPrecedentScrollTarget: (paraId: string | null) => void;
   openPrecedentPanel: () => void;
   closePrecedentPanel: () => void;
 }
@@ -218,6 +220,7 @@ const initialPrecedentState: PrecedentState = {
   precedentFilename: null,
   precedentParagraphs: [],
   precedentSections: [],
+  precedentScrollTarget: null,
 };
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -327,11 +330,13 @@ export const useAppStore = create<AppStore>((set) => ({
       precedentParagraphs: data.paragraphs,
       precedentSections: data.sections,
     }),
+  setPrecedentScrollTarget: (paraId) => set({ precedentScrollTarget: paraId }),
   openPrecedentPanel: () => set({ precedentPanelOpen: true }),
   closePrecedentPanel: () =>
     set({
       precedentPanelOpen: false,
       lockedParaId: null,
       lockedRelatedClauses: null,
+      precedentScrollTarget: null,
     }),
 }));
