@@ -28,18 +28,11 @@ export function useRevision() {
       includeRelatedIds?: string[],
       customInstruction?: string
     ) => {
-      const {
-        sessionId,
-        setGeneratingRevision,
-        setRevision,
-        setRevisionSheetParaId,
-        bottomSheetOpen,
-        toggleBottomSheet,
-      } = useAppStore.getState();
+      const { sessionId } = useAppStore.getState();
 
       if (!sessionId || riskIds.length === 0) return;
 
-      setGeneratingRevision(true);
+      useAppStore.getState().setGeneratingRevision(true);
 
       try {
         const result = await revise({
@@ -50,7 +43,11 @@ export function useRevision() {
           custom_instruction: customInstruction,
         });
 
-        setRevision(paraId, {
+        // Read fresh state after async call completes
+        const store = useAppStore.getState();
+        console.log("[generate] API done. bottomSheetOpen:", store.bottomSheetOpen, "paraId:", paraId);
+
+        store.setRevision(paraId, {
           original: result.original,
           revised: result.revised,
           rationale: result.rationale,
@@ -60,11 +57,18 @@ export function useRevision() {
           accepted: false,
           timestamp: new Date().toISOString(),
         });
+        console.log("[generate] setRevision done");
 
-        setRevisionSheetParaId(paraId);
+        store.setRevisionSheetParaId(paraId);
+        console.log("[generate] setRevisionSheetParaId done");
 
-        if (!bottomSheetOpen) {
-          toggleBottomSheet();
+        const freshOpen = useAppStore.getState().bottomSheetOpen;
+        console.log("[generate] re-read bottomSheetOpen:", freshOpen);
+        if (!freshOpen) {
+          store.toggleBottomSheet();
+          console.log("[generate] toggled. now:", useAppStore.getState().bottomSheetOpen);
+        } else {
+          console.log("[generate] sheet already open, skipping toggle");
         }
 
         toast.success("Revision generated");
@@ -73,7 +77,7 @@ export function useRevision() {
           err instanceof Error ? err.message : "Revision failed"
         );
       } finally {
-        setGeneratingRevision(false);
+        useAppStore.getState().setGeneratingRevision(false);
       }
     },
     []
@@ -116,14 +120,14 @@ export function useRevision() {
           result.affected_para_ids.length > 0
         ) {
           toast.success(
-            `Revision accepted (${result.affected_para_ids.length} related clauses may need re-analysis)`
+            `Revision approved (${result.affected_para_ids.length} related clauses may need re-analysis)`
           );
         } else {
-          toast.success("Revision accepted");
+          toast.success("Revision approved");
         }
       } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : "Accept failed"
+          err instanceof Error ? err.message : "Approve failed"
         );
       }
     },

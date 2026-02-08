@@ -20,6 +20,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   const focusedRiskId = useAppStore((s) => s.focusedRiskId);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const originalHtmlCache = useRef<Map<string, string>>(new Map());
 
   // Attach click handlers to paragraph elements rendered by backend HTML
   const attachClickHandlers = useCallback(() => {
@@ -61,11 +62,30 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
       // Revision state
       const revision = revisions[paraId];
+      const isAccepted = !!revision && revision.accepted;
       el.classList.toggle("has-revision", !!revision && !revision.accepted);
-      el.classList.toggle(
-        "revision-accepted",
-        !!revision && revision.accepted
-      );
+      el.classList.toggle("revision-accepted", isAccepted);
+
+      // Inline track changes for approved revisions
+      if (isAccepted) {
+        const diffContent = revision.editedHtml || revision.diff_html;
+        if (diffContent) {
+          // Cache original HTML before replacing (only on first accept)
+          if (!originalHtmlCache.current.has(paraId)) {
+            originalHtmlCache.current.set(paraId, el.innerHTML);
+          }
+          // Only replace if not already showing diff content
+          if (!el.classList.contains("showing-diff")) {
+            el.innerHTML = diffContent;
+            el.classList.add("showing-diff");
+          }
+        }
+      } else if (originalHtmlCache.current.has(paraId)) {
+        // Revision reopened or removed — restore original HTML
+        el.innerHTML = originalHtmlCache.current.get(paraId)!;
+        originalHtmlCache.current.delete(paraId);
+        el.classList.remove("showing-diff");
+      }
 
       // Flag state
       el.classList.toggle("flagged", flaggedIds.has(paraId));
@@ -104,6 +124,9 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       `[data-para-id="${risk.para_id}"]`
     );
     if (!paraEl) return;
+
+    // Skip risk highlighting for accepted paragraphs (diff HTML breaks text matching)
+    if (paraEl.classList.contains("showing-diff")) return;
 
     // Use TreeWalker to find text nodes containing the highlight_text
     const walker = document.createTreeWalker(paraEl, NodeFilter.SHOW_TEXT);
@@ -186,20 +209,25 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   }, [documentHtml, highlightRiskText]);
 
   // Auto-open bottom sheet when clicking a paragraph with an existing revision
+  // IMPORTANT: read revisions from getState() — NOT from the subscribed selector.
+  // Using `revisions` as a dependency would create an infinite loop:
+  // setRevisionSheetParaId → RevisionSheet persists edits → setRevision → revisions change → re-fire
   useEffect(() => {
+    console.log("[docviewer] auto-open effect fired. selectedParaId:", selectedParaId);
     if (!selectedParaId) return;
-    const revision = revisions[selectedParaId];
+    const store = useAppStore.getState();
+    const revision = store.revisions[selectedParaId];
+    console.log("[docviewer] revision exists:", !!revision, "bottomSheetOpen:", store.bottomSheetOpen);
     if (revision) {
-      const store = useAppStore.getState();
       store.setRevisionSheetParaId(selectedParaId);
       if (!store.bottomSheetOpen) {
         store.toggleBottomSheet();
+        console.log("[docviewer] toggled sheet open");
       }
     } else {
-      // Update revision sheet para ID to track current paragraph even without revision
-      useAppStore.getState().setRevisionSheetParaId(selectedParaId);
+      store.setRevisionSheetParaId(selectedParaId);
     }
-  }, [selectedParaId, revisions]);
+  }, [selectedParaId]);
 
   // Scroll selected paragraph into view
   useEffect(() => {

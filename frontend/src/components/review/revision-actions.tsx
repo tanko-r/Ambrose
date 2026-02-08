@@ -1,7 +1,7 @@
 "use client";
 
 // =============================================================================
-// RevisionActions — Accept/Reject/Reset/Reopen button bar for revisions
+// RevisionActions — Approve/Reject/Reset/Reopen button bar for revisions
 // =============================================================================
 
 import { Check, X, RotateCcw, RotateCw } from "lucide-react";
@@ -30,7 +30,7 @@ export function RevisionActions({
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
           <Check className="size-4" />
-          Accepted
+          Approved
         </span>
         <Button variant="secondary" size="sm" onClick={onReopen}>
           <RotateCw className="size-3.5" />
@@ -44,7 +44,7 @@ export function RevisionActions({
     <div className="flex items-center gap-2">
       <Button variant="default" size="sm" onClick={onAccept}>
         <Check className="size-3.5" />
-        Accept
+        Approve
       </Button>
       {isModified && (
         <Button variant="outline" size="sm" onClick={onReset}>
