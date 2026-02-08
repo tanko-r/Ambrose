@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
-import { intake, loadTestSession } from "@/lib/api";
+import { intake, loadSession } from "@/lib/api";
 import type { Approach, Aggressiveness, Representation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -189,22 +189,22 @@ export function IntakeForm() {
   const handleLoadTest = async () => {
     setSubmitting(true);
     try {
-      const result = await loadTestSession();
+      const result = await loadSession("test-sample-psa");
       toast.success(
-        `Test session loaded: ${result.paragraphs_count} paragraphs`
+        `Test session loaded: ${result.target_filename}`
       );
 
       setSession({
         sessionId: result.session_id,
-        status: "analyzed",
-        targetFilename: "Test Document",
+        status: result.session_status as "analyzed",
+        targetFilename: result.target_filename,
       });
       setView("review");
 
       router.push(`/review/${result.session_id}`);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "No test data available"
+        err instanceof Error ? err.message : "No test data available. Run: python fixtures/seed_test_session.py"
       );
     } finally {
       setSubmitting(false);

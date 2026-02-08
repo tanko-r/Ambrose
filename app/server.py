@@ -24,8 +24,8 @@ def create_app():
                 static_folder='static',
                 static_url_path='/static')
 
-    # Allow cross-origin requests from Next.js dev server
-    CORS(app, origins=["http://localhost:3000"])
+    # Allow cross-origin requests from Next.js dev server (any localhost port)
+    CORS(app, origins=[r"http://localhost:\d+"])
 
     # Configuration
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload

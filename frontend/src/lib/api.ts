@@ -1,7 +1,11 @@
 // =============================================================================
 // Typed API client for Flask backend
-// All requests go through Next.js rewrite proxy (/api/* -> Flask :5000)
+// Fast endpoints: Next.js rewrite proxy (/api/* -> Flask :5000)
+// Long-running endpoints (revise, accept, reject): direct to Flask to avoid
+// proxy timeout (Next.js rewrite proxy drops connections after ~30s)
 // =============================================================================
+
+const FLASK_DIRECT = 'http://localhost:5000';
 
 import type {
   IntakeResponse,
@@ -195,7 +199,7 @@ export async function getAnalysisProgress(
 // =============================================================================
 
 export async function revise(data: ReviseRequest): Promise<ReviseResponse> {
-  return request('/api/revise', {
+  return request(`${FLASK_DIRECT}/api/revise`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -203,7 +207,7 @@ export async function revise(data: ReviseRequest): Promise<ReviseResponse> {
 }
 
 export async function acceptRevision(data: AcceptRequest): Promise<AcceptResponse> {
-  return request('/api/accept', {
+  return request(`${FLASK_DIRECT}/api/accept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -211,7 +215,7 @@ export async function acceptRevision(data: AcceptRequest): Promise<AcceptRespons
 }
 
 export async function rejectRevision(data: RejectRequest): Promise<RejectResponse> {
-  return request('/api/reject', {
+  return request(`${FLASK_DIRECT}/api/reject`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -219,7 +223,7 @@ export async function rejectRevision(data: RejectRequest): Promise<RejectRespons
 }
 
 export async function reanalyze(data: ReanalyzeRequest): Promise<ReanalyzeResponse> {
-  return request('/api/reanalyze', {
+  return request(`${FLASK_DIRECT}/api/reanalyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

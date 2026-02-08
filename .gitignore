@@ -43,3 +43,17 @@ nul
 # OS
 .DS_Store
 Thumbs.db
+.claude/settings.local.json
+
+# Agent config symlinks (machine-specific)
+.agents
+.claude/CLAUDE.md
+.claude/commands
+.claude/hooks
+.claude/skills
+.codex/
+.gemini/
+test documents/.agents/
+test documents/.claude/
+test documents/.codex/
+test documents/.gemini/

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAppStore } from "@/lib/store";
-import { getDocument, getDocumentHtml } from "@/lib/api";
+import { getDocument, getDocumentHtml, loadSession } from "@/lib/api";
 import { toast } from "sonner";
 
 /**
@@ -26,10 +26,22 @@ export function useDocument(sessionId: string | null) {
 
     try {
       // Fetch document data and HTML in parallel
-      const [doc, html] = await Promise.all([
-        getDocument(sessionId),
-        getDocumentHtml(sessionId).catch(() => null),
-      ]);
+      // If session not in memory, try loading from disk first
+      let doc;
+      let html: string | null;
+      try {
+        [doc, html] = await Promise.all([
+          getDocument(sessionId),
+          getDocumentHtml(sessionId).catch(() => null),
+        ]);
+      } catch {
+        // Session may be on disk but not in memory — load it first
+        await loadSession(sessionId);
+        [doc, html] = await Promise.all([
+          getDocument(sessionId),
+          getDocumentHtml(sessionId).catch(() => null),
+        ]);
+      }
 
       setDocument({
         paragraphs: doc.content,

@@ -250,10 +250,11 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 1.25rem;
-    font-family: inherit;
-    font-size: 0.9375rem;
-    line-height: 1.7;
-    max-height: 200px;
+    font-family: 'Calibri', 'Carlito', 'Arial', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    max-height: none;
+    flex: 1;
     overflow-y: auto;
     transition: all 150ms;
   }

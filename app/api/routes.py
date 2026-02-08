@@ -15,12 +15,36 @@ Endpoints:
 
 import json
 import uuid
+import platform
 from datetime import datetime
 from pathlib import Path
 from flask import Blueprint, request, jsonify, current_app, send_file, Response
 from app.services.html_renderer import render_document_html, render_precedent_html
 
 api_bp = Blueprint('api', __name__)
+
+# Running in WSL but paths may have been saved from Windows
+_IS_WSL = 'microsoft' in platform.uname().release.lower()
+
+
+def _normalize_path(p: str | None) -> str | None:
+    """Translate Windows paths to WSL paths when running under WSL, and vice versa."""
+    if not p:
+        return p
+    if _IS_WSL:
+        # Convert C:\Users\... -> /mnt/c/Users/...
+        if len(p) >= 3 and p[1] == ':' and p[2] in ('\\', '/'):
+            drive = p[0].lower()
+            rest = p[3:].replace('\\', '/')
+            return f'/mnt/{drive}/{rest}'
+    else:
+        # Convert /mnt/c/Users/... -> C:\Users\...
+        if p.startswith('/mnt/') and len(p) > 6 and p[5] == '/':
+            drive = p[4].upper()
+            rest = p[6:].replace('/', '\\')
+            return f'{drive}:\\{rest}'
+    return p
+
 
 # Session storage (in-memory for now, could use Redis/DB for production)
 sessions = {}
@@ -1259,6 +1283,11 @@ def load_saved_session(session_id):
     try:
         with open(session_path, 'r', encoding='utf-8') as f:
             session_data = json.load(f)
+
+        # Normalize Windows<->WSL paths before restoring
+        for path_key in ('parsed_doc_path', 'target_path', 'precedent_path'):
+            if session_data.get(path_key):
+                session_data[path_key] = _normalize_path(session_data[path_key])
 
         # Restore parsed document if path exists
         parsed_doc_path = session_data.get('parsed_doc_path')

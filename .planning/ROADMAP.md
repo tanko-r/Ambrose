@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
-**Created:** 2026-02-01
-**Updated:** 2026-02-07
+**Created:** 2026-02-01  
+**Updated:** 2026-02-07  
 **Milestone:** v1.0 — Next.js Migration + Feature Completion
 
 ## Overview
@@ -147,5 +147,5 @@ Plans:
 
 ---
 
-_Roadmap created: 2026-02-01_
+_Roadmap created: 2026-02-01_  
 _Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)_

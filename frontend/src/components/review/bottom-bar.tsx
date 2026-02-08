@@ -19,9 +19,6 @@ export function BottomBar() {
     bottomSheetOpen,
   } = useAppStore();
 
-  // Hide bottom bar when revision sheet is open to avoid overlap
-  if (bottomSheetOpen) return null;
-
   // Content paragraphs only
   const contentParas = useMemo(
     () => paragraphs.filter((p) => p.type === "paragraph"),
@@ -66,6 +63,9 @@ export function BottomBar() {
     const idx = currentIndex >= riskParaIds.length - 1 ? 0 : currentIndex + 1;
     selectParagraph(riskParaIds[idx].id);
   };
+
+  // Hide bottom bar when revision sheet is open to avoid overlap
+  if (bottomSheetOpen) return null;
 
   return (
     <div className="flex h-11 shrink-0 items-center justify-between border-t bg-card px-4">

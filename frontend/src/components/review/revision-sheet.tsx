@@ -1,26 +1,22 @@
 "use client";
 
 // =============================================================================
-// RevisionSheet — Drawer-based bottom sheet wrapping revision content
-// Uses shadcn Drawer (Vaul) with snap points for peek/half/full height.
-// Non-modal so sidebar + document remain interactive.
+// RevisionSheet — CSS-animated bottom sheet panel for revision content
+// Replaces Vaul Drawer (which had rendering bugs in non-modal + snap-point mode).
+// Simple fixed-position panel with slide-up transition and resize toggle.
 // =============================================================================
 
-import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { X, Maximize2, Minimize2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
 import { useRevision } from "@/hooks/use-revision";
 import { TrackChangesEditor } from "./track-changes-editor";
 import { RevisionActions } from "./revision-actions";
 
-const SNAP_POINTS = [0.25, 0.5, 1] as const;
+const SNAP_HEIGHTS = ["25vh", "50vh", "100vh"] as const;
+type SnapIndex = 0 | 1 | 2;
 
 export function RevisionSheet() {
   const bottomSheetOpen = useAppStore((s) => s.bottomSheetOpen);
@@ -35,7 +31,7 @@ export function RevisionSheet() {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const prevParaIdRef = useRef<string | null>(null);
   const [isModified, setIsModified] = useState(false);
-  const [snap, setSnap] = useState<number | string | null>(SNAP_POINTS[1]);
+  const [snapIdx, setSnapIdx] = useState<SnapIndex>(1); // start at 50vh
 
   const revision = revisionSheetParaId
     ? revisions[revisionSheetParaId]
@@ -49,7 +45,8 @@ export function RevisionSheet() {
       const prevRevision = useAppStore.getState().revisions[prevId];
       if (prevRevision && editorRef.current) {
         const html = editorRef.current.innerHTML;
-        if (html && html !== prevRevision.diff_html) {
+        const changed = html && html !== prevRevision.diff_html;
+        if (changed) {
           setRevision(prevId, { ...prevRevision, editedHtml: html });
         }
       }
@@ -60,21 +57,20 @@ export function RevisionSheet() {
   }, [revisionSheetParaId, setRevision]);
 
   // ---- Handle close: persist edits, then toggle ----
-  function handleOpenChange(open: boolean) {
-    if (!open) {
-      // Persist edits before closing
-      if (revisionSheetParaId && revision && editorRef.current) {
-        const html = editorRef.current.innerHTML;
-        if (html && html !== revision.diff_html) {
-          setRevision(revisionSheetParaId, {
-            ...revision,
-            editedHtml: html,
-          });
-        }
+  const handleClose = useCallback(() => {
+    if (revisionSheetParaId && revision && editorRef.current) {
+      const html = editorRef.current.innerHTML;
+      if (html && html !== revision.diff_html) {
+        setRevision(revisionSheetParaId, { ...revision, editedHtml: html });
       }
-      toggleBottomSheet();
     }
-  }
+    toggleBottomSheet();
+  }, [revisionSheetParaId, revision, setRevision, toggleBottomSheet]);
+
+  // ---- Cycle through snap heights ----
+  const cycleSnap = useCallback(() => {
+    setSnapIdx((prev) => ((prev + 1) % SNAP_HEIGHTS.length) as SnapIndex);
+  }, []);
 
   // ---- Get paragraph info for header ----
   const para = revisionSheetParaId
@@ -107,70 +103,91 @@ export function RevisionSheet() {
   }
 
   return (
-    <Drawer
-      open={bottomSheetOpen}
-      onOpenChange={handleOpenChange}
-      snapPoints={SNAP_POINTS as unknown as (number | string)[]}
-      activeSnapPoint={snap}
-      setActiveSnapPoint={setSnap}
-      direction="bottom"
-      modal={false}
-      dismissible
+    <div
+      aria-hidden={!bottomSheetOpen}
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-50 mx-auto flex max-w-4xl flex-col rounded-t-lg border bg-background shadow-[0_-4px_24px_rgba(0,0,0,0.12)]",
+        "transition-all duration-300 ease-in-out",
+        bottomSheetOpen ? "translate-y-0" : "translate-y-full",
+      )}
+      style={{ height: SNAP_HEIGHTS[snapIdx] }}
     >
-      <DrawerContent className="mx-auto max-w-none px-4 pb-4">
-        {/* Header with drag handle (built-in), title, and close button */}
-        <DrawerHeader className="flex flex-row items-center justify-between gap-2 px-0">
-          <DrawerTitle className="truncate text-sm">
-            {headerTitle}
-          </DrawerTitle>
+      {/* Header bar */}
+      <div className="flex shrink-0 items-center justify-between border-b px-6 py-2">
+        <div className="flex min-w-0 items-center gap-3">
+          {/* Drag-handle visual indicator */}
+          <div className="h-1 w-8 shrink-0 rounded-full bg-muted-foreground/25" />
+          <span className="truncate text-sm font-semibold">{headerTitle}</span>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
-            size="icon-xs"
-            onClick={() => handleOpenChange(false)}
+            size="icon"
+            className="h-7 w-7"
+            onClick={cycleSnap}
+            aria-label="Resize panel"
+          >
+            {snapIdx < 2 ? (
+              <Maximize2 className="size-3.5" />
+            ) : (
+              <Minimize2 className="size-3.5" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleClose}
             aria-label="Close revision sheet"
           >
             <X className="size-4" />
           </Button>
-        </DrawerHeader>
+        </div>
+      </div>
 
-        {/* Content area */}
-        {!revisionSheetParaId || !revision ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            No revision to display. Select a paragraph and generate a revision.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3 overflow-y-auto">
-            {/* Track changes editor */}
-            <TrackChangesEditor
-              diffHtml={revision.editedHtml || revision.diff_html}
-              readOnly={revision.accepted}
-              onModified={() => setIsModified(true)}
-              editorRef={editorRef}
-            />
+      {/* Content — only mount children when open to avoid wasted renders */}
+      {bottomSheetOpen && (
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 py-3">
+          {!revisionSheetParaId || !revision ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No revision to display. Select a paragraph and generate a
+              revision.
+            </p>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
+              {/* Track changes editor */}
+              <TrackChangesEditor
+                diffHtml={revision.editedHtml || revision.diff_html}
+                readOnly={revision.accepted}
+                onModified={() => setIsModified(true)}
+                editorRef={editorRef}
+              />
 
-            {/* Rationale */}
-            {revision.rationale && (
-              <div className="rounded-r border-l-[3px] border-violet-500 bg-gradient-to-r from-violet-50 to-purple-50 px-3 py-2.5 text-sm italic text-muted-foreground">
-                <span className="not-italic font-semibold text-foreground">
-                  Rationale:{" "}
-                </span>
-                {revision.rationale}
-              </div>
-            )}
+              {/* Rationale */}
+              {revision.rationale && (
+                <div className="rounded-r border-l-[3px] border-violet-500 bg-gradient-to-r from-violet-50 to-purple-50 px-3 py-2.5 text-sm italic text-muted-foreground">
+                  <span className="not-italic font-semibold text-foreground">
+                    Rationale:{" "}
+                  </span>
+                  {revision.rationale}
+                </div>
+              )}
 
-            {/* Action buttons */}
-            <RevisionActions
-              paraId={revisionSheetParaId}
-              accepted={revision.accepted}
-              isModified={isModified}
-              onAccept={handleAccept}
-              onReject={handleReject}
-              onReset={handleReset}
-              onReopen={handleReopen}
-            />
-          </div>
-        )}
-      </DrawerContent>
-    </Drawer>
+              {/* Action buttons */}
+              <RevisionActions
+                paraId={revisionSheetParaId}
+                accepted={revision.accepted}
+                isModified={isModified}
+                onAccept={handleAccept}
+                onReject={handleReject}
+                onReset={handleReset}
+                onReopen={handleReopen}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

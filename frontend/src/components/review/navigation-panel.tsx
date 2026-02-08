@@ -239,7 +239,7 @@ function LinearOutline({
     <div className="space-y-px">
       {paragraphs.map((para) => {
         const sev = maxSeverity(para.id);
-        const level = (para.section_ref.match(/\./g) || []).length;
+        const level = (para.section_ref?.match(/\./g) || []).length;
 
         return (
           <OutlineItem

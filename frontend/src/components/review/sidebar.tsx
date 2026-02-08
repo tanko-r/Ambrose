@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { useRevision } from "@/hooks/use-revision";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +13,47 @@ import {
   BookOpen,
   Flag,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { RiskAccordion } from "./risk-accordion";
 import { DefinitionsTab } from "./definitions-tab";
 import { RelatedClausesTab } from "./related-clauses-tab";
 import { FlagsTab } from "./flags-tab";
+
+const GENERATING_VERBS = [
+  "Analyzing risk exposure",
+  "Reviewing clause structure",
+  "Drafting protective language",
+  "Cross-referencing provisions",
+  "Evaluating counterparty position",
+  "Identifying negotiation leverage",
+  "Assessing materiality threshold",
+  "Checking defined terms",
+  "Calibrating revision scope",
+  "Preparing redline markup",
+];
+
+function useRotatingVerb(active: boolean) {
+  const [index, setIndex] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setIndex(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % GENERATING_VERBS.length);
+        setFading(false);
+      }, 200);
+    }, 2400);
+    return () => clearInterval(id);
+  }, [active]);
+
+  return { verb: GENERATING_VERBS[index], fading };
+}
 
 type SidebarTab = "risks" | "related" | "definitions" | "flags";
 
@@ -60,6 +96,7 @@ export function Sidebar() {
   // Revision hook and ref for collecting included risk IDs
   const { generate, generating } = useRevision();
   const getIncludedRiskIdsRef = useRef<(() => string[]) | null>(null);
+  const { verb: generatingVerb, fading: verbFading } = useRotatingVerb(generating);
 
   // Revision state for current paragraph
   const revisions = useAppStore((s) => s.revisions);
@@ -202,26 +239,34 @@ export function Sidebar() {
                   View Revision
                 </Button>
               )}
-              <Button
-                size="sm"
-                className="h-7 text-xs"
-                disabled={generating || paraRisks.length === 0}
-                onClick={() => {
-                  if (!selectedParaId) return;
-                  const riskIds =
-                    getIncludedRiskIdsRef.current?.() ??
-                    paraRisks.map((r) => r.risk_id);
-                  if (riskIds.length > 0) {
-                    generate(selectedParaId, riskIds);
-                  }
-                }}
-              >
-                {generating
-                  ? "Generating..."
-                  : hasRevision
-                    ? "Regenerate"
-                    : "Generate Revision"}
-              </Button>
+              {generating ? (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                  <span
+                    className="transition-opacity duration-200"
+                    style={{ opacity: verbFading ? 0 : 1 }}
+                  >
+                    {generatingVerb}...
+                  </span>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  className="h-7 text-xs"
+                  disabled={paraRisks.length === 0}
+                  onClick={() => {
+                    if (!selectedParaId) return;
+                    const riskIds =
+                      getIncludedRiskIdsRef.current?.() ??
+                      paraRisks.map((r) => r.risk_id);
+                    if (riskIds.length > 0) {
+                      generate(selectedParaId, riskIds);
+                    }
+                  }}
+                >
+                  {hasRevision ? "Regenerate" : "Generate Revision"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
