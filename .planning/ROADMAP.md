@@ -11,14 +11,14 @@ Unified roadmap consolidating the Next.js frontend migration with remaining v1.0
 **Branch:** `nextjs-migration` (all remaining work happens here)
 
 | Phase | Name | Goal | Status |
-|-------|------|------|--------|
+| --- | --- | --- | --- |
 | A | High-Fidelity Document Rendering | Exact Word formatting in both panels | Complete |
-| B | Analysis Acceleration | Analysis time from 30+ min to <2 min | Complete |
+| B | Analysis Acceleration | Analysis time from 30+ min to \<2 min | Complete |
 | 0 | Scaffolding + Foundation | Next.js app, types, API client, store, design tokens | Complete |
 | 1 | Core Layout + Intake | Header, intake form, recent projects, new project dialog | Complete |
 | 2 | Document Viewer + Navigation | HTML rendering, nav panel, sidebar shell, bottom bar | Complete |
-| 3 | Sidebar + Risk Analysis | Risk accordion, analysis overlay, hover highlights | Planned |
-| 4 | Revision Bottom Sheet + Track Changes | Diff display, accept/reject, inline editing | Pending |
+| 3 | Sidebar + Risk Analysis | Risk accordion, analysis overlay, hover highlights | Complete |
+| 4 | Revision Bottom Sheet + Track Changes | Diff display, accept/reject, inline editing | Planned |
 | 5 | Precedent Split View | Precedent panel, resizable panes, related clauses | Pending |
 | 6 | Dialogs + Finalization | Flag, finalize (Word export), transmittal, new project | Pending |
 | 7 | Polish + Validation | Keyboard shortcuts, accessibility, responsive, visual parity | Pending |
@@ -36,38 +36,27 @@ Conversation forking architecture: initial full-document analysis with Claude Op
 
 ### Phase 0-2: Next.js Migration Foundation (Complete)
 
-- **Phase 0:** Next.js 16 scaffold, 16 shadcn/ui components, Zustand store, typed API client for all 30+ endpoints, design tokens, API proxy config
-- **Phase 1:** Header with dropdown menus, drag-drop intake form, recent projects list, new project confirmation dialog
-- **Phase 2:** Document viewer (HTML rendering, click handlers, state classes), collapsible navigation panel (3 outline modes, search, severity indicators), sidebar shell (Risks/Related/Definitions/Flags tabs), bottom bar (progress, severity pills, navigation)
+*   **Phase 0:** Next.js 16 scaffold, 16 shadcn/ui components, Zustand store, typed API client for all 30+ endpoints, design tokens, API proxy config
+*   **Phase 1:** Header with dropdown menus, drag-drop intake form, recent projects list, new project confirmation dialog
+*   **Phase 2:** Document viewer (HTML rendering, click handlers, state classes), collapsible navigation panel (3 outline modes, search, severity indicators), sidebar shell (Risks/Related/Definitions/Flags tabs), bottom bar (progress, severity pills, navigation)
+
+### Phase 3: Sidebar + Risk Analysis (Complete)
+
+*   **Phase 3:** Risk accordion with include/exclude toggles, analysis overlay with real-time progress, risk text highlighting via TreeWalker, sidebar tabs (definitions, related clauses, flags)
 
 ## Remaining Phases
-
-### Phase 3: Sidebar + Risk Analysis
-
-**Goal:** Full risk display with analysis progress feedback and document-risk interaction.
-
-**Plans:** 4 plans
-
-Plans:
-- [ ] 03-01-PLAN.md — Store + CSS + analysis polling hook (infrastructure)
-- [ ] 03-02-PLAN.md — Risk accordion + risk card components
-- [ ] 03-03-PLAN.md — Analysis overlay + page wiring
-- [ ] 03-04-PLAN.md — Document highlighting + sidebar tabs (definitions, related, flags)
-
-**Verification:** Start review, see analysis progress, click paragraphs to see risks in sidebar, hover risks to see text highlighted in document
-
----
 
 ### Phase 4: Revision Bottom Sheet + Track Changes
 
 **Goal:** Generate and manage redline revisions with track-changes visualization.
 
-**Tasks:**
-- bottom-sheet.tsx — draggable bottom panel
-- revision-sheet.tsx — diff display, accept/reject buttons
-- track-changes-editor.tsx — contenteditable wrapper
-- lib/track-changes.ts — port from app/static/js/revision.js
-- use-revision.ts hook
+**Plans:** 3 plans
+
+Plans:
+
+*   04-01-PLAN.md — Infrastructure: shadcn Drawer, track-changes.ts DOM utils, useRevision hook, store/type extensions, CSS
+*   04-02-PLAN.md — Components: TrackChangesEditor (contentEditable), RevisionSheet (Drawer), RevisionActions
+*   04-03-PLAN.md — Wiring: Generate button, page layout, auto-open, BottomBar visibility
 
 **Verification:** Generate revision for a risk, see track-changes diff, accept/reject, edit inline
 
@@ -80,10 +69,11 @@ Plans:
 **Covers v1.0 requirements:** PREC-01, PREC-02, PREC-03, PREC-04
 
 **Tasks:**
-- precedent-panel.tsx
-- precedent-navigator.tsx
-- react-resizable-panels integration
-- use-precedent.ts hook
+
+*   precedent-panel.tsx
+*   precedent-navigator.tsx
+*   react-resizable-panels integration
+*   use-precedent.ts hook
 
 **Verification:** Open precedent view, resize panes, see related clauses highlighted, copy text
 
@@ -96,12 +86,13 @@ Plans:
 **Covers v1.0 requirements:** FIN-01, FIN-02, FIN-03, FIN-04, TRANS-01, TRANS-02, TRANS-03, TRANS-04, NEW-01, NEW-02, NEW-03, NEW-04
 
 **Tasks:**
-- flag-dialog.tsx (flag paragraphs for client review)
-- finalize-dialog.tsx (review accepted revisions, export Word docs with track changes + clean)
-- transmittal-dialog.tsx (generate cover email with revision summary + flags)
-- new-project-dialog.tsx (save/discard current work, return to intake)
-- use-flags.ts hook
-- Backend: Finalize endpoint using python-redlines for track changes Word export
+
+*   flag-dialog.tsx (flag paragraphs for client review)
+*   finalize-dialog.tsx (review accepted revisions, export Word docs with track changes + clean)
+*   transmittal-dialog.tsx (generate cover email with revision summary + flags)
+*   new-project-dialog.tsx (save/discard current work, return to intake)
+*   use-flags.ts hook
+*   Backend: Finalize endpoint using python-redlines for track changes Word export
 
 **Verification:** Flag items, finalize to Word (track changes + clean), transmittal email opens, new project resets to intake
 
@@ -112,16 +103,17 @@ Plans:
 **Goal:** Production-quality UX polish and accessibility.
 
 **Tasks:**
-- Keyboard shortcuts (navigation, accept/reject, flag)
-- Light/dark mode toggle
-- Compact mode
-- LocalStorage preferences persistence
-- Bottom bar risk filters + prev/next navigation
-- Loading/error/empty states throughout
-- Responsive behavior
-- Accessibility audit (WCAG 2.2 AA)
-- Visual parity check vs old UI
-- Design token audit
+
+*   Keyboard shortcuts (navigation, accept/reject, flag)
+*   Light/dark mode toggle
+*   Compact mode
+*   LocalStorage preferences persistence
+*   Bottom bar risk filters + prev/next navigation
+*   Loading/error/empty states throughout
+*   Responsive behavior
+*   Accessibility audit (WCAG 2.2 AA)
+*   Visual parity check vs old UI
+*   Design token audit
 
 **Verification:** Keyboard navigation works, modes toggle, preferences persist, accessible
 
@@ -132,10 +124,11 @@ Plans:
 **Goal:** Remove old frontend, finalize dev setup.
 
 **Tasks:**
-- Archive app/static/ to _archived/
-- Remove Flask send_from_directory for index.html
-- Dev startup script (both servers)
-- Update README
+
+*   Archive app/static/ to \_archived/
+*   Remove Flask send\_from\_directory for index.html
+*   Dev startup script (both servers)
+*   Update README
 
 **Verification:** Old frontend removed, `npm run dev` + Flask starts cleanly, README accurate
 
@@ -144,7 +137,7 @@ Plans:
 ## Requirement Traceability
 
 | Requirement | Covered In | Status |
-|-------------|------------|--------|
+| --- | --- | --- |
 | FIN-01..04 | Phase 6 | Pending |
 | TRANS-01..04 | Phase 6 | Pending |
 | PREC-01..04 | Phase 5 | Pending |
@@ -153,5 +146,6 @@ Plans:
 | ACCEL-01..04 | Phase B | Complete |
 
 ---
-*Roadmap created: 2026-02-01*
-*Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)*
+
+_Roadmap created: 2026-02-01_
+_Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)_
