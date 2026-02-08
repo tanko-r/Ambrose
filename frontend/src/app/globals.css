@@ -299,3 +299,86 @@
     padding: 0 1px;
   }
 }
+
+/* ==========================================================================
+   Precedent Split View
+   ========================================================================== */
+
+/* Related clause highlight in precedent content */
+[data-para-id].related-clause {
+  border-left: 3px solid oklch(0.546 0.215 264);
+  background: oklch(0.95 0.02 264 / 0.12);
+  transition: background-color 300ms ease;
+}
+
+[data-para-id].related-clause-locked {
+  border-left: 3px solid oklch(0.546 0.215 264);
+  background: oklch(0.93 0.04 264 / 0.18);
+}
+
+/* Pulse animation for navigator items when related clauses update */
+@keyframes clause-pulse {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: oklch(0.546 0.215 264 / 0.12); }
+}
+
+.pulse-highlight {
+  animation: clause-pulse 750ms ease-in-out 2;
+}
+
+/* Flash animation for precedent content scroll-to target */
+@keyframes clause-flash {
+  0% { background-color: oklch(0.546 0.215 264 / 0.25); }
+  100% { background-color: transparent; }
+}
+
+.flash-highlight {
+  animation: clause-flash 1s ease-out 1;
+}
+
+/* Sidebar restore tab (when collapsed for precedent view) */
+.sidebar-restore-tab {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+}
+
+/* Sidebar overlay (when expanded during precedent view) */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+  width: 380px;
+}
+
+/* Precedent navigator matched item indicator */
+.nav-match-dot::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: oklch(0.546 0.215 264);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Precedent selection tooltip */
+.precedent-selection-tooltip {
+  pointer-events: auto;
+}
+
+/* react-resizable-panels separator styling */
+[data-panel-group] > [data-resize-handle] {
+  position: relative;
+}
+
+[data-panel-group] > [data-resize-handle]::after {
+  content: '';
+  position: absolute;
+  inset: 0 -2px;
+}
