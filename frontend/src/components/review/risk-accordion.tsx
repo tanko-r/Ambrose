@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import type { Risk, RiskMap } from "@/lib/types";
 import { useAppStore } from "@/lib/store";
 import { Accordion } from "@/components/ui/accordion";
@@ -14,13 +14,15 @@ interface RiskAccordionProps {
   risks: Risk[];
   riskMap: RiskMap | null;
   paraId: string;
+  /** Ref callback: parent can read included risk IDs at generation time */
+  onIncludedRiskIdsRef?: React.MutableRefObject<(() => string[]) | null>;
 }
 
 // ---------------------------------------------------------------------------
 // RiskAccordion — wraps RiskCards in shadcn Accordion (single-expand)
 // ---------------------------------------------------------------------------
 
-export function RiskAccordion({ risks, riskMap, paraId }: RiskAccordionProps) {
+export function RiskAccordion({ risks, riskMap, paraId, onIncludedRiskIdsRef }: RiskAccordionProps) {
   const setHoveredRiskId = useAppStore((s) => s.setHoveredRiskId);
   const setFocusedRiskId = useAppStore((s) => s.setFocusedRiskId);
 
@@ -33,6 +35,19 @@ export function RiskAccordion({ risks, riskMap, paraId }: RiskAccordionProps) {
   const [riskInclusions, setRiskInclusions] = useState<Record<string, boolean>>(
     {},
   );
+
+  // Expose a getter for included risk IDs to the parent via ref
+  const getIncludedRiskIds = useCallback(() => {
+    return risks
+      .filter((r) => riskInclusions[r.risk_id] === undefined || riskInclusions[r.risk_id])
+      .map((r) => r.risk_id);
+  }, [risks, riskInclusions]);
+
+  useEffect(() => {
+    if (onIncludedRiskIdsRef) {
+      onIncludedRiskIdsRef.current = getIncludedRiskIds;
+    }
+  }, [onIncludedRiskIdsRef, getIncludedRiskIds]);
 
   // Toggle include/exclude for a risk
   const handleToggleInclude = useCallback((riskId: string) => {

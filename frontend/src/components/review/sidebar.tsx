@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
+import { useRevision } from "@/hooks/use-revision";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +12,7 @@ import {
   Link2,
   BookOpen,
   Flag,
+  Eye,
 } from "lucide-react";
 import { RiskAccordion } from "./risk-accordion";
 import { DefinitionsTab } from "./definitions-tab";
@@ -54,6 +56,17 @@ export function Sidebar() {
   } = useAppStore();
 
   const [activeTab, setActiveTab] = useState<SidebarTab>("risks");
+
+  // Revision hook and ref for collecting included risk IDs
+  const { generate, generating } = useRevision();
+  const getIncludedRiskIdsRef = useRef<(() => string[]) | null>(null);
+
+  // Revision state for current paragraph
+  const revisions = useAppStore((s) => s.revisions);
+  const setRevisionSheetParaId = useAppStore((s) => s.setRevisionSheetParaId);
+  const toggleBottomSheet = useAppStore((s) => s.toggleBottomSheet);
+  const bottomSheetOpen = useAppStore((s) => s.bottomSheetOpen);
+  const hasRevision = selectedParaId ? !!revisions[selectedParaId] : false;
 
   // Find selected paragraph
   const selectedPara = useMemo(
@@ -151,6 +164,7 @@ export function Sidebar() {
             risks={paraRisks}
             riskMap={riskMap}
             paraId={selectedParaId}
+            onIncludedRiskIdsRef={getIncludedRiskIdsRef}
           />
         ) : activeTab === "related" ? (
           <RelatedClausesTab sessionId={sessionId} paraId={selectedParaId} />
@@ -170,9 +184,45 @@ export function Sidebar() {
                 ? `${paraRisks.length} risk${paraRisks.length !== 1 ? "s" : ""} identified`
                 : "No risks identified"}
             </span>
-            <Button size="sm" className="h-7 text-xs" disabled>
-              Generate Revision
-            </Button>
+            <div className="flex items-center gap-1.5">
+              {hasRevision && !generating && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    if (!selectedParaId) return;
+                    setRevisionSheetParaId(selectedParaId);
+                    if (!bottomSheetOpen) {
+                      toggleBottomSheet();
+                    }
+                  }}
+                >
+                  <Eye className="mr-1 h-3 w-3" />
+                  View Revision
+                </Button>
+              )}
+              <Button
+                size="sm"
+                className="h-7 text-xs"
+                disabled={generating || paraRisks.length === 0}
+                onClick={() => {
+                  if (!selectedParaId) return;
+                  const riskIds =
+                    getIncludedRiskIdsRef.current?.() ??
+                    paraRisks.map((r) => r.risk_id);
+                  if (riskIds.length > 0) {
+                    generate(selectedParaId, riskIds);
+                  }
+                }}
+              >
+                {generating
+                  ? "Generating..."
+                  : hasRevision
+                    ? "Regenerate"
+                    : "Generate Revision"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
