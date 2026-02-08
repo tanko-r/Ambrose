@@ -9,7 +9,7 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Next.js frontend migration -- Phase 4 COMPLETE (all plans done, awaiting human verification checkpoint)
+**Current focus:** Next.js frontend migration -- Phase 5 in progress (Plan 01 of 03 complete)
 
 ## Current Milestone
 
@@ -24,23 +24,24 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 2 | Document Viewer + Navigation | Complete | 100% |
 | 3 | Sidebar + Risk Analysis | Complete | 100% |
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
-| 5 | Precedent Split View | Pending | 0% |
+| 5 | Precedent Split View | In Progress | 33% |
 | 6 | Dialogs + Finalization | Pending | 0% |
 | 7 | Polish + Validation | Pending | 0% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
-**Overall:** 7/11 phases complete, Phase 4 Plan 03 of 03 complete
+**Overall:** 7/11 phases complete, Phase 5 Plan 01 of 03 complete
 
-Progress: [##############      ] 68%
+Progress: [##############      ] 70%
 
 ## Next Action
 
-Begin Phase 5: Precedent Split View
-- Phase 4 checkpoint passed (human verification complete)
-- All revision workflow components wired and functional
+Continue Phase 5: Plan 02 (Precedent UI Components)
+- Plan 01 foundation complete: types, store, hook, layout, CSS
+- Ready for PrecedentPanel, Navigator, ContentViewer, SelectionTooltip
 
 ## Recent Activity
 
+- 2026-02-08: Phase 5 Plan 01 complete -- types, store precedent slice, usePrecedent hook, SplitLayout, CSS animations
 - 2026-02-08: Phase 4 COMPLETE -- Plan 03: wiring + integration (Generate button, auto-open, BottomBar visibility)
 - 2026-02-08: Phase 4 Plan 02 complete -- TrackChangesEditor, RevisionActions, RevisionSheet components
 - 2026-02-08: Phase 4 Plan 01 complete -- Drawer installed, track-changes utils, useRevision hook, store/CSS extensions
@@ -82,6 +83,10 @@ Begin Phase 5: Precedent Split View
 | 4 | Ref callback pattern for risk IDs | Avoids lifting riskInclusions state; parent passes MutableRefObject |
 | 4 | Store getState() in auto-open effect | Prevents infinite loop from revision subscription in useEffect |
 | 4 | BottomBar returns null when sheet open | Simpler than CSS visibility; prevents layout contribution |
+| 5 | react-resizable-panels v4 direct API (not shadcn) | Library already installed; Group/Panel/Separator/useDefaultLayout |
+| 5 | useRef Map cache for related clauses in usePrecedent | Same pattern as RelatedClausesTab; prevents duplicate API calls |
+| 5 | Lock/unlock clears cache entry to force refresh | Ensures fresh data after unlock |
+| 5 | togglePrecedentPanel clears lock state on close | Clean UX; prevents stale lock when reopening |
 | A | docx-parser-converter for HTML | Pure Python, ~100ms, preserves all formatting |
 | B | Conversation forking for parallelism | 30 concurrent forks, ~90s analysis, $2.50/doc |
 | -- | Unified roadmap | v1.0 features built in Next.js phases, not separately |
@@ -89,7 +94,7 @@ Begin Phase 5: Precedent Split View
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 04-03-PLAN.md (wiring + integration -- Generate button, auto-open, BottomBar visibility)
+Stopped at: Completed 05-01-PLAN.md (precedent foundation -- types, store, hook, layout, CSS)
 Resume file: None
 
 ---
