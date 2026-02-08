@@ -8,6 +8,7 @@ import { NavigationPanel } from "@/components/review/navigation-panel";
 import { DocumentViewer } from "@/components/review/document-viewer";
 import { Sidebar } from "@/components/review/sidebar";
 import { BottomBar } from "@/components/review/bottom-bar";
+import { RevisionSheet } from "@/components/review/revision-sheet";
 import { Header } from "@/components/layout/header";
 import { AnalysisOverlay } from "@/components/review/analysis-overlay";
 
@@ -51,6 +52,9 @@ export default function ReviewPage({
         {/* Right: Analysis sidebar */}
         <Sidebar />
       </div>
+
+      {/* Revision bottom sheet (non-modal, renders over document area) */}
+      <RevisionSheet />
 
       {/* Bottom toolbar */}
       <BottomBar />

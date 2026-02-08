@@ -16,7 +16,11 @@ export function BottomBar() {
     revisions,
     selectedParaId,
     selectParagraph,
+    bottomSheetOpen,
   } = useAppStore();
+
+  // Hide bottom bar when revision sheet is open to avoid overlap
+  if (bottomSheetOpen) return null;
 
   // Content paragraphs only
   const contentParas = useMemo(

@@ -185,6 +185,22 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     }
   }, [documentHtml, highlightRiskText]);
 
+  // Auto-open bottom sheet when clicking a paragraph with an existing revision
+  useEffect(() => {
+    if (!selectedParaId) return;
+    const revision = revisions[selectedParaId];
+    if (revision) {
+      const store = useAppStore.getState();
+      store.setRevisionSheetParaId(selectedParaId);
+      if (!store.bottomSheetOpen) {
+        store.toggleBottomSheet();
+      }
+    } else {
+      // Update revision sheet para ID to track current paragraph even without revision
+      useAppStore.getState().setRevisionSheetParaId(selectedParaId);
+    }
+  }, [selectedParaId, revisions]);
+
   // Scroll selected paragraph into view
   useEffect(() => {
     if (!selectedParaId || !containerRef.current) return;
