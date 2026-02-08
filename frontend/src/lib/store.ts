@@ -22,6 +22,9 @@ import type {
   RiskMap,
   AnalysisSummary,
   SavedSessionListItem,
+  PrecedentSnippet,
+  NavigatorPosition,
+  RelatedClause,
 } from './types';
 
 // --- Session State ---
@@ -91,9 +94,21 @@ interface UIState {
   generatingRevision: boolean;
 }
 
+// --- Precedent State ---
+
+interface PrecedentState {
+  lockedParaId: string | null;
+  lockedRelatedClauses: RelatedClause[] | null;
+  precedentSnippets: PrecedentSnippet[];
+  navigatorPosition: NavigatorPosition;
+  precedentFilename: string | null;
+  precedentParagraphs: Paragraph[];
+  precedentSections: Section[];
+}
+
 // --- Combined Store ---
 
-interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewState, UIState {
+interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewState, UIState, PrecedentState {
   // Session actions
   setSession: (session: Partial<SessionState>) => void;
   resetSession: () => void;
@@ -128,6 +143,17 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   setFocusedRiskId: (riskId: string | null) => void;
   setGeneratingRevision: (v: boolean) => void;
   setRevisionSheetParaId: (paraId: string | null) => void;
+
+  // Precedent actions
+  setLockedParaId: (paraId: string | null) => void;
+  setLockedRelatedClauses: (clauses: RelatedClause[] | null) => void;
+  addPrecedentSnippet: (snippet: PrecedentSnippet) => void;
+  removePrecedentSnippet: (snippetId: string) => void;
+  clearPrecedentSnippets: (targetParaId?: string) => void;
+  setNavigatorPosition: (position: NavigatorPosition) => void;
+  setPrecedentData: (data: { filename: string; paragraphs: Paragraph[]; sections: Section[] }) => void;
+  openPrecedentPanel: () => void;
+  closePrecedentPanel: () => void;
 }
 
 const initialSessionState: SessionState = {
@@ -184,6 +210,16 @@ const initialUIState: UIState = {
   generatingRevision: false,
 };
 
+const initialPrecedentState: PrecedentState = {
+  lockedParaId: null,
+  lockedRelatedClauses: null,
+  precedentSnippets: [],
+  navigatorPosition: 'right-sidebar',
+  precedentFilename: null,
+  precedentParagraphs: [],
+  precedentSections: [],
+};
+
 export const useAppStore = create<AppStore>((set) => ({
   // Initial state
   ...initialSessionState,
@@ -191,6 +227,7 @@ export const useAppStore = create<AppStore>((set) => ({
   ...initialAnalysisState,
   ...initialReviewState,
   ...initialUIState,
+  ...initialPrecedentState,
 
   // Session actions
   setSession: (session) => set((state) => ({ ...state, ...session })),
@@ -200,6 +237,7 @@ export const useAppStore = create<AppStore>((set) => ({
       ...initialDocumentState,
       ...initialAnalysisState,
       ...initialReviewState,
+      ...initialPrecedentState,
       view: 'dashboard',
     }),
 
@@ -242,7 +280,14 @@ export const useAppStore = create<AppStore>((set) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   toggleBottomSheet: () => set((state) => ({ bottomSheetOpen: !state.bottomSheetOpen })),
   togglePrecedentPanel: () =>
-    set((state) => ({ precedentPanelOpen: !state.precedentPanelOpen })),
+    set((state) => {
+      const opening = !state.precedentPanelOpen;
+      return {
+        precedentPanelOpen: opening,
+        // Clear lock state when closing
+        ...(opening ? {} : { lockedParaId: null, lockedRelatedClauses: null }),
+      };
+    }),
   setReviewMode: (mode) => set({ reviewMode: mode }),
   toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
   setHoveredRiskId: (riskId) => set({ hoveredRiskId: riskId }),
@@ -252,4 +297,41 @@ export const useAppStore = create<AppStore>((set) => ({
     })),
   setGeneratingRevision: (v) => set({ generatingRevision: v }),
   setRevisionSheetParaId: (paraId) => set({ revisionSheetParaId: paraId }),
+
+  // Precedent actions
+  setLockedParaId: (paraId) =>
+    set((state) => ({
+      lockedParaId: paraId,
+      // Clear locked related clauses when unlocking
+      lockedRelatedClauses: paraId === null ? null : state.lockedRelatedClauses,
+    })),
+  setLockedRelatedClauses: (clauses) => set({ lockedRelatedClauses: clauses }),
+  addPrecedentSnippet: (snippet) =>
+    set((state) => ({
+      precedentSnippets: [...state.precedentSnippets, snippet],
+    })),
+  removePrecedentSnippet: (snippetId) =>
+    set((state) => ({
+      precedentSnippets: state.precedentSnippets.filter((s) => s.id !== snippetId),
+    })),
+  clearPrecedentSnippets: (targetParaId) =>
+    set((state) => ({
+      precedentSnippets: targetParaId
+        ? state.precedentSnippets.filter((s) => s.targetParaId !== targetParaId)
+        : [],
+    })),
+  setNavigatorPosition: (position) => set({ navigatorPosition: position }),
+  setPrecedentData: (data) =>
+    set({
+      precedentFilename: data.filename,
+      precedentParagraphs: data.paragraphs,
+      precedentSections: data.sections,
+    }),
+  openPrecedentPanel: () => set({ precedentPanelOpen: true }),
+  closePrecedentPanel: () =>
+    set({
+      precedentPanelOpen: false,
+      lockedParaId: null,
+      lockedRelatedClauses: null,
+    }),
 }));

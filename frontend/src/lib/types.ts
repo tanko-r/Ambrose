@@ -477,3 +477,16 @@ export interface HealthResponse {
 export interface ApiError {
   error: string;
 }
+
+// --- Precedent Split View ---
+
+export type NavigatorPosition = 'right-sidebar' | 'bottom-drawer' | 'overlay';
+
+export interface PrecedentSnippet {
+  id: string;
+  text: string;
+  sourceParagraphId: string;
+  sourceSection: string;
+  targetParaId: string;
+  timestamp: string;
+}
