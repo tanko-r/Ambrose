@@ -6,14 +6,21 @@ import { useRevision } from "@/hooks/use-revision";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   PanelRightClose,
   PanelRightOpen,
+  PanelLeftOpen,
   AlertTriangle,
   Link2,
   BookOpen,
   Flag,
   Eye,
   Loader2,
+  X,
 } from "lucide-react";
 import { RiskAccordion } from "./risk-accordion";
 import { DefinitionsTab } from "./definitions-tab";
@@ -91,6 +98,10 @@ export function Sidebar() {
     toggleSidebar,
   } = useAppStore();
 
+  const precedentPanelOpen = useAppStore((s) => s.precedentPanelOpen);
+  const precedentSnippets = useAppStore((s) => s.precedentSnippets);
+  const removePrecedentSnippet = useAppStore((s) => s.removePrecedentSnippet);
+
   const [activeTab, setActiveTab] = useState<SidebarTab>("risks");
 
   // Revision hook and ref for collecting included risk IDs
@@ -117,8 +128,40 @@ export function Sidebar() {
     [risks, selectedParaId]
   );
 
-  // Reopen tab when sidebar is closed
+  // Snippets for current paragraph
+  const snippetsForPara = useMemo(
+    () =>
+      selectedParaId
+        ? precedentSnippets.filter((s) => s.targetParaId === selectedParaId)
+        : [],
+    [precedentSnippets, selectedParaId]
+  );
+
+  // Auto-collapse sidebar when precedent opens
+  useEffect(() => {
+    if (precedentPanelOpen && sidebarOpen) {
+      toggleSidebar();
+    }
+    // Only trigger when precedentPanelOpen changes to true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [precedentPanelOpen]);
+
+  // --- Collapsed mode: show restore tab ---
   if (!sidebarOpen) {
+    // When precedent is open: show left-edge restore tab
+    if (precedentPanelOpen) {
+      return (
+        <button
+          onClick={toggleSidebar}
+          className="fixed left-0 top-1/2 z-30 -translate-y-1/2 rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
+          aria-label="Open sidebar"
+        >
+          <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
+        </button>
+      );
+    }
+
+    // Normal mode (precedent closed): show right-edge restore tab
     return (
       <button
         onClick={toggleSidebar}
@@ -130,8 +173,10 @@ export function Sidebar() {
     );
   }
 
-  return (
-    <aside className="flex h-full w-[380px] shrink-0 flex-col border-l bg-card shadow-sm">
+  // --- Sidebar content (shared between normal and overlay modes) ---
+
+  const sidebarContent = (
+    <>
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="min-w-0">
@@ -222,6 +267,50 @@ export function Sidebar() {
                 : "No risks identified"}
             </span>
             <div className="flex items-center gap-1.5">
+              {/* Snippet badge */}
+              {snippetsForPara.length > 0 && !generating && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                      {snippetsForPara.length} ref{snippetsForPara.length !== 1 ? "s" : ""}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    className="w-72 p-0"
+                    side="top"
+                  >
+                    <div className="border-b px-3 py-2">
+                      <span className="text-xs font-semibold">
+                        Queued Precedent Snippets
+                      </span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {snippetsForPara.map((snippet) => (
+                        <div
+                          key={snippet.id}
+                          className="flex items-start gap-2 border-b px-3 py-2 last:border-b-0"
+                        >
+                          <p className="flex-1 text-xs text-muted-foreground line-clamp-2">
+                            {snippet.text}
+                          </p>
+                          <button
+                            onClick={() => removePrecedentSnippet(snippet.id)}
+                            className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
               {hasRevision && !generating && (
                 <Button
                   variant="outline"
@@ -260,7 +349,13 @@ export function Sidebar() {
                       getIncludedRiskIdsRef.current?.() ??
                       paraRisks.map((r) => r.risk_id);
                     if (riskIds.length > 0) {
-                      generate(selectedParaId, riskIds);
+                      // Pass precedent snippets as custom instruction
+                      const snippetTexts = snippetsForPara.map((s) => s.text);
+                      const customInstruction =
+                        snippetTexts.length > 0
+                          ? `Incorporate the following precedent language where appropriate:\n${snippetTexts.map((t, i) => `${i + 1}. "${t}"`).join("\n")}`
+                          : undefined;
+                      generate(selectedParaId, riskIds, undefined, customInstruction);
                     }
                   }}
                 >
@@ -271,6 +366,30 @@ export function Sidebar() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  // --- Overlay mode: sidebar is a fixed overlay on the LEFT ---
+  if (precedentPanelOpen) {
+    return (
+      <>
+        {/* Backdrop to dismiss */}
+        <div
+          className="fixed inset-0 z-30 bg-black/5"
+          onClick={toggleSidebar}
+        />
+        {/* Overlay sidebar */}
+        <aside className="fixed top-[49px] left-0 bottom-0 z-40 flex w-[380px] flex-col bg-card shadow-2xl">
+          {sidebarContent}
+        </aside>
+      </>
+    );
+  }
+
+  // --- Normal mode: sidebar as flex column on the right ---
+  return (
+    <aside className="flex h-full w-[380px] shrink-0 flex-col border-l bg-card shadow-sm">
+      {sidebarContent}
     </aside>
   );
 }
