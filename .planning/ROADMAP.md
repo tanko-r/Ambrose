@@ -18,7 +18,7 @@ Unified roadmap consolidating the Next.js frontend migration with remaining v1.0
 | 1 | Core Layout + Intake | Header, intake form, recent projects, new project dialog | Complete |
 | 2 | Document Viewer + Navigation | HTML rendering, nav panel, sidebar shell, bottom bar | Complete |
 | 3 | Sidebar + Risk Analysis | Risk accordion, analysis overlay, hover highlights | Complete |
-| 4 | Revision Bottom Sheet + Track Changes | Diff display, accept/reject, inline editing | Planned |
+| 4 | Revision Bottom Sheet + Track Changes | Diff display, accept/reject, inline editing | Complete |
 | 5 | Precedent Split View | Precedent panel, resizable panes, related clauses | Pending |
 | 6 | Dialogs + Finalization | Flag, finalize (Word export), transmittal, new project | Pending |
 | 7 | Polish + Validation | Keyboard shortcuts, accessibility, responsive, visual parity | Pending |
