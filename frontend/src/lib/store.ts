@@ -240,10 +240,7 @@ export const useAppStore = create<AppStore>((set) => ({
   setView: (view) => set({ view }),
   toggleNavPanel: () => set((state) => ({ navPanelOpen: !state.navPanelOpen })),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  toggleBottomSheet: () => set((state) => {
-    console.log("[store] toggleBottomSheet:", state.bottomSheetOpen, "->", !state.bottomSheetOpen, new Error().stack?.split('\n').slice(1, 4).join(' | '));
-    return { bottomSheetOpen: !state.bottomSheetOpen };
-  }),
+  toggleBottomSheet: () => set((state) => ({ bottomSheetOpen: !state.bottomSheetOpen })),
   togglePrecedentPanel: () =>
     set((state) => ({ precedentPanelOpen: !state.precedentPanelOpen })),
   setReviewMode: (mode) => set({ reviewMode: mode }),

@@ -6,7 +6,7 @@
 // Simple fixed-position panel with slide-up transition and resize toggle.
 // =============================================================================
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { X, Maximize2, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export function RevisionSheet() {
 
   const editorRef = useRef<HTMLDivElement | null>(null);
   const prevParaIdRef = useRef<string | null>(null);
+  const lastHtmlRef = useRef<string | null>(null);
   const [isModified, setIsModified] = useState(false);
   const [snapIdx, setSnapIdx] = useState<SnapIndex>(1); // start at 50vh
 
@@ -38,28 +39,40 @@ export function RevisionSheet() {
     : undefined;
 
   // ---- Persist edits when switching paragraphs ----
+  // NOTE: We read from lastHtmlRef (captured on every modification) instead of
+  // editorRef.current.innerHTML because child effects fire first — by the time
+  // this parent effect runs, TrackChangesEditor has already replaced innerHTML
+  // with the new paragraph's content.
   useEffect(() => {
     const prevId = prevParaIdRef.current;
 
     if (prevId && prevId !== revisionSheetParaId) {
       const prevRevision = useAppStore.getState().revisions[prevId];
-      if (prevRevision && editorRef.current) {
-        const html = editorRef.current.innerHTML;
-        const changed = html && html !== prevRevision.diff_html;
-        if (changed) {
+      if (prevRevision && lastHtmlRef.current) {
+        const html = lastHtmlRef.current;
+        if (html !== prevRevision.diff_html) {
           setRevision(prevId, { ...prevRevision, editedHtml: html });
         }
       }
     }
 
     prevParaIdRef.current = revisionSheetParaId;
+    lastHtmlRef.current = null;
     setIsModified(false);
   }, [revisionSheetParaId, setRevision]);
 
+  // ---- Track modifications: capture innerHTML for persist effect ----
+  const handleModified = useCallback(() => {
+    setIsModified(true);
+    if (editorRef.current) {
+      lastHtmlRef.current = editorRef.current.innerHTML;
+    }
+  }, []);
+
   // ---- Handle close: persist edits, then toggle ----
   const handleClose = useCallback(() => {
-    if (revisionSheetParaId && revision && editorRef.current) {
-      const html = editorRef.current.innerHTML;
+    if (revisionSheetParaId && revision) {
+      const html = lastHtmlRef.current ?? editorRef.current?.innerHTML;
       if (html && html !== revision.diff_html) {
         setRevision(revisionSheetParaId, { ...revision, editedHtml: html });
       }
@@ -160,7 +173,7 @@ export function RevisionSheet() {
               <TrackChangesEditor
                 diffHtml={revision.editedHtml || revision.diff_html}
                 readOnly={revision.accepted}
-                onModified={() => setIsModified(true)}
+                onModified={handleModified}
                 editorRef={editorRef}
               />
 

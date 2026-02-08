@@ -43,9 +43,7 @@ export function useRevision() {
           custom_instruction: customInstruction,
         });
 
-        // Read fresh state after async call completes
         const store = useAppStore.getState();
-        console.log("[generate] API done. bottomSheetOpen:", store.bottomSheetOpen, "paraId:", paraId);
 
         store.setRevision(paraId, {
           original: result.original,
@@ -57,18 +55,11 @@ export function useRevision() {
           accepted: false,
           timestamp: new Date().toISOString(),
         });
-        console.log("[generate] setRevision done");
-
         store.setRevisionSheetParaId(paraId);
-        console.log("[generate] setRevisionSheetParaId done");
 
         const freshOpen = useAppStore.getState().bottomSheetOpen;
-        console.log("[generate] re-read bottomSheetOpen:", freshOpen);
         if (!freshOpen) {
           store.toggleBottomSheet();
-          console.log("[generate] toggled. now:", useAppStore.getState().bottomSheetOpen);
-        } else {
-          console.log("[generate] sheet already open, skipping toggle");
         }
 
         toast.success("Revision generated");

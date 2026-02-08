@@ -14,6 +14,51 @@ import {
   selectCharacterAfter,
 } from "@/lib/track-changes";
 
+// ---- Cursor offset helpers for undo/redo ----
+
+/** Count text characters from start of element to current cursor position. */
+function getTextOffset(el: HTMLElement): number {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount) return 0;
+  const range = selection.getRangeAt(0);
+  const preRange = document.createRange();
+  preRange.selectNodeContents(el);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  return preRange.toString().length;
+}
+
+/** Place cursor at a text character offset within element. */
+function setTextOffset(el: HTMLElement, offset: number): void {
+  const selection = window.getSelection();
+  if (!selection) return;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let current = 0;
+  let node: Text | null;
+  while ((node = walker.nextNode() as Text | null)) {
+    const len = node.textContent?.length || 0;
+    if (current + len >= offset) {
+      const range = document.createRange();
+      range.setStart(node, offset - current);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      return;
+    }
+    current += len;
+  }
+  // Offset beyond content — place at end
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+interface UndoEntry {
+  html: string;
+  offset: number;
+}
+
 interface TrackChangesEditorProps {
   diffHtml: string;
   readOnly: boolean;
@@ -27,10 +72,10 @@ export function TrackChangesEditor({
   onModified,
   editorRef,
 }: TrackChangesEditorProps) {
-  const undoStackRef = useRef<string[]>([]);
-  const redoStackRef = useRef<string[]>([]);
+  const undoStackRef = useRef<UndoEntry[]>([]);
+  const redoStackRef = useRef<UndoEntry[]>([]);
   const isModifiedRef = useRef(false);
-  const pendingSnapshotRef = useRef<string | null>(null);
+  const pendingSnapshotRef = useRef<UndoEntry | null>(null);
   const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const BATCH_DELAY = 300;
 
@@ -76,9 +121,12 @@ export function TrackChangesEditor({
 
     function captureForUndo() {
       if (!el) return;
-      // On first keystroke of a batch, snapshot current state
+      // On first keystroke of a batch, snapshot current state + cursor
       if (pendingSnapshotRef.current === null) {
-        pendingSnapshotRef.current = el.innerHTML;
+        pendingSnapshotRef.current = {
+          html: el.innerHTML,
+          offset: getTextOffset(el),
+        };
         redoStackRef.current = [];
       }
       // Reset the batch timer on every keystroke
@@ -128,14 +176,18 @@ export function TrackChangesEditor({
         if (e.shiftKey) {
           // Redo: Ctrl+Shift+Z
           if (redoStackRef.current.length === 0 || !el) return;
-          undoStackRef.current.push(el.innerHTML);
-          el.innerHTML = redoStackRef.current.pop()!;
+          undoStackRef.current.push({ html: el.innerHTML, offset: getTextOffset(el) });
+          const entry = redoStackRef.current.pop()!;
+          el.innerHTML = entry.html;
+          setTextOffset(el, entry.offset);
           markModified();
         } else {
           // Undo
           if (undoStackRef.current.length === 0 || !el) return;
-          redoStackRef.current.push(el.innerHTML);
-          el.innerHTML = undoStackRef.current.pop()!;
+          redoStackRef.current.push({ html: el.innerHTML, offset: getTextOffset(el) });
+          const entry = undoStackRef.current.pop()!;
+          el.innerHTML = entry.html;
+          setTextOffset(el, entry.offset);
           markModified();
         }
         return;
@@ -146,8 +198,10 @@ export function TrackChangesEditor({
         e.preventDefault();
         commitPendingSnapshot(); // flush in-progress batch
         if (redoStackRef.current.length === 0 || !el) return;
-        undoStackRef.current.push(el.innerHTML);
-        el.innerHTML = redoStackRef.current.pop()!;
+        undoStackRef.current.push({ html: el.innerHTML, offset: getTextOffset(el) });
+        const entry = redoStackRef.current.pop()!;
+        el.innerHTML = entry.html;
+        setTextOffset(el, entry.offset);
         markModified();
         return;
       }
