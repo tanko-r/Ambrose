@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
-**Created:** 2026-02-01  
-**Updated:** 2026-02-07  
+**Created:** 2026-02-01
+**Updated:** 2026-02-08
 **Milestone:** v1.0 — Next.js Migration + Feature Completion
 
 ## Overview
@@ -19,7 +19,7 @@ Unified roadmap consolidating the Next.js frontend migration with remaining v1.0
 | 2 | Document Viewer + Navigation | HTML rendering, nav panel, sidebar shell, bottom bar | Complete |
 | 3 | Sidebar + Risk Analysis | Risk accordion, analysis overlay, hover highlights | Complete |
 | 4 | Revision Bottom Sheet + Track Changes | Diff display, accept/reject, inline editing | Complete |
-| 5 | Precedent Split View | Precedent panel, resizable panes, related clauses | Pending |
+| 5 | Precedent Split View | Resizable split pane, precedent panel, related clause highlights, text selection actions | In Progress |
 | 6 | Dialogs + Finalization | Flag, finalize (Word export), transmittal, new project | Pending |
 | 7 | Polish + Validation | Keyboard shortcuts, accessibility, responsive, visual parity | Pending |
 | 8 | Cleanup + Cutover | Archive vanilla JS, dev scripts, README update | Pending |
@@ -44,38 +44,30 @@ Conversation forking architecture: initial full-document analysis with Claude Op
 
 *   **Phase 3:** Risk accordion with include/exclude toggles, analysis overlay with real-time progress, risk text highlighting via TreeWalker, sidebar tabs (definitions, related clauses, flags)
 
-## Remaining Phases
-
-### Phase 4: Revision Bottom Sheet + Track Changes
-
-**Goal:** Generate and manage redline revisions with track-changes visualization.
+### Phase 4: Revision Bottom Sheet + Track Changes (Complete)
 
 **Plans:** 3 plans
-
-Plans:
 
 *   04-01-PLAN.md — Infrastructure: shadcn Drawer, track-changes.ts DOM utils, useRevision hook, store/type extensions, CSS
 *   04-02-PLAN.md — Components: TrackChangesEditor (contentEditable), RevisionSheet (Drawer), RevisionActions
 *   04-03-PLAN.md — Wiring: Generate button, page layout, auto-open, BottomBar visibility
 
-**Verification:** Generate revision for a risk, see track-changes diff, accept/reject, edit inline
-
----
+## Remaining Phases
 
 ### Phase 5: Precedent Split View
 
-**Goal:** Side-by-side precedent viewing with related clause highlighting.
+**Goal:** Side-by-side precedent viewing with resizable split pane, related clause highlighting, clause lock, text selection actions (copy, use in revision, flag), and hierarchical navigator.
 
 **Covers v1.0 requirements:** PREC-01, PREC-02, PREC-03, PREC-04
 
-**Tasks:**
+**Plans:** 3 plans
 
-*   precedent-panel.tsx
-*   precedent-navigator.tsx
-*   react-resizable-panels integration
-*   use-precedent.ts hook
+Plans:
+- [ ] 05-01-PLAN.md — Foundation: types, store extensions, use-precedent hook, split-layout, CSS
+- [ ] 05-02-PLAN.md — Components: precedent-content, precedent-navigator, precedent-panel, selection tooltip
+- [ ] 05-03-PLAN.md — Integration: page layout, sidebar overlay/collapse, related tab wiring, snippet badge
 
-**Verification:** Open precedent view, resize panes, see related clauses highlighted, copy text
+**Verification:** Open precedent view, resize panes, see related clauses highlighted, lock clause, copy text, use in revision, close panel
 
 ---
 
@@ -140,12 +132,13 @@ Plans:
 | --- | --- | --- |
 | FIN-01..04 | Phase 6 | Pending |
 | TRANS-01..04 | Phase 6 | Pending |
-| PREC-01..04 | Phase 5 | Pending |
+| PREC-01..04 | Phase 5 | In Progress |
 | NEW-01..04 | Phase 6 | Pending |
 | RENDER-01..04 | Phase A | Complete |
 | ACCEL-01..04 | Phase B | Complete |
 
 ---
 
-_Roadmap created: 2026-02-01_  
+_Roadmap created: 2026-02-01_
 _Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)_
+_Phase 5 planned: 2026-02-08_
