@@ -9,7 +9,7 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Next.js frontend migration -- Phase 5 in progress (Plan 02 of 03 complete)
+**Current focus:** Next.js frontend migration -- Phase 5 Plan 03 Tasks 1-3 complete, Task 4 human verification pending
 
 ## Current Milestone
 
@@ -35,12 +35,13 @@ Progress: [###############     ] 73%
 
 ## Next Action
 
-Continue Phase 5: Plan 03 (Precedent Integration + Wiring)
-- Plan 02 UI components complete: PrecedentPanel, Navigator, Content, SelectionTooltip
-- Ready to wire into review page via SplitLayout, sidebar collapse logic
+Phase 5 Plan 03 Task 4: Human verification of full precedent split view
+- Tasks 1-3 complete: SplitLayout integration, sidebar overlay/collapse, related tab click-to-open
+- Start both servers (Flask :5000, Next.js :3000), load session with precedent, verify end-to-end workflow
 
 ## Recent Activity
 
+- 2026-02-08: Phase 5 Plan 03 Tasks 1-3 complete -- SplitLayout in review page, sidebar overlay/collapse, related tab click-to-open, snippet badge
 - 2026-02-08: Phase 5 Plan 02 complete -- PrecedentContent, SelectionTooltip, Navigator, Panel components
 - 2026-02-08: Phase 5 Plan 01 complete -- types, store precedent slice, usePrecedent hook, SplitLayout, CSS animations
 - 2026-02-08: Phase 4 COMPLETE -- Plan 03: wiring + integration (Generate button, auto-open, BottomBar visibility)
@@ -92,6 +93,10 @@ Continue Phase 5: Plan 03 (Precedent Integration + Wiring)
 | 5 | forwardRef + useImperativeHandle for PrecedentContent scroll | Parent PrecedentPanel needs programmatic scrollToClause access |
 | 5 | Flag for Reference uses flagItem with attorney default | No category UI until Phase 6; keeps tooltip simple |
 | 5 | Navigator position modes via conditional rendering | Simpler than CSS-only; avoids hydration mismatches |
+| 5 | Sidebar overlay on LEFT side when precedent open | Avoids interfering with SplitLayout center-right area |
+| 5 | Snippet badge via shadcn Popover for removal UI | Consistent with project component library |
+| 5 | Manual store.subscribe for navigator persistence | subscribeWithSelector middleware not in store |
+| 5 | precedentScrollTarget cleared after scroll + on close | Clean state across panel reopens |
 | A | docx-parser-converter for HTML | Pure Python, ~100ms, preserves all formatting |
 | B | Conversation forking for parallelism | 30 concurrent forks, ~90s analysis, $2.50/doc |
 | -- | Unified roadmap | v1.0 features built in Next.js phases, not separately |
@@ -99,7 +104,7 @@ Continue Phase 5: Plan 03 (Precedent Integration + Wiring)
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 05-02-PLAN.md (precedent UI components -- PrecedentPanel, Navigator, Content, SelectionTooltip)
+Stopped at: 05-03-PLAN.md Task 4 checkpoint (human verification of full precedent split view pending)
 Resume file: None
 
 ---
