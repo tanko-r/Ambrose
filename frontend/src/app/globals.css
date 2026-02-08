@@ -243,4 +243,58 @@
     outline-offset: 1px;
     border-radius: 2px;
   }
+
+  /* Track changes in revision editor */
+  .revision-diff {
+    background: oklch(0.98 0 0);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    max-height: 200px;
+    overflow-y: auto;
+    transition: all 150ms;
+  }
+  .revision-diff:hover {
+    background: oklch(1 0 0);
+    border-color: oklch(0.546 0.215 264);
+    box-shadow: 0 0 0 2px oklch(0.546 0.215 264 / 0.1);
+  }
+  .revision-diff[contenteditable="true"] {
+    cursor: text;
+    outline: none;
+  }
+  .revision-diff[contenteditable="true"]:focus {
+    box-shadow: 0 0 0 2px oklch(0.546 0.215 264 / 0.2);
+  }
+  .revision-diff.user-modified {
+    border-color: oklch(0.705 0.213 47.604);
+    background: oklch(1 0 0);
+  }
+  .diff-del, del.diff-del {
+    color: #b91c1c;
+    text-decoration: line-through;
+    text-decoration-color: #b91c1c;
+  }
+  .diff-ins, ins.diff-ins {
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-decoration-style: solid;
+  }
+  .user-addition {
+    background: #fef9c3;
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-decoration-color: #1d4ed8;
+    padding: 0 1px;
+  }
+  .user-deletion {
+    background: #fef9c3;
+    color: #dc2626;
+    text-decoration: line-through;
+    text-decoration-color: #dc2626;
+    padding: 0 1px;
+  }
 }

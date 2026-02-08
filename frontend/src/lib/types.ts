@@ -136,6 +136,7 @@ export interface Revision {
   related_revisions: RelatedRevision[];
   accepted: boolean;
   timestamp: string;
+  editedHtml?: string;
   prompts?: unknown;
 }
 

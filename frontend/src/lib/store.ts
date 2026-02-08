@@ -67,6 +67,7 @@ interface AnalysisState {
 
 interface ReviewState {
   selectedParaId: string | null;
+  revisionSheetParaId: string | null;
   revisions: Record<string, Revision>;
   flags: Flag[];
   savedSessions: SavedSessionListItem[];
@@ -87,6 +88,7 @@ interface UIState {
   compactMode: boolean;
   hoveredRiskId: string | null;
   focusedRiskId: string | null;
+  generatingRevision: boolean;
 }
 
 // --- Combined Store ---
@@ -124,6 +126,8 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   toggleCompactMode: () => void;
   setHoveredRiskId: (riskId: string | null) => void;
   setFocusedRiskId: (riskId: string | null) => void;
+  setGeneratingRevision: (v: boolean) => void;
+  setRevisionSheetParaId: (paraId: string | null) => void;
 }
 
 const initialSessionState: SessionState = {
@@ -161,6 +165,7 @@ const initialAnalysisState: AnalysisState = {
 
 const initialReviewState: ReviewState = {
   selectedParaId: null,
+  revisionSheetParaId: null,
   revisions: {},
   flags: [],
   savedSessions: [],
@@ -176,6 +181,7 @@ const initialUIState: UIState = {
   compactMode: false,
   hoveredRiskId: null,
   focusedRiskId: null,
+  generatingRevision: false,
 };
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -244,4 +250,6 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => ({
       focusedRiskId: state.focusedRiskId === riskId ? null : riskId,
     })),
+  setGeneratingRevision: (v) => set({ generatingRevision: v }),
+  setRevisionSheetParaId: (paraId) => set({ revisionSheetParaId: paraId }),
 }));
