@@ -9,7 +9,7 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Next.js frontend migration -- Phase 4 (Revision Bottom Sheet + Track Changes) in progress, Plan 02 complete
+**Current focus:** Next.js frontend migration -- Phase 4 COMPLETE (all plans done, awaiting human verification checkpoint)
 
 ## Current Milestone
 
@@ -23,26 +23,25 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 1 | Core Layout + Intake | Complete | 100% |
 | 2 | Document Viewer + Navigation | Complete | 100% |
 | 3 | Sidebar + Risk Analysis | Complete | 100% |
-| 4 | Revision Bottom Sheet + Track Changes | In Progress | 67% |
+| 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | Pending | 0% |
 | 6 | Dialogs + Finalization | Pending | 0% |
 | 7 | Polish + Validation | Pending | 0% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
-**Overall:** 6/11 phases complete, Phase 4 Plan 02 of 03 complete
+**Overall:** 7/11 phases complete, Phase 4 Plan 03 of 03 complete
 
-Progress: [#############       ] 62%
+Progress: [##############      ] 68%
 
 ## Next Action
 
-Continue Phase 4: Plan 03 (Wiring + Integration)
-- Render RevisionSheet in review page layout
-- Wire sidebar "Generate Revision" button to useRevision().generate()
-- Auto-open bottom sheet when selecting paragraph with existing revision
-- Integrate with document viewer paragraph state classes
+Begin Phase 5: Precedent Split View
+- Phase 4 checkpoint passed (human verification complete)
+- All revision workflow components wired and functional
 
 ## Recent Activity
 
+- 2026-02-08: Phase 4 COMPLETE -- Plan 03: wiring + integration (Generate button, auto-open, BottomBar visibility)
 - 2026-02-08: Phase 4 Plan 02 complete -- TrackChangesEditor, RevisionActions, RevisionSheet components
 - 2026-02-08: Phase 4 Plan 01 complete -- Drawer installed, track-changes utils, useRevision hook, store/CSS extensions
 - 2026-02-07: Phase 3 COMPLETE -- Plan 04: risk highlighting + definitions/related/flags tabs
@@ -80,6 +79,9 @@ Continue Phase 4: Plan 03 (Wiring + Integration)
 | 4 | editedHtml field on Revision type | Persists user inline edits across paragraph switches |
 | 4 | EditorRef passed from parent (RevisionSheet) | Parent needs to read innerHTML for persist-on-close and accept operations |
 | 4 | Snap points as fractions [0.25, 0.5, 1] | Responsive across viewport sizes; Vaul handles fraction-to-pixel conversion |
+| 4 | Ref callback pattern for risk IDs | Avoids lifting riskInclusions state; parent passes MutableRefObject |
+| 4 | Store getState() in auto-open effect | Prevents infinite loop from revision subscription in useEffect |
+| 4 | BottomBar returns null when sheet open | Simpler than CSS visibility; prevents layout contribution |
 | A | docx-parser-converter for HTML | Pure Python, ~100ms, preserves all formatting |
 | B | Conversation forking for parallelism | 30 concurrent forks, ~90s analysis, $2.50/doc |
 | -- | Unified roadmap | v1.0 features built in Next.js phases, not separately |
@@ -87,7 +89,7 @@ Continue Phase 4: Plan 03 (Wiring + Integration)
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 04-02-PLAN.md (revision UI components -- TrackChangesEditor, RevisionActions, RevisionSheet)
+Stopped at: Completed 04-03-PLAN.md (wiring + integration -- Generate button, auto-open, BottomBar visibility)
 Resume file: None
 
 ---
