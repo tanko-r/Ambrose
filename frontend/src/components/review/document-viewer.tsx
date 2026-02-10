@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FlagDialog } from "@/components/dialogs/flag-dialog";
+import { Flag as FlagIcon } from "lucide-react";
 
 interface DocumentViewerProps {
   loading: boolean;
@@ -21,6 +23,14 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const originalHtmlCache = useRef<Map<string, string>>(new Map());
+
+  // Text selection flagging state
+  const [selectionContext, setSelectionContext] = useState<{
+    paraId: string;
+    textExcerpt: string;
+    rect: { top: number; left: number };
+  } | null>(null);
+  const [flagDialogOpen, setFlagDialogOpen] = useState(false);
 
   // Attach click handlers to paragraph elements rendered by backend HTML
   const attachClickHandlers = useCallback(() => {
@@ -47,6 +57,13 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
     const allParas = container.querySelectorAll<HTMLElement>("[data-para-id]");
 
+    // Build a map from para_id to the first flag's category (for margin icon color)
+    const flagCategoryMap = new Map<string, string>();
+    for (const f of flags) {
+      if (!flagCategoryMap.has(f.para_id)) {
+        flagCategoryMap.set(f.para_id, f.category ?? "for-discussion");
+      }
+    }
     const flaggedIds = new Set(flags.map((f) => f.para_id));
     const riskParaIds = new Set(risks.map((r) => r.para_id));
 
@@ -87,8 +104,14 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
         el.classList.remove("showing-diff");
       }
 
-      // Flag state
-      el.classList.toggle("flagged", flaggedIds.has(paraId));
+      // Flag state + category data attribute for CSS margin icons
+      const isFlagged = flaggedIds.has(paraId);
+      el.classList.toggle("flagged", isFlagged);
+      if (isFlagged) {
+        el.setAttribute("data-flag-category", flagCategoryMap.get(paraId) ?? "for-discussion");
+      } else {
+        el.removeAttribute("data-flag-category");
+      }
     });
   }, [selectedParaId, revisions, flags, risks]);
 
@@ -208,25 +231,14 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     }
   }, [documentHtml, highlightRiskText]);
 
-  // Auto-open bottom sheet when clicking a paragraph with an existing revision
-  // IMPORTANT: read revisions from getState() — NOT from the subscribed selector.
-  // Using `revisions` as a dependency would create an infinite loop:
-  // setRevisionSheetParaId → RevisionSheet persists edits → setRevision → revisions change → re-fire
+  // Track which paragraph the revision sheet is pointing at.
+  // The bottom sheet should NOT auto-open — the user opens it explicitly via
+  // "View Revision" in the sidebar. We only update the paraId so the sheet
+  // shows the correct revision when the user does open it.
   useEffect(() => {
-    console.log("[docviewer] auto-open effect fired. selectedParaId:", selectedParaId);
     if (!selectedParaId) return;
     const store = useAppStore.getState();
-    const revision = store.revisions[selectedParaId];
-    console.log("[docviewer] revision exists:", !!revision, "bottomSheetOpen:", store.bottomSheetOpen);
-    if (revision) {
-      store.setRevisionSheetParaId(selectedParaId);
-      if (!store.bottomSheetOpen) {
-        store.toggleBottomSheet();
-        console.log("[docviewer] toggled sheet open");
-      }
-    } else {
-      store.setRevisionSheetParaId(selectedParaId);
-    }
+    store.setRevisionSheetParaId(selectedParaId);
   }, [selectedParaId]);
 
   // Scroll selected paragraph into view
@@ -265,9 +277,79 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     updateParagraphStates();
   }, [updateParagraphStates]);
 
+  // Text selection flagging: detect mouseup in document and show floating Flag button
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    function handleMouseUp() {
+      requestAnimationFrame(() => {
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+          return;
+        }
+
+        const range = selection.getRangeAt(0);
+        if (!container!.contains(range.commonAncestorContainer)) {
+          return;
+        }
+
+        // Find the nearest ancestor with data-para-id
+        let node: Node | null = selection.anchorNode;
+        let el = node instanceof HTMLElement ? node : node?.parentElement;
+        let paraId: string | null = null;
+        while (el) {
+          paraId = el.getAttribute?.("data-para-id");
+          if (paraId) break;
+          el = el.parentElement;
+        }
+
+        if (!paraId) return;
+
+        const text = selection.toString().trim().slice(0, 200);
+        const rect = range.getBoundingClientRect();
+        const containerRect = container!.getBoundingClientRect();
+
+        setSelectionContext({
+          paraId,
+          textExcerpt: text,
+          rect: {
+            // Position relative to the scrollable container parent
+            top: rect.top - containerRect.top - 36,
+            left: rect.left - containerRect.left + rect.width / 2,
+          },
+        });
+      });
+    }
+
+    // Clear selection context when selection changes to collapsed
+    function handleSelectionChange() {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) {
+        setSelectionContext(null);
+      }
+    }
+
+    container.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("selectionchange", handleSelectionChange);
+
+    return () => {
+      container.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("selectionchange", handleSelectionChange);
+    };
+  }, [documentHtml]);
+
+  // Open flag dialog from floating button
+  const handleSelectionFlag = useCallback(() => {
+    if (!selectionContext) return;
+    setFlagDialogOpen(true);
+    // Clear the floating button but keep the selectionContext for dialog
+    window.getSelection()?.removeAllRanges();
+  }, [selectionContext]);
+
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4 p-8">
+      <div className="space-y-4 p-8">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
@@ -285,13 +367,42 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   // High-fidelity HTML mode (preferred)
   if (documentHtml) {
     return (
-      <div className="flex-1 overflow-y-auto bg-secondary/30">
-        <div className="mx-auto max-w-3xl rounded border bg-card p-10 my-6 shadow-sm">
+      <div className="flex-1 overflow-y-auto bg-card px-6 py-4">
+        <div className="relative">
           <div
             ref={containerRef}
             className="document-container"
             dangerouslySetInnerHTML={{ __html: documentHtml }}
           />
+
+          {/* Floating Flag button on text selection */}
+          {selectionContext && !flagDialogOpen && (
+            <button
+              onClick={handleSelectionFlag}
+              className="absolute z-40 flex items-center gap-1 rounded-md border bg-card px-2 py-1.5 text-xs font-medium shadow-lg transition-colors hover:bg-accent"
+              style={{
+                top: selectionContext.rect.top,
+                left: selectionContext.rect.left,
+                transform: "translateX(-50%)",
+              }}
+            >
+              <FlagIcon className="h-3 w-3 text-primary" />
+              Flag
+            </button>
+          )}
+
+          {/* Flag dialog for text selection flagging */}
+          {selectionContext && (
+            <FlagDialog
+              open={flagDialogOpen}
+              onOpenChange={(open) => {
+                setFlagDialogOpen(open);
+                if (!open) setSelectionContext(null);
+              }}
+              paraId={selectionContext.paraId}
+              defaultCategory="for-discussion"
+            />
+          )}
         </div>
       </div>
     );
@@ -300,9 +411,8 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   // Fallback: plain-text paragraph rendering
   if (paragraphs.length > 0) {
     return (
-      <div className="flex-1 overflow-y-auto bg-secondary/30">
-        <div className="mx-auto max-w-3xl rounded border bg-card p-10 my-6 shadow-sm">
-          <div ref={containerRef} className="document-container">
+      <div className="flex-1 overflow-y-auto bg-card px-6 py-4">
+        <div ref={containerRef} className="document-container">
             {paragraphs
               .filter((p) => p.type === "paragraph")
               .map((para) => (
@@ -326,7 +436,6 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
                   </div>
                 </div>
               ))}
-          </div>
         </div>
       </div>
     );
