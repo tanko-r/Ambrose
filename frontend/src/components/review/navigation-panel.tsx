@@ -11,6 +11,7 @@ import {
   Search,
   PanelLeftClose,
   PanelLeft,
+  PanelLeftOpen,
   Check,
 } from "lucide-react";
 import type { Paragraph, Risk, Severity } from "@/lib/types";
@@ -137,8 +138,9 @@ export function NavigationPanel() {
           onMouseEnter={() => { clearGhostTimeout(); setGhostVisible(true); }}
           onMouseLeave={startGhostHide}
         >
-          <div className="rounded-r-md border border-l-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
-            <PanelLeft className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-1 rounded-r-md border border-l-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
+            <PanelLeftOpen className="h-3.5 w-3.5" />
+            <span className="text-[10px] font-medium">Show</span>
           </div>
         </div>
         {/* Ghost slide-in panel */}
