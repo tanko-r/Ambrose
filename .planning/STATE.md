@@ -9,7 +9,7 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Next.js frontend migration -- Phase 6 Plans 01-02 + 05 complete, Plans 03-04 remain
+**Current focus:** Next.js frontend migration -- Phase 6 Plans 01-02 + 04-05 complete, Plan 03 remains
 
 ## Current Milestone
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 3 | Sidebar + Risk Analysis | Complete | 100% |
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
-| 6 | Dialogs + Finalization | In Progress | 60% |
+| 6 | Dialogs + Finalization | In Progress | 80% |
 | 7 | Polish + Validation | Pending | 0% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
-**Overall:** 7/11 phases complete, Phase 6 Plans 01-02 + 05 of 05 complete (03-04 remain)
+**Overall:** 7/11 phases complete, Phase 6 Plans 01-02 + 04-05 of 05 complete (03 remains)
 
 Progress: [################    ] 80%
 
@@ -38,10 +38,11 @@ Progress: [################    ] 80%
 Phase 6 Plan 03: Transmittal dialog and finalization wiring
 - Depends on Plans 06-01 (flag system) and 06-02 (finalize dialog) -- both complete
 - Wire transmittal email generation and remaining finalization integration
-- Then Plan 04 remaining
+- Only remaining plan in Phase 6
 
 ## Recent Activity
 
+- 2026-02-10: Phase 6 Plan 04 complete -- Flag card click-to-navigate, edit button, right-side margin icons, tooltip, text selection fixes
 - 2026-02-10: Phase 6 Plan 05 complete -- Store-sourced revisions, export dropdown, backend unaccept sync, UI terminology/alignment fixes
 - 2026-02-10: Phase 6 Plan 01 complete -- FlagCategory type, useFlags hook, FlagDialog, FlagsTab rewrite, margin icons, text selection flagging
 - 2026-02-10: Phase 6 Plan 02 complete -- FinalizeDialog with stats, revision accordion, author name, export/download; bottom bar wiring
@@ -107,6 +108,9 @@ Phase 6 Plan 03: Transmittal dialog and finalization wiring
 | 6 | FinalizeDialog uses shadcn Dialog (not AlertDialog) | Complex content (accordion, stats, inputs) needs full Dialog |
 | 6 | Stats from store, not just preview | Real-time accuracy; preview only has accepted revisions |
 | 6 | Fragment wrapper for dialog in BottomBar | Renders dialog outside bar layout div cleanly |
+| 6 | Unified FlagDialog for create and edit via editingFlag state | null=create, non-null=edit; avoids duplicate dialog instances |
+| 6 | Right-side ::after pseudo-element for flag icons (was ::before left) | Avoids ::before conflicts; right-side matches box-shadow gutter |
+| 6 | Browser title attribute for flag tooltip | Simpler than custom CSS tooltip on pseudo-element |
 | 6 | Store-sourced revision list in finalize dialog | Eliminates preview fetch; store is single source of truth |
 | 6 | Optimistic unaccept with backend rollback | Update store immediately, sync to backend, revert on error |
 | 6 | Auto-download via useEffect on export state | Triggers downloads based on exportType after export completes |
@@ -127,7 +131,7 @@ Phase 6 Plan 03: Transmittal dialog and finalization wiring
 ## Session Continuity
 
 Last session: 2026-02-10
-Last activity: 2026-02-10 - Completed Phase 6 Plan 05: Finalize dialog gap closure
+Last activity: 2026-02-10 - Completed Phase 6 Plan 04: Flag UX gaps and enhancements
 Resume file: None
 
 ---
