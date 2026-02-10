@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useAppStore } from "@/lib/store";
 import { useFinalize } from "@/hooks/use-finalize";
-import type { FinalizePreviewResponse, FinalizeResponse } from "@/lib/types";
+import type { FinalizeResponse } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +33,10 @@ import {
   AlertTriangle,
   Loader2,
   FileDown,
+  ChevronDown,
 } from "lucide-react";
+
+type ExportType = "both" | "track_changes" | "clean";
 
 interface FinalizeDialogProps {
   open: boolean;
@@ -35,17 +44,27 @@ interface FinalizeDialogProps {
 }
 
 export function FinalizeDialog({ open, onOpenChange }: FinalizeDialogProps) {
-  const { fetchPreview, doExport, download } = useFinalize();
+  const { doExport, download } = useFinalize();
 
   // Local state
-  const [preview, setPreview] = useState<FinalizePreviewResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [authorName, setAuthorName] = useState("");
+  // TODO: Move author name to user settings/preferences page
+  const [authorName, setAuthorName] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem("ambrose-author-name") ?? "";
+  });
   const [exporting, setExporting] = useState(false);
   const [exported, setExported] = useState(false);
   const [exportResult, setExportResult] = useState<FinalizeResponse | null>(
     null
   );
+  const [exportType, setExportType] = useState<ExportType>("both");
+
+  // Persist author name to localStorage
+  useEffect(() => {
+    if (authorName) {
+      localStorage.setItem("ambrose-author-name", authorName);
+    }
+  }, [authorName]);
 
   // Compute stats from store
   const revisions = useAppStore((s) => s.revisions);
@@ -69,36 +88,56 @@ export function FinalizeDialog({ open, onOpenChange }: FinalizeDialogProps) {
     return count;
   }, [risks, revisions]);
 
-  // Fetch preview on open
+  // Build approved revisions list from store (single source of truth)
+  const approvedRevisions = useMemo(() => {
+    const sessionParagraphs = useAppStore.getState().paragraphs;
+    return Object.entries(revisions)
+      .filter(([, r]) => r.accepted)
+      .map(([paraId, r]) => {
+        const para = sessionParagraphs.find((p) => p.id === paraId);
+        return {
+          para_id: paraId,
+          section_ref: para?.section_ref ?? paraId,
+          rationale: r.rationale,
+          diff_html: r.editedHtml || r.diff_html,
+        };
+      });
+  }, [revisions]);
+
+  // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
-      setPreview(null);
       setExported(false);
       setExportResult(null);
-      return;
+      setExportType("both");
     }
-    const controller = new AbortController();
-    setLoading(true);
-    fetchPreview()
-      .then((data) => {
-        if (!controller.signal.aborted) setPreview(data);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [open, fetchPreview]);
+  }, [open]);
 
-  const handleExport = async () => {
-    setExporting(true);
-    const result = await doExport(authorName);
-    setExporting(false);
-    if (result) {
-      setExported(true);
-      setExportResult(result);
+  // Auto-download after export completes
+  useEffect(() => {
+    if (!exported || !exportType) return;
+    if (exportType === "both") {
+      download("track_changes");
+      // Small delay to avoid browser blocking second download
+      setTimeout(() => download("clean"), 500);
+    } else {
+      download(exportType);
     }
-  };
+  }, [exported, exportType, download]);
+
+  const handleExport = useCallback(
+    async (type: ExportType) => {
+      setExporting(true);
+      const result = await doExport(authorName);
+      setExporting(false);
+      if (result) {
+        setExported(true);
+        setExportResult(result);
+        setExportType(type);
+      }
+    },
+    [authorName, doExport]
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,65 +145,57 @@ export function FinalizeDialog({ open, onOpenChange }: FinalizeDialogProps) {
         <DialogHeader>
           <DialogTitle>Finalize & Export</DialogTitle>
           <DialogDescription>
-            Review your revisions and export Word documents.
+            Review your approved revisions and export Word documents.
           </DialogDescription>
         </DialogHeader>
 
         {/* Stats row */}
         <div className="flex gap-3">
-          <div className="flex flex-1 items-center gap-2 rounded-md border p-3">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <div>
-              <div className="text-lg font-semibold tabular-nums">
-                {acceptedCount}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                revisions accepted
-              </div>
+          {/* Approved revisions */}
+          <div className="flex-1 rounded-md border p-3 text-center">
+            <CheckCircle2 className="mx-auto mb-1 h-5 w-5 text-green-600" />
+            <div className="text-2xl font-semibold tabular-nums">
+              {acceptedCount}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              revisions approved
             </div>
           </div>
-          <div className="flex flex-1 items-center gap-2 rounded-md border p-3">
-            <Flag className="h-5 w-5 text-blue-600" />
-            <div>
-              <div className="text-lg font-semibold tabular-nums">
-                {flagCount}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                items flagged
-              </div>
+
+          {/* Flags */}
+          <div className="flex-1 rounded-md border p-3 text-center">
+            <Flag className="mx-auto mb-1 h-5 w-5 text-blue-600" />
+            <div className="text-2xl font-semibold tabular-nums">
+              {flagCount}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              items flagged
             </div>
           </div>
-          <div className="flex flex-1 items-center gap-2 rounded-md border p-3">
+
+          {/* Unreviewed */}
+          <div className="flex-1 rounded-md border p-3 text-center">
             {unreviewedCount > 0 ? (
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="mx-auto mb-1 h-5 w-5 text-amber-500" />
             ) : (
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <CheckCircle2 className="mx-auto mb-1 h-5 w-5 text-green-600" />
             )}
-            <div>
-              <div className="text-lg font-semibold tabular-nums">
-                {unreviewedCount > 0 ? unreviewedCount : ""}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {unreviewedCount > 0
-                  ? "clauses with risks not yet reviewed"
-                  : "All risk clauses reviewed"}
-              </div>
+            <div className="text-2xl font-semibold tabular-nums">
+              {unreviewedCount > 0 ? unreviewedCount : 0}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {unreviewedCount > 0
+                ? "risks not yet reviewed"
+                : "all risks reviewed"}
             </div>
           </div>
         </div>
 
-        {/* Revision list */}
-        {loading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-sm text-muted-foreground">
-              Loading preview...
-            </span>
-          </div>
-        ) : preview && preview.revisions.length > 0 ? (
+        {/* Revision list — sourced from store */}
+        {approvedRevisions.length > 0 ? (
           <div className="max-h-64 overflow-y-auto rounded-md border">
             <Accordion type="multiple">
-              {preview.revisions.map((rev, i) => (
+              {approvedRevisions.map((rev, i) => (
                 <AccordionItem key={rev.para_id} value={`rev-${i}`}>
                   <AccordionTrigger className="px-3 py-2 text-xs">
                     <span className="flex items-center gap-2">
@@ -177,33 +208,21 @@ export function FinalizeDialog({ open, onOpenChange }: FinalizeDialogProps) {
                       </span>
                     </span>
                   </AccordionTrigger>
-                  <AccordionContent className="px-3">
+                  <AccordionContent className="px-3 pb-3">
                     <div
-                      className="revision-diff text-xs"
+                      className="revision-diff text-sm leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: rev.diff_html }}
                     />
-                    <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                      <div>
-                        <span className="font-medium">Original:</span>{" "}
-                        {rev.original.slice(0, 120)}
-                        {rev.original.length > 120 ? "..." : ""}
-                      </div>
-                      <div>
-                        <span className="font-medium">Revised:</span>{" "}
-                        {rev.revised.slice(0, 120)}
-                        {rev.revised.length > 120 ? "..." : ""}
-                      </div>
-                    </div>
                   </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
           </div>
-        ) : !loading && preview ? (
+        ) : (
           <p className="py-4 text-center text-sm text-muted-foreground">
-            No accepted revisions to export.
+            No approved revisions to export.
           </p>
-        ) : null}
+        )}
 
         {/* Author name input */}
         <div className="space-y-1.5">
@@ -235,29 +254,52 @@ export function FinalizeDialog({ open, onOpenChange }: FinalizeDialogProps) {
               >
                 Cancel
               </Button>
-              <Button
-                onClick={handleExport}
-                disabled={exporting || acceptedCount === 0}
-              >
-                {exporting && (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                )}
-                Export Documents
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button disabled={exporting || acceptedCount === 0}>
+                    {exporting && (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    )}
+                    Export
+                    <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleExport("both")}>
+                    Export Both (Redline + Clean)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleExport("track_changes")}
+                  >
+                    Export Redline Only
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("clean")}>
+                    Export Clean Only
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <div className="flex w-full flex-col gap-2">
+              <p className="text-sm text-green-700">
+                Export complete. Downloads started.
+              </p>
               <div className="flex gap-2 sm:justify-end">
-                <Button onClick={() => download("track_changes")}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => download("track_changes")}
+                >
                   <FileDown className="mr-1.5 h-3.5 w-3.5" />
-                  Download Redline (.docx)
+                  Re-download Redline
                 </Button>
                 <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => download("clean")}
                 >
                   <FileDown className="mr-1.5 h-3.5 w-3.5" />
-                  Download Clean (.docx)
+                  Re-download Clean
                 </Button>
               </div>
               <div className="flex items-center justify-between">
