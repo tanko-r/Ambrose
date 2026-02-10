@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-08
+**Updated:** 2026-02-09
 **Milestone:** v1.0 — Next.js Migration + Feature Completion
 
 ## Overview
@@ -77,16 +77,14 @@ Plans:
 
 **Covers v1.0 requirements:** FIN-01, FIN-02, FIN-03, FIN-04, TRANS-01, TRANS-02, TRANS-03, TRANS-04, NEW-01, NEW-02, NEW-03, NEW-04
 
-**Tasks:**
+**Plans:** 3 plans
 
-*   flag-dialog.tsx (flag paragraphs for client review)
-*   finalize-dialog.tsx (review accepted revisions, export Word docs with track changes + clean)
-*   transmittal-dialog.tsx (generate cover email with revision summary + flags)
-*   new-project-dialog.tsx (save/discard current work, return to intake)
-*   use-flags.ts hook
-*   Backend: Finalize endpoint using python-redlines for track changes Word export
+Plans:
+- [ ] 06-01-PLAN.md — Flag system: types, backend category, use-flags hook, flag dialog, flags-tab rewrite, margin icons, text selection flagging
+- [ ] 06-02-PLAN.md — Finalize & export: use-finalize hook, finalize dialog, bottom bar wiring, sidebar flag button
+- [ ] 06-03-PLAN.md — Transmittal + new project: transmittal dialog, new project enhancement, delete dialog, recent projects badges, finalized banner
 
-**Verification:** Flag items, finalize to Word (track changes + clean), transmittal email opens, new project resets to intake
+**Verification:** Flag items, finalize to Word (track changes + clean), transmittal email opens, new project auto-saves and resets to intake
 
 ---
 
@@ -142,3 +140,4 @@ Plans:
 _Roadmap created: 2026-02-01_
 _Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)_
 _Phase 5 planned: 2026-02-08_
+_Phase 6 planned: 2026-02-09_
