@@ -16,15 +16,33 @@ interface RiskAccordionProps {
   paraId: string;
   /** Ref callback: parent can read included risk IDs at generation time */
   onIncludedRiskIdsRef?: React.MutableRefObject<(() => string[]) | null>;
+  /** Called when user clicks Flag on a risk card */
+  onFlag?: (riskId: string, riskTitle: string, riskDescription: string) => void;
 }
 
 // ---------------------------------------------------------------------------
 // RiskAccordion — wraps RiskCards in shadcn Accordion (single-expand)
 // ---------------------------------------------------------------------------
 
-export function RiskAccordion({ risks, riskMap, paraId, onIncludedRiskIdsRef }: RiskAccordionProps) {
+export function RiskAccordion({ risks, riskMap, paraId, onIncludedRiskIdsRef, onFlag }: RiskAccordionProps) {
   const setHoveredRiskId = useAppStore((s) => s.setHoveredRiskId);
   const setFocusedRiskId = useAppStore((s) => s.setFocusedRiskId);
+  const flags = useAppStore((s) => s.flags);
+
+  // Build a set of flagged risk titles for the current paragraph
+  const flaggedRiskTitles = useMemo(() => {
+    const titles = new Set<string>();
+    for (const flag of flags) {
+      if (flag.para_id === paraId && flag.note) {
+        // Flags created from risk cards have note format: "riskTitle: riskDescription"
+        const colonIdx = flag.note.indexOf(":");
+        if (colonIdx > 0) {
+          titles.add(flag.note.slice(0, colonIdx));
+        }
+      }
+    }
+    return titles;
+  }, [flags, paraId]);
 
   // Local state: which risk is expanded (single-expand behavior)
   const [expandedRiskId, setExpandedRiskId] = useState<string | undefined>(
@@ -121,6 +139,8 @@ export function RiskAccordion({ risks, riskMap, paraId, onIncludedRiskIdsRef }: 
             onToggleInclude={handleToggleInclude}
             onHover={handleHover}
             onFocus={handleFocus}
+            onFlag={onFlag}
+            isFlagged={flaggedRiskTitles.has(risk.title)}
           />
         ))}
       </Accordion>

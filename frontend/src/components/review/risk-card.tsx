@@ -14,6 +14,7 @@ import {
   X,
   ShieldCheck,
   AlertTriangle,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -29,6 +30,8 @@ export interface RiskCardProps {
   onToggleInclude: (riskId: string) => void;
   onHover: (riskId: string | null) => void;
   onFocus: (riskId: string) => void;
+  onFlag?: (riskId: string, riskTitle: string, riskDescription: string) => void;
+  isFlagged?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -204,6 +207,8 @@ export function RiskCard({
   onToggleInclude,
   onHover,
   onFocus,
+  onFlag,
+  isFlagged,
 }: RiskCardProps) {
   return (
     <AccordionItem
@@ -246,15 +251,31 @@ export function RiskCard({
         {/* Relationships */}
         <RiskRelationships risk={risk} riskMap={riskMap} />
 
-        {/* Include / Exclude toggle */}
+        {/* Include / Exclude toggle + Flag button */}
         <div className="mt-3 flex items-center justify-between">
           <span className="text-[10px] text-muted-foreground">
             Include in revision?
           </span>
-          <IncludeToggle
-            isIncluded={isIncluded}
-            onToggle={() => onToggleInclude(risk.risk_id)}
-          />
+          <div className="flex items-center gap-1.5">
+            {onFlag && (
+              <Button
+                variant={isFlagged ? "destructive" : "ghost"}
+                size="sm"
+                className="h-6 gap-1 text-[10px] px-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFlag(risk.risk_id, risk.title, risk.description);
+                }}
+              >
+                <Flag className="h-3 w-3" />
+                {isFlagged ? "Flagged" : "Flag"}
+              </Button>
+            )}
+            <IncludeToggle
+              isIncluded={isIncluded}
+              onToggle={() => onToggleInclude(risk.risk_id)}
+            />
+          </div>
         </div>
       </AccordionContent>
     </AccordionItem>
