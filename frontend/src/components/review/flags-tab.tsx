@@ -1,9 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
+import { useFlags } from "@/hooks/use-flags";
 import { Badge } from "@/components/ui/badge";
-import { Flag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FlagDialog } from "@/components/dialogs/flag-dialog";
+import { Flag as FlagIcon, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
+import { FLAG_CATEGORY_LABELS } from "@/lib/types";
+import type { Flag } from "@/lib/types";
+
+// ---------------------------------------------------------------------------
+// Category badge color classes
+// ---------------------------------------------------------------------------
+
+const CATEGORY_BADGE_CLASSES: Record<string, string> = {
+  "business-decision": "border-blue-300 text-blue-700 bg-blue-50",
+  "risk-alert": "border-orange-300 text-orange-700 bg-orange-50",
+  "for-discussion": "border-purple-300 text-purple-700 bg-purple-50",
+  fyi: "border-gray-300 text-gray-700 bg-gray-50",
+};
 
 // ---------------------------------------------------------------------------
 // Props
@@ -14,83 +30,225 @@ interface FlagsTabProps {
 }
 
 // ---------------------------------------------------------------------------
-// FlagsTab - shows flags on the selected paragraph
+// FlagCard - renders a single flag entry
+// ---------------------------------------------------------------------------
+
+function FlagCard({
+  flag,
+  onRemove,
+  onClickSection,
+}: {
+  flag: Flag;
+  onRemove: (paraId: string) => void;
+  onClickSection?: (paraId: string) => void;
+}) {
+  const categoryLabel =
+    FLAG_CATEGORY_LABELS[flag.category] ?? flag.category ?? "Flag";
+  const badgeClasses =
+    CATEGORY_BADGE_CLASSES[flag.category] ?? "border-gray-300 text-gray-700 bg-gray-50";
+
+  return (
+    <div className="group relative rounded-lg border p-3 transition-colors hover:bg-accent/30">
+      {/* Top row: section_ref + category + timestamp */}
+      <div className="mb-1.5 flex items-center gap-1.5 pr-6">
+        {flag.section_ref && (
+          <Badge
+            variant="secondary"
+            className="cursor-pointer text-[10px] hover:bg-secondary/80"
+            onClick={() => onClickSection?.(flag.para_id)}
+          >
+            {flag.section_ref}
+          </Badge>
+        )}
+        <Badge variant="outline" className={`text-[10px] ${badgeClasses}`}>
+          {categoryLabel}
+        </Badge>
+        {flag.timestamp && (
+          <span className="ml-auto text-[10px] text-muted-foreground">
+            {new Date(flag.timestamp).toLocaleDateString()}
+          </span>
+        )}
+      </div>
+
+      {/* Note */}
+      {flag.note && (
+        <p className="text-xs leading-relaxed text-foreground/80">
+          {flag.note}
+        </p>
+      )}
+
+      {/* Text excerpt */}
+      {flag.text_excerpt && (
+        <p className="mt-1 text-[10px] italic text-muted-foreground/70 line-clamp-2">
+          &ldquo;{flag.text_excerpt}&rdquo;
+        </p>
+      )}
+
+      {/* Remove button (top right) */}
+      <button
+        onClick={() => onRemove(flag.para_id)}
+        className="absolute right-2 top-2 rounded p-0.5 text-muted-foreground/50 opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+        title="Remove flag"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FlagsTab - full flags listing with create button and management
 // ---------------------------------------------------------------------------
 
 export function FlagsTab({ paraId }: FlagsTabProps) {
   const flags = useAppStore((s) => s.flags);
+  const selectParagraph = useAppStore((s) => s.selectParagraph);
+  const { remove } = useFlags();
 
-  const paraFlags = useMemo(
-    () => flags.filter((f) => f.para_id === paraId),
-    [flags, paraId]
-  );
+  const [flagDialogOpen, setFlagDialogOpen] = useState(false);
+  const [allFlagsExpanded, setAllFlagsExpanded] = useState(true);
 
-  // No paragraph selected
+  // Split flags into current paragraph and all others
+  const { paraFlags, otherFlags } = useMemo(() => {
+    const pf: Flag[] = [];
+    const of: Flag[] = [];
+    for (const f of flags) {
+      if (f.para_id === paraId) {
+        pf.push(f);
+      } else {
+        of.push(f);
+      }
+    }
+    return { paraFlags: pf, otherFlags: of };
+  }, [flags, paraId]);
+
+  const handleRemove = (flagParaId: string) => {
+    remove(flagParaId);
+  };
+
+  const handleClickSection = (flagParaId: string) => {
+    selectParagraph(flagParaId);
+    // Scroll to the element in the document
+    const el = document.querySelector(`[data-para-id="${flagParaId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  // ---- No paragraph selected: show ALL flags ----
   if (!paraId) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          Select a clause to see flags.
-        </p>
-      </div>
-    );
-  }
-
-  // No flags on this paragraph
-  if (paraFlags.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Flag className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">
-          No flags on this clause.
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground/70">
-          Use the Flag button to mark clauses for client or attorney review.
-        </p>
-        <p className="mt-3 text-[10px] text-muted-foreground/50">
-          Full flagging UI available in Phase 6.
-        </p>
-      </div>
-    );
-  }
-
-  // Render existing flags
-  return (
-    <div className="space-y-2">
-      {paraFlags.map((flag, idx) => (
-        <div key={`${flag.para_id}-${flag.flag_type}-${idx}`} className="rounded-lg border p-3">
-          <div className="mb-1 flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className={
-                flag.flag_type === "client"
-                  ? "border-blue-300 text-blue-700 text-[10px]"
-                  : "border-amber-300 text-amber-700 text-[10px]"
-              }
-            >
-              {flag.flag_type === "client" ? "Client Review" : "Attorney Review"}
-            </Badge>
-            {flag.timestamp && (
-              <span className="text-[10px] text-muted-foreground">
-                {new Date(flag.timestamp).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-          {flag.note && (
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {flag.note}
-            </p>
-          )}
-          {flag.text_excerpt && (
-            <p className="mt-1 text-[10px] italic text-muted-foreground/70 line-clamp-2">
-              &ldquo;{flag.text_excerpt}&rdquo;
-            </p>
-          )}
+    if (flags.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <FlagIcon className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">No flags yet.</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            Select a clause and use the Flag button to mark it for review.
+          </p>
         </div>
-      ))}
-      <p className="pt-2 text-center text-[10px] text-muted-foreground/50">
-        Full flagging UI available in Phase 6.
-      </p>
+      );
+    }
+
+    return (
+      <div className="space-y-2 p-1">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs font-medium text-muted-foreground">
+            All Flags ({flags.length})
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled
+            className="h-7 text-xs"
+            title="Select a paragraph to add a flag"
+          >
+            <Plus className="mr-1 h-3 w-3" />
+            Add Flag
+          </Button>
+        </div>
+        {flags.map((flag, idx) => (
+          <FlagCard
+            key={`${flag.para_id}-${flag.flag_type}-${idx}`}
+            flag={flag}
+            onRemove={handleRemove}
+            onClickSection={handleClickSection}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // ---- Paragraph selected ----
+  return (
+    <div className="space-y-2 p-1">
+      {/* Add Flag button */}
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground">
+          Flags
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => setFlagDialogOpen(true)}
+        >
+          <Plus className="mr-1 h-3 w-3" />
+          Add Flag
+        </Button>
+      </div>
+
+      {/* Flags on selected paragraph */}
+      {paraFlags.length > 0 ? (
+        paraFlags.map((flag, idx) => (
+          <FlagCard
+            key={`${flag.para_id}-${flag.flag_type}-${idx}`}
+            flag={flag}
+            onRemove={handleRemove}
+            onClickSection={handleClickSection}
+          />
+        ))
+      ) : (
+        <div className="rounded-lg border border-dashed p-4 text-center">
+          <FlagIcon className="mx-auto mb-2 h-6 w-6 text-muted-foreground/30" />
+          <p className="text-xs text-muted-foreground">
+            No flags on this clause.
+          </p>
+        </div>
+      )}
+
+      {/* All other flags */}
+      {otherFlags.length > 0 && (
+        <>
+          <div className="my-3 border-t" />
+          <button
+            onClick={() => setAllFlagsExpanded(!allFlagsExpanded)}
+            className="flex w-full items-center justify-between rounded px-1 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+          >
+            <span>All Flags ({flags.length})</span>
+            {allFlagsExpanded ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+          </button>
+          {allFlagsExpanded &&
+            otherFlags.map((flag, idx) => (
+              <FlagCard
+                key={`other-${flag.para_id}-${flag.flag_type}-${idx}`}
+                flag={flag}
+                onRemove={handleRemove}
+                onClickSection={handleClickSection}
+              />
+            ))}
+        </>
+      )}
+
+      {/* Flag dialog */}
+      <FlagDialog
+        open={flagDialogOpen}
+        onOpenChange={setFlagDialogOpen}
+        paraId={paraId}
+      />
     </div>
   );
 }
