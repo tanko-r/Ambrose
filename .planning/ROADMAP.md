@@ -107,6 +107,12 @@ Plans:
 *   Visual parity check vs old UI
 *   Design token audit
 
+**UAT-sourced UI enhancements (from Phase 6 verification):**
+
+*   Flag date format: use locale-aware formatting (MM/DD/YYYY for US); add date format preference to user settings page
+*   Flag icon click-to-navigate: clicking right-margin flag icon should switch sidebar to Flags tab and highlight the flag (needs sidebar tab state in store)
+*   Flag card click-to-highlight: clicking flag card should highlight the flagged language in the document pane (not just scroll to paragraph)
+
 **Verification:** Keyboard navigation works, modes toggle, preferences persist, accessible
 
 ---
