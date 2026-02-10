@@ -1,6 +1,6 @@
 # Contract Redlining Assistant
 
-A collaborative legal contract review tool that helps attorneys analyze documents for risks and opportunities, then generate surgical redlines. Built for real estate attorneys to reduce the 8+ hours typically spent manually redlining PSAs and other complex agreements.
+A collaborative legal contract review tool that helps attorneys analyze documents for risks and opportunities, then generate surgical redlines. Built for real estate attorneys redlining agreements, but planned to expand to other disciplines as well.
 
 ## What It Does
 
