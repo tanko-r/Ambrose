@@ -31,6 +31,13 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     rect: { top: number; left: number };
   } | null>(null);
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
+  // Saved context for the dialog — persists after selection is cleared
+  const [dialogContext, setDialogContext] = useState<{
+    paraId: string;
+    textExcerpt: string;
+  } | null>(null);
+  // Guard: when true, suppress selectionchange from clearing selectionContext
+  const suppressSelectionClear = useRef(false);
 
   // Attach click handlers to paragraph elements rendered by backend HTML
   const attachClickHandlers = useCallback(() => {
@@ -43,7 +50,24 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
     clickableParas.forEach((el) => {
       el.style.cursor = "pointer";
-      el.addEventListener("click", () => {
+      el.addEventListener("click", (e) => {
+        // Don't fire paragraph selection when user is selecting text
+        const selection = window.getSelection();
+        if (selection && !selection.isCollapsed && selection.toString().trim()) {
+          return;
+        }
+
+        // Check if click was on the flag icon area (right margin, ~30px from right edge)
+        // This selects the paragraph so the Flags tab shows its flags
+        // TODO: Switch sidebar to Flags tab on flag icon click (activeTab is local to Sidebar)
+        const rect = el.getBoundingClientRect();
+        const clickX = (e as MouseEvent).clientX;
+        if (el.classList.contains("flagged") && clickX > rect.right - 30) {
+          const paraId = el.getAttribute("data-para-id");
+          if (paraId) selectParagraph(paraId);
+          return;
+        }
+
         const paraId = el.getAttribute("data-para-id");
         if (paraId) selectParagraph(paraId);
       });
@@ -109,8 +133,12 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       el.classList.toggle("flagged", isFlagged);
       if (isFlagged) {
         el.setAttribute("data-flag-category", flagCategoryMap.get(paraId) ?? "for-discussion");
+        // Tooltip: show first flag's note on hover
+        const flagNote = flags.find((f) => f.para_id === paraId)?.note;
+        el.title = flagNote ? flagNote.slice(0, 100) : "Flagged for review";
       } else {
         el.removeAttribute("data-flag-category");
+        el.title = "";
       }
     });
   }, [selectedParaId, revisions, flags, risks]);
@@ -324,6 +352,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
     // Clear selection context when selection changes to collapsed
     function handleSelectionChange() {
+      if (suppressSelectionClear.current) return;
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) {
         setSelectionContext(null);
@@ -342,9 +371,20 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   // Open flag dialog from floating button
   const handleSelectionFlag = useCallback(() => {
     if (!selectionContext) return;
+    // Save context for the dialog before clearing anything
+    setDialogContext({
+      paraId: selectionContext.paraId,
+      textExcerpt: selectionContext.textExcerpt,
+    });
     setFlagDialogOpen(true);
-    // Clear the floating button but keep the selectionContext for dialog
+    // Suppress the selectionchange listener while we clean up
+    suppressSelectionClear.current = true;
+    setSelectionContext(null);
     window.getSelection()?.removeAllRanges();
+    // Re-enable selectionchange listener on next tick
+    requestAnimationFrame(() => {
+      suppressSelectionClear.current = false;
+    });
   }, [selectionContext]);
 
   if (loading) {
@@ -378,6 +418,11 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
           {/* Floating Flag button on text selection */}
           {selectionContext && !flagDialogOpen && (
             <button
+              onMouseDown={(e) => {
+                // Prevent mousedown from collapsing the text selection
+                // so the click handler can fire with selectionContext intact
+                e.preventDefault();
+              }}
               onClick={handleSelectionFlag}
               className="absolute z-40 flex items-center gap-1 rounded-md border bg-card px-2 py-1.5 text-xs font-medium shadow-lg transition-colors hover:bg-accent"
               style={{
@@ -392,15 +437,19 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
           )}
 
           {/* Flag dialog for text selection flagging */}
-          {selectionContext && (
+          {dialogContext && (
             <FlagDialog
               open={flagDialogOpen}
               onOpenChange={(open) => {
                 setFlagDialogOpen(open);
-                if (!open) setSelectionContext(null);
+                if (!open) {
+                  setDialogContext(null);
+                  setSelectionContext(null);
+                }
               }}
-              paraId={selectionContext.paraId}
+              paraId={dialogContext.paraId}
               defaultCategory="for-discussion"
+              defaultFlagType="client"
             />
           )}
         </div>
