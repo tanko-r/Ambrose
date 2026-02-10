@@ -2,14 +2,14 @@
 
 **Project:** Ambrose (Contract Redlining)
 **Branch:** nextjs-migration
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-10
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Next.js frontend migration -- Phase 5 Plan 03 Tasks 1-3 complete, Task 4 human verification pending
+**Current focus:** Next.js frontend migration -- Phase 6 Plan 02 complete, Plan 03 next
 
 ## Current Milestone
 
@@ -25,22 +25,23 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 3 | Sidebar + Risk Analysis | Complete | 100% |
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
-| 6 | Dialogs + Finalization | Pending | 0% |
+| 6 | Dialogs + Finalization | In Progress | 33% |
 | 7 | Polish + Validation | Pending | 0% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
-**Overall:** 7/11 phases complete, Phase 5 Plan 02 of 03 complete
+**Overall:** 7/11 phases complete, Phase 6 Plan 02 of 03 complete
 
-Progress: [###############     ] 73%
+Progress: [################    ] 78%
 
 ## Next Action
 
-Phase 5 Plan 03 Task 4: Human verification of full precedent split view
-- Tasks 1-3 complete: SplitLayout integration, sidebar overlay/collapse, related tab click-to-open
-- Start both servers (Flask :5000, Next.js :3000), load session with precedent, verify end-to-end workflow
+Phase 6 Plan 03: Transmittal dialog, flag dialog, sidebar flag button
+- Depends on Plan 06-02 (finalize dialog) which is now complete
+- Wire transmittal email generation and flag management UI
 
 ## Recent Activity
 
+- 2026-02-10: Phase 6 Plan 02 complete -- FinalizeDialog with stats, revision accordion, author name, export/download; bottom bar wiring
 - 2026-02-08: Phase 5 Plan 03 Tasks 1-3 complete -- SplitLayout in review page, sidebar overlay/collapse, related tab click-to-open, snippet badge
 - 2026-02-08: Phase 5 Plan 02 complete -- PrecedentContent, SelectionTooltip, Navigator, Panel components
 - 2026-02-08: Phase 5 Plan 01 complete -- types, store precedent slice, usePrecedent hook, SplitLayout, CSS animations
@@ -97,15 +98,18 @@ Phase 5 Plan 03 Task 4: Human verification of full precedent split view
 | 5 | Snippet badge via shadcn Popover for removal UI | Consistent with project component library |
 | 5 | Manual store.subscribe for navigator persistence | subscribeWithSelector middleware not in store |
 | 5 | precedentScrollTarget cleared after scroll + on close | Clean state across panel reopens |
+| 6 | FinalizeDialog uses shadcn Dialog (not AlertDialog) | Complex content (accordion, stats, inputs) needs full Dialog |
+| 6 | Stats from store, not just preview | Real-time accuracy; preview only has accepted revisions |
+| 6 | Fragment wrapper for dialog in BottomBar | Renders dialog outside bar layout div cleanly |
 | A | docx-parser-converter for HTML | Pure Python, ~100ms, preserves all formatting |
 | B | Conversation forking for parallelism | 30 concurrent forks, ~90s analysis, $2.50/doc |
 | -- | Unified roadmap | v1.0 features built in Next.js phases, not separately |
 
 ## Session Continuity
 
-Last session: 2026-02-08
-Stopped at: 05-03-PLAN.md Task 4 checkpoint (human verification of full precedent split view pending)
+Last session: 2026-02-10
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
 
 ---
-*State updated: 2026-02-08*
+*State updated: 2026-02-10*
