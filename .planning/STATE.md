@@ -9,7 +9,7 @@
 See: .planning/PROJECT.md (updated 2026-02-01)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Next.js frontend migration -- Phase 6 Plan 02 complete, Plan 03 next
+**Current focus:** Next.js frontend migration -- Phase 6 Plans 01 and 02 complete, Plan 03 next
 
 ## Current Milestone
 
@@ -25,22 +25,23 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 | 3 | Sidebar + Risk Analysis | Complete | 100% |
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
-| 6 | Dialogs + Finalization | In Progress | 33% |
+| 6 | Dialogs + Finalization | In Progress | 67% |
 | 7 | Polish + Validation | Pending | 0% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
-**Overall:** 7/11 phases complete, Phase 6 Plan 02 of 03 complete
+**Overall:** 7/11 phases complete, Phase 6 Plans 01-02 of 03 complete
 
-Progress: [################    ] 78%
+Progress: [################    ] 80%
 
 ## Next Action
 
-Phase 6 Plan 03: Transmittal dialog, flag dialog, sidebar flag button
-- Depends on Plan 06-02 (finalize dialog) which is now complete
-- Wire transmittal email generation and flag management UI
+Phase 6 Plan 03: Transmittal dialog and finalization wiring
+- Depends on Plans 06-01 (flag system) and 06-02 (finalize dialog) -- both complete
+- Wire transmittal email generation and remaining finalization integration
 
 ## Recent Activity
 
+- 2026-02-10: Phase 6 Plan 01 complete -- FlagCategory type, useFlags hook, FlagDialog, FlagsTab rewrite, margin icons, text selection flagging
 - 2026-02-10: Phase 6 Plan 02 complete -- FinalizeDialog with stats, revision accordion, author name, export/download; bottom bar wiring
 - 2026-02-08: Phase 5 Plan 03 Tasks 1-3 complete -- SplitLayout in review page, sidebar overlay/collapse, related tab click-to-open, snippet badge
 - 2026-02-08: Phase 5 Plan 02 complete -- PrecedentContent, SelectionTooltip, Navigator, Panel components
@@ -98,6 +99,9 @@ Phase 6 Plan 03: Transmittal dialog, flag dialog, sidebar flag button
 | 5 | Snippet badge via shadcn Popover for removal UI | Consistent with project component library |
 | 5 | Manual store.subscribe for navigator persistence | subscribeWithSelector middleware not in store |
 | 5 | precedentScrollTarget cleared after scroll + on close | Clean state across panel reopens |
+| 6 | FlagCategory separate from FlagType; all UI categories use flag_type='client' | FlagType=client/attorney; FlagCategory=user classification for client review |
+| 6 | CSS ::before pseudo-element with SVG data URIs for margin flag icons | No extra assets; data-flag-category attribute drives color via CSS selectors |
+| 6 | Floating Flag button on text selection (absolute positioning) | Simpler than portal; avoids z-index complexity in document viewer |
 | 6 | FinalizeDialog uses shadcn Dialog (not AlertDialog) | Complex content (accordion, stats, inputs) needs full Dialog |
 | 6 | Stats from store, not just preview | Real-time accuracy; preview only has accepted revisions |
 | 6 | Fragment wrapper for dialog in BottomBar | Renders dialog outside bar layout div cleanly |
@@ -108,7 +112,7 @@ Phase 6 Plan 03: Transmittal dialog, flag dialog, sidebar flag button
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 06-02-PLAN.md
+Stopped at: Completed 06-01-PLAN.md (flag system)
 Resume file: None
 
 ---
