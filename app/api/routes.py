@@ -275,6 +275,7 @@ def get_document(session_id):
     return jsonify({
         'session_id': session_id,
         'filename': filename,
+        'has_precedent': session.get('precedent_path') is not None,
         'content': parsed_doc.get('content', []),
         'sections': parsed_doc.get('sections', []),
         'exhibits': parsed_doc.get('exhibits', []),
@@ -861,6 +862,7 @@ def flag_item():
     para_id = data.get('para_id')
     note = data.get('note', '')
     flag_type = data.get('flag_type', 'client')  # 'client' or 'attorney'
+    category = data.get('category', 'for-discussion')  # business-decision, risk-alert, for-discussion, fyi
 
     session = get_session(session_id)
     if not session:
@@ -880,6 +882,7 @@ def flag_item():
         'text_excerpt': paragraph.get('text', '')[:200] if paragraph else '',
         'note': note,
         'flag_type': flag_type,  # 'client' = included in transmittal, 'attorney' = internal review
+        'category': category,  # business-decision, risk-alert, for-discussion, fyi
         'timestamp': datetime.now().isoformat()
     }
 

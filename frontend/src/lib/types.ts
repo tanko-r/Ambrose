@@ -11,6 +11,21 @@ export type Approach = 'quick-sale' | 'competitive-bid' | 'relationship' | 'adve
 export type Aggressiveness = 1 | 2 | 3 | 4 | 5;
 export type SessionStatus = 'initialized' | 'analyzing' | 'analyzed' | 'finalized';
 export type FlagType = 'client' | 'attorney';
+export type FlagCategory = 'business-decision' | 'risk-alert' | 'for-discussion' | 'fyi';
+
+export const FLAG_CATEGORY_LABELS: Record<FlagCategory, string> = {
+  'business-decision': 'Business Decision',
+  'risk-alert': 'Risk Alert',
+  'for-discussion': 'For Discussion',
+  'fyi': 'FYI',
+} as const;
+
+export const FLAG_CATEGORY_COLORS: Record<FlagCategory, string> = {
+  'business-decision': 'blue',
+  'risk-alert': 'orange',
+  'for-discussion': 'purple',
+  'fyi': 'gray',
+} as const;
 export type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info';
 export type AnalysisStage = 'initial_analysis' | 'parallel_batches' | 'complete';
 export type AnalysisStatus = 'not_started' | 'analyzing' | 'complete';
@@ -155,6 +170,7 @@ export interface Flag {
   text_excerpt: string;
   note: string;
   flag_type: FlagType;
+  category: FlagCategory;
   timestamp: string;
 }
 
@@ -213,6 +229,7 @@ export interface FlagRequest {
   para_id: string;
   note: string;
   flag_type: FlagType;
+  category: FlagCategory;
 }
 
 export interface UnflagRequest {
@@ -251,6 +268,7 @@ export interface IntakeResponse {
 export interface DocumentResponse {
   session_id: string;
   filename: string;
+  has_precedent: boolean;
   content: Paragraph[];
   sections: Section[];
   exhibits: Exhibit[];
@@ -271,10 +289,13 @@ export interface PrecedentResponse {
 }
 
 export interface RelatedClause {
+  id: string;
   para_id: string;
   section_ref: string;
   text: string;
+  score: number;
   similarity: number;
+  caption?: string;
 }
 
 export interface RelatedClausesResponse {
@@ -480,7 +501,7 @@ export interface ApiError {
 
 // --- Precedent Split View ---
 
-export type NavigatorPosition = 'right-sidebar' | 'bottom-drawer' | 'overlay';
+export type NavigatorPosition = 'right-sidebar' | 'bottom-drawer' | 'ghost';
 
 export interface PrecedentSnippet {
   id: string;
