@@ -1114,8 +1114,8 @@ def get_transmittal(session_id):
     Generate transmittal email content summarizing the review.
 
     Returns formatted email subject and body with:
-    - High-level summary of key revisions made
-    - List of all client-flagged paragraphs with notes
+    - High-level summary of key revisions made (when include_revisions=true)
+    - List of all client-flagged paragraphs with notes and categories
 
     TRANS-01: User can generate transmittal email summarizing the review
     TRANS-02: Transmittal includes high-level summary of key revisions made
@@ -1125,6 +1125,8 @@ def get_transmittal(session_id):
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
+    include_revisions = request.args.get('include_revisions', 'false').lower() == 'true'
+
     # Get contract name from session
     contract_name = session.get('target_filename', 'Contract Document')
     if contract_name.endswith('.docx'):
@@ -1132,7 +1134,8 @@ def get_transmittal(session_id):
 
     # Count accepted revisions for stats
     revisions = session.get('revisions', {})
-    revision_count = sum(1 for r in revisions.values() if r.get('accepted'))
+    accepted_revisions = {k: v for k, v in revisions.items() if v.get('accepted')}
+    revision_count = len(accepted_revisions)
 
     # Collect client flags (flag_type == 'client')
     flags = session.get('flags', [])
@@ -1141,6 +1144,19 @@ def get_transmittal(session_id):
     # Sort flags by section reference for logical ordering
     client_flags.sort(key=lambda f: f.get('section_ref', ''))
 
+    # Category label mapping
+    category_labels = {
+        'business-decision': 'Business Decision',
+        'risk-alert': 'Risk Alert',
+        'for-discussion': 'For Discussion',
+        'fyi': 'FYI',
+    }
+    # Flag type labels as fallback for older flags without category
+    flag_type_labels = {
+        'client': 'Client Review',
+        'attorney': 'Attorney Note',
+    }
+
     # Build the email body
     email_lines = []
     email_lines.append("Dear [Client],")
@@ -1148,13 +1164,45 @@ def get_transmittal(session_id):
     email_lines.append(f"I have completed my review of {contract_name}. Please see the attached redlined document containing my proposed revisions.")
     email_lines.append("")
 
+    # Key Revisions section (only when include_revisions is true)
+    if include_revisions and accepted_revisions:
+        email_lines.append("## Key Revisions Made")
+        parsed_doc = session.get('parsed_doc', {})
+        content = parsed_doc.get('content', [])
+        # Build para_id -> paragraph lookup
+        para_lookup = {p.get('id'): p for p in content if p.get('id')}
+
+        # Group revisions by top-level section
+        section_revisions = {}
+        for para_id, rev in list(accepted_revisions.items())[:10]:
+            para = para_lookup.get(para_id, {})
+            section_ref = para.get('section_ref', 'N/A')
+            hierarchy = para.get('section_hierarchy', [])
+            top_section = hierarchy[0].get('caption', section_ref) if hierarchy else section_ref
+            if top_section not in section_revisions:
+                section_revisions[top_section] = []
+            rationale = rev.get('rationale', 'Revision made')
+            section_revisions[top_section].append(f"[{section_ref}]: {rationale[:100]}")
+
+        for section, items in section_revisions.items():
+            for item in items:
+                email_lines.append(f"- {item}")
+        email_lines.append("")
+
     # Items for Your Review section (only if there are flags)
     if client_flags:
         email_lines.append("## Items for Your Review")
         for i, flag in enumerate(client_flags, 1):
             section = flag.get('section_ref', 'N/A')
             note = flag.get('note', 'Flagged for review')
-            email_lines.append(f"{i}. [{section}]: {note}")
+            # Use category label if present, fall back to flag_type label
+            category = flag.get('category', '')
+            if category and category in category_labels:
+                label = category_labels[category]
+            else:
+                flag_type = flag.get('flag_type', 'client')
+                label = flag_type_labels.get(flag_type, 'Review')
+            email_lines.append(f"{i}. [{section}] ({label}): {note}")
         email_lines.append("")
 
     email_lines.append("Please let me know if you have any questions.")
@@ -1169,7 +1217,8 @@ def get_transmittal(session_id):
         'subject': email_subject,
         'body': email_body,
         'revision_count': revision_count,
-        'flag_count': len(client_flags)
+        'flag_count': len(client_flags),
+        'include_revisions': include_revisions
     })
 
 

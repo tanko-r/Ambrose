@@ -7,15 +7,19 @@ import {
   ChevronLeft,
   ChevronRight,
   FileDown,
+  Mail,
 } from "lucide-react";
 import { FinalizeDialog } from "@/components/dialogs/finalize-dialog";
+import { TransmittalDialog } from "@/components/dialogs/transmittal-dialog";
 
 export function BottomBar() {
   const [finalizeOpen, setFinalizeOpen] = useState(false);
+  const [transmittalOpen, setTransmittalOpen] = useState(false);
   const {
     paragraphs,
     risks,
     revisions,
+    flags,
     selectedParaId,
     selectParagraph,
     bottomSheetOpen,
@@ -143,18 +147,31 @@ export function BottomBar() {
         </Button>
       </div>
 
-      {/* Right: finalize */}
-      <Button
-        size="sm"
-        className="h-7 text-xs"
-        disabled={!hasAcceptedRevisions}
-        onClick={() => setFinalizeOpen(true)}
-      >
-        <FileDown className="mr-1.5 h-3.5 w-3.5" />
-        Finalize Redline
-      </Button>
+      {/* Right: transmittal + finalize */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs"
+          disabled={flags.length === 0}
+          onClick={() => setTransmittalOpen(true)}
+        >
+          <Mail className="mr-1.5 h-3.5 w-3.5" />
+          Generate Transmittal
+        </Button>
+        <Button
+          size="sm"
+          className="h-7 text-xs"
+          disabled={!hasAcceptedRevisions}
+          onClick={() => setFinalizeOpen(true)}
+        >
+          <FileDown className="mr-1.5 h-3.5 w-3.5" />
+          Finalize Redline
+        </Button>
+      </div>
 
     </div>
+    <TransmittalDialog open={transmittalOpen} onOpenChange={setTransmittalOpen} />
     <FinalizeDialog open={finalizeOpen} onOpenChange={setFinalizeOpen} />
     </>
   );

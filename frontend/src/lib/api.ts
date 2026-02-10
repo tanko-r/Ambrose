@@ -172,7 +172,16 @@ export async function getRelatedClauses(
   sessionId: string,
   paraId: string
 ): Promise<RelatedClausesResponse> {
-  return request(`/api/precedent/${sessionId}/related/${paraId}`);
+  const data = await request<RelatedClausesResponse>(`/api/precedent/${sessionId}/related/${paraId}`);
+  // Normalize: API returns 'id' and 'score', frontend expects 'para_id' and 'similarity'
+  if (data.related_clauses) {
+    data.related_clauses = data.related_clauses.map((c) => ({
+      ...c,
+      para_id: c.para_id || c.id,
+      similarity: c.similarity ?? c.score ?? 0,
+    }));
+  }
+  return data;
 }
 
 // =============================================================================
@@ -272,8 +281,14 @@ export async function finalizePreview(
   });
 }
 
-export async function getTransmittal(sessionId: string): Promise<TransmittalResponse> {
-  return request(`/api/transmittal/${sessionId}`);
+export async function getTransmittal(
+  sessionId: string,
+  options?: { includeRevisions?: boolean }
+): Promise<TransmittalResponse> {
+  const params = new URLSearchParams();
+  if (options?.includeRevisions) params.set('include_revisions', 'true');
+  const qs = params.toString();
+  return request(`/api/transmittal/${sessionId}${qs ? `?${qs}` : ''}`);
 }
 
 export async function downloadFile(

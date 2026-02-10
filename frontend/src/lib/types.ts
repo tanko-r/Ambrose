@@ -401,6 +401,7 @@ export interface TransmittalResponse {
   body: string;
   revision_count: number;
   flag_count: number;
+  include_revisions?: boolean;
 }
 
 export interface SessionListItem {
