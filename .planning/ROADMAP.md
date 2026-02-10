@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-09
+**Updated:** 2026-02-10
 **Milestone:** v1.0 — Next.js Migration + Feature Completion
 
 ## Overview
@@ -20,7 +20,7 @@ Unified roadmap consolidating the Next.js frontend migration with remaining v1.0
 | 3 | Sidebar + Risk Analysis | Risk accordion, analysis overlay, hover highlights | Complete |
 | 4 | Revision Bottom Sheet + Track Changes | Diff display, accept/reject, inline editing | Complete |
 | 5 | Precedent Split View | Resizable split pane, precedent panel, related clause highlights, text selection actions | In Progress |
-| 6 | Dialogs + Finalization | Flag, finalize (Word export), transmittal, new project | Pending |
+| 6 | Dialogs + Finalization | Flag, finalize (Word export), transmittal, new project | In Progress |
 | 7 | Polish + Validation | Keyboard shortcuts, accessibility, responsive, visual parity | Pending |
 | 8 | Cleanup + Cutover | Archive vanilla JS, dev scripts, README update | Pending |
 
@@ -77,12 +77,14 @@ Plans:
 
 **Covers v1.0 requirements:** FIN-01, FIN-02, FIN-03, FIN-04, TRANS-01, TRANS-02, TRANS-03, TRANS-04, NEW-01, NEW-02, NEW-03, NEW-04
 
-**Plans:** 3 plans
+**Plans:** 5 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Flag system: types, backend category, use-flags hook, flag dialog, flags-tab rewrite, margin icons, text selection flagging
-- [ ] 06-02-PLAN.md — Finalize & export: use-finalize hook, finalize dialog, bottom bar wiring, sidebar flag button
+- [x] 06-01-PLAN.md — Flag system: types, backend category, use-flags hook, flag dialog, flags-tab rewrite, margin icons, text selection flagging
+- [x] 06-02-PLAN.md — Finalize & export: use-finalize hook, finalize dialog, bottom bar wiring, sidebar flag button
 - [ ] 06-03-PLAN.md — Transmittal + new project: transmittal dialog, new project enhancement, delete dialog, recent projects badges, finalized banner
+- [ ] 06-04-PLAN.md — Gap closure: flag card navigation, text selection fixes, flag icon position/tooltip, flag card edit button
+- [ ] 06-05-PLAN.md — Gap closure: finalize dialog data sync, UI fixes, export dropdown, author autofill
 
 **Verification:** Flag items, finalize to Word (track changes + clean), transmittal email opens, new project auto-saves and resets to intake
 
@@ -128,10 +130,10 @@ Plans:
 
 | Requirement | Covered In | Status |
 | --- | --- | --- |
-| FIN-01..04 | Phase 6 | Pending |
-| TRANS-01..04 | Phase 6 | Pending |
+| FIN-01..04 | Phase 6 | In Progress |
+| TRANS-01..04 | Phase 6 | In Progress |
 | PREC-01..04 | Phase 5 | In Progress |
-| NEW-01..04 | Phase 6 | Pending |
+| NEW-01..04 | Phase 6 | In Progress |
 | RENDER-01..04 | Phase A | Complete |
 | ACCEL-01..04 | Phase B | Complete |
 
@@ -141,3 +143,4 @@ _Roadmap created: 2026-02-01_
 _Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)_
 _Phase 5 planned: 2026-02-08_
 _Phase 6 planned: 2026-02-09_
+_Phase 6 gap closure plans added: 2026-02-10_
