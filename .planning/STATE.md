@@ -109,10 +109,16 @@ Phase 6 Plan 03: Transmittal dialog and finalization wiring
 | B | Conversation forking for parallelism | 30 concurrent forks, ~90s analysis, $2.50/doc |
 | -- | Unified roadmap | v1.0 features built in Next.js phases, not separately |
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Flag button on risk card shows red fill when risk is flagged | 2026-02-10 | 081b6c9 | [1-flag-button-on-risk-card-shows-red-fill-](./quick/1-flag-button-on-risk-card-shows-red-fill-/) |
+
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Completed 06-01-PLAN.md (flag system)
+Last activity: 2026-02-10 - Completed quick task 1: Flag button on risk card shows red fill when risk is flagged
 Resume file: None
 
 ---
