@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   Search,
   PanelLeftClose,
+  PanelLeft,
   Check,
 } from "lucide-react";
 import type { Paragraph, Risk, Severity } from "@/lib/types";
@@ -48,6 +49,24 @@ export function NavigationPanel() {
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
     new Set()
   );
+
+  // Ghost hover state (when panel is closed)
+  const [ghostVisible, setGhostVisible] = useState(false);
+  const ghostTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearGhostTimeout = () => {
+    if (ghostTimeoutRef.current) {
+      clearTimeout(ghostTimeoutRef.current);
+      ghostTimeoutRef.current = null;
+    }
+  };
+
+  const startGhostHide = () => {
+    ghostTimeoutRef.current = setTimeout(() => {
+      setGhostVisible(false);
+      ghostTimeoutRef.current = null;
+    }, 300);
+  };
 
   // Risk lookup by paragraph
   const risksByPara = useMemo(() => {
@@ -111,13 +130,124 @@ export function NavigationPanel() {
 
   if (!navPanelOpen) {
     return (
-      <button
-        onClick={toggleNavPanel}
-        className="fixed left-0 top-1/2 z-40 -translate-y-1/2 rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
-        aria-label="Open navigation panel"
-      >
-        <List className="h-4 w-4 text-muted-foreground" />
-      </button>
+      <div className="relative shrink-0" style={{ width: 0 }}>
+        {/* Top-left trigger tab */}
+        <div
+          className="absolute left-0 top-2 z-20 flex items-center"
+          onMouseEnter={() => { clearGhostTimeout(); setGhostVisible(true); }}
+          onMouseLeave={startGhostHide}
+        >
+          <div className="rounded-r-md border border-l-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
+            <PanelLeft className="h-3.5 w-3.5" />
+          </div>
+        </div>
+        {/* Ghost slide-in panel */}
+        <div
+          className={`absolute left-0 top-0 bottom-0 z-30 w-[260px] border-r bg-card/80 backdrop-blur-md shadow-xl transition-transform duration-200 ease-out ${
+            ghostVisible ? "translate-x-0" : "-translate-x-full"
+          }`}
+          style={{ height: "100vh" }}
+          onMouseEnter={clearGhostTimeout}
+          onMouseLeave={startGhostHide}
+        >
+          <aside className="flex h-full flex-col">
+            {/* Header — click to dock */}
+            <div className="flex items-center justify-between border-b px-3 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Navigator
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => { setGhostVisible(false); toggleNavPanel(); }}
+                title="Dock navigator"
+              >
+                <PanelLeftClose className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+
+            {/* Review mode selector */}
+            <div className="flex gap-1 border-b px-2 py-2">
+              {REVIEW_MODES.map((mode) => (
+                <button
+                  key={mode.value}
+                  onClick={() => setReviewMode(mode.value)}
+                  className={`flex flex-1 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-[10px] font-medium uppercase tracking-wider transition-colors ${
+                    reviewMode === mode.value
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
+                >
+                  {mode.icon}
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
+            <div className="border-b px-2 py-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Filter clauses..."
+                  className="h-7 pl-7 text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Progress */}
+            {riskyParas.length > 0 && (
+              <div className="flex items-center gap-2 border-b px-3 py-2 text-xs text-muted-foreground">
+                <span>
+                  Reviewed:{" "}
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {reviewedCount}/{riskyParas.length}
+                  </span>
+                </span>
+              </div>
+            )}
+
+            {/* Outline */}
+            <div className="flex-1 overflow-y-auto px-1 py-1">
+              {contentParas.length === 0 ? (
+                <p className="p-4 text-center text-xs italic text-muted-foreground">
+                  Load a document to see outline
+                </p>
+              ) : reviewMode === "linear" ? (
+                <LinearOutline
+                  paragraphs={filteredParas}
+                  selectedParaId={selectedParaId}
+                  maxSeverity={maxSeverity}
+                  isReviewed={isReviewed}
+                  onJump={handleJump}
+                />
+              ) : reviewMode === "by-risk" ? (
+                <ByRiskOutline
+                  paragraphs={contentParas}
+                  risksByPara={risksByPara}
+                  selectedParaId={selectedParaId}
+                  isReviewed={isReviewed}
+                  onJump={handleJump}
+                />
+              ) : (
+                <ByCategoryOutline
+                  paragraphs={filteredParas}
+                  sections={sections}
+                  selectedParaId={selectedParaId}
+                  maxSeverity={maxSeverity}
+                  isReviewed={isReviewed}
+                  collapsedCategories={collapsedCategories}
+                  toggleCategory={toggleCategory}
+                  onJump={handleJump}
+                />
+              )}
+            </div>
+          </aside>
+        </div>
+      </div>
     );
   }
 
@@ -130,11 +260,13 @@ export function NavigationPanel() {
         </span>
         <Button
           variant="ghost"
-          size="icon"
-          className="h-7 w-7"
+          size="sm"
+          className="h-7 gap-1 px-2 text-[10px] text-muted-foreground"
           onClick={toggleNavPanel}
+          title="Hide navigator (ghost mode)"
         >
           <PanelLeftClose className="h-3.5 w-3.5" />
+          Hide
         </Button>
       </div>
 
