@@ -115,11 +115,12 @@ Phase 6 Plan 03: Transmittal dialog and finalization wiring
 |---|-------------|------|--------|-----------|
 | 1 | Flag button on risk card shows red fill when risk is flagged | 2026-02-10 | 081b6c9 | [1-flag-button-on-risk-card-shows-red-fill-](./quick/1-flag-button-on-risk-card-shows-red-fill-/) |
 | 2 | Toggle to hide target doc panel nav bar | 2026-02-10 | 4703579 | [2-toggle-to-hide-target-doc-panel-nav-bar](./quick/2-toggle-to-hide-target-doc-panel-nav-bar/) |
+| 3 | Fix layout so app renders fullscreen within viewport | 2026-02-10 | 17ba4c9 | [3-fix-layout-so-app-renders-fullscreen-wit](./quick/3-fix-layout-so-app-renders-fullscreen-wit/) |
 
 ## Session Continuity
 
 Last session: 2026-02-10
-Last activity: 2026-02-10 - Completed quick task 2: Toggle to hide target doc panel nav bar
+Last activity: 2026-02-10 - Completed quick task 3: Fix layout so app renders fullscreen within viewport
 Resume file: None
 
 ---
