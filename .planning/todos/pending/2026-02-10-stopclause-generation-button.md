@@ -1,27 +1,29 @@
 ---
 created: 2026-02-10T17:15:55.560Z
-title: Add stopclause generation button
+title: Stop clause generation button for revisions
 area: ui
 files:
-  - frontend/src/components/analysis/analysis-overlay.tsx
+  - frontend/src/components/review/bottom-bar.tsx
+  - frontend/src/components/review/revision-sheet.tsx
   - frontend/src/lib/store.ts
   - app/api/routes.py
 ---
 
 ## Problem
 
-During the analysis phase, users need a way to stop or cancel clause generation if it's taking too long or if they want to switch documents/cancel the operation. Currently there's no UI affordance to abort the analysis in progress.
+When user clicks "Generate Revisions" or "Regenerate" button to get revised language for a clause, the generation process runs to completion with no way to cancel mid-operation. If generation is slow or user changes their mind, they need a way to stop it without waiting for all revisions to finish.
 
 ## Solution
 
-Add a "Stop" or "Cancel" button in the AnalysisOverlay that:
-1. Calls a backend endpoint to cancel the analysis task
-2. Updates store state (generatingAnalysis = false, current clause/progress reset)
-3. Provides clear user feedback that analysis was cancelled
-4. Allows user to restart or switch to different document
+Add a "Stop" button that appears while generatingRevision is true:
+1. Button appears in RevisionSheet or BottomBar during generation
+2. User can click to cancel the running revision generation
+3. Calls backend endpoint to cancel the revision task
+4. Updates store state (generatingRevision = false, clears partial revisions)
+5. Returns to normal state so user can modify document or request new generation
 
 Implementation approach:
-- Add cancel endpoint in routes.py (or wire existing cancel mechanism)
-- Add stopAnalysis method in store
-- Add cancel/stop button in AnalysisOverlay next to progress indicators
-- Handle cleanup: cancel API request, reset state, clear partial results
+- Add cancel endpoint in routes.py for revision cancellation
+- Add stopRevisionGeneration method in store
+- Add stop button in RevisionSheet (near the "Generate Revisions" button area)
+- Handle cleanup: cancel API request, reset generatingRevision flag, preserve any already-generated content
