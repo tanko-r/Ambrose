@@ -170,7 +170,7 @@ export interface Flag {
   text_excerpt: string;
   note: string;
   flag_type: FlagType;
-  category: FlagCategory;
+  category?: FlagCategory;
   timestamp: string;
 }
 
@@ -212,6 +212,18 @@ export interface ReviseRequest {
 export interface AcceptRequest {
   session_id: string;
   para_id: string;
+  revised?: string;       // User's edited revision text
+  diff_html?: string;     // User's edited diff HTML
+}
+
+export interface UnacceptRequest {
+  session_id: string;
+  para_id: string;
+}
+
+export interface UnacceptResponse {
+  status: 'unaccepted';
+  para_id: string;
 }
 
 export interface RejectRequest {
@@ -229,7 +241,7 @@ export interface FlagRequest {
   para_id: string;
   note: string;
   flag_type: FlagType;
-  category: FlagCategory;
+  category?: FlagCategory;
 }
 
 export interface UnflagRequest {

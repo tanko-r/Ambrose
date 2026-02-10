@@ -722,6 +722,14 @@ def accept_revision():
         session['concept_map'] = updated_cm
         session['risk_map'] = updated_rm
 
+    # Update revision text if user made inline edits
+    revised_text = data.get('revised')
+    diff_html = data.get('diff_html')
+    if revised_text is not None:
+        revision['revised'] = revised_text
+    if diff_html is not None:
+        revision['diff_html'] = diff_html
+
     # Mark as accepted
     revision['accepted'] = True
     save_session(session_id, session)
@@ -731,6 +739,33 @@ def accept_revision():
         'para_id': para_id,
         'concept_changes': changes,
         'affected_para_ids': affected_para_ids
+    })
+
+
+@api_bp.route('/unaccept', methods=['POST'])
+def unaccept_revision():
+    """
+    Revert an accepted revision back to pending state.
+    Called when user reopens an accepted revision for further editing.
+    """
+    data = request.get_json()
+    session_id = data.get('session_id')
+    para_id = data.get('para_id')
+
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    revision = session.get('revisions', {}).get(para_id)
+    if not revision:
+        return jsonify({'error': 'Revision not found'}), 404
+
+    revision['accepted'] = False
+    save_session(session_id, session)
+
+    return jsonify({
+        'status': 'unaccepted',
+        'para_id': para_id
     })
 
 
@@ -862,7 +897,7 @@ def flag_item():
     para_id = data.get('para_id')
     note = data.get('note', '')
     flag_type = data.get('flag_type', 'client')  # 'client' or 'attorney'
-    category = data.get('category', 'for-discussion')  # business-decision, risk-alert, for-discussion, fyi
+    category = data.get('category')  # business-decision, risk-alert, for-discussion, fyi (None for attorney flags)
 
     session = get_session(session_id)
     if not session:

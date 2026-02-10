@@ -18,6 +18,8 @@ import type {
   ReviseResponse,
   AcceptRequest,
   AcceptResponse,
+  UnacceptRequest,
+  UnacceptResponse,
   RejectRequest,
   RejectResponse,
   ReanalyzeRequest,
@@ -217,6 +219,14 @@ export async function revise(data: ReviseRequest): Promise<ReviseResponse> {
 
 export async function acceptRevision(data: AcceptRequest): Promise<AcceptResponse> {
   return request(`${FLASK_DIRECT}/api/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function unacceptRevision(data: UnacceptRequest): Promise<UnacceptResponse> {
+  return request(`${FLASK_DIRECT}/api/unaccept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

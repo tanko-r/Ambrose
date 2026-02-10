@@ -8,7 +8,7 @@
 
 import { useCallback } from "react";
 import { useAppStore } from "@/lib/store";
-import { revise, acceptRevision, rejectRevision } from "@/lib/api";
+import { revise, acceptRevision, rejectRevision, unacceptRevision } from "@/lib/api";
 import { extractFinalText } from "@/lib/track-changes";
 import { toast } from "sonner";
 
@@ -95,9 +95,14 @@ export function useRevision() {
       }
 
       try {
+        // Read the latest state which may include edits
+        const latestBeforeApi = useAppStore.getState().revisions[paraId];
+
         const result = await acceptRevision({
           session_id: sessionId,
           para_id: paraId,
+          revised: latestBeforeApi?.revised,
+          diff_html: latestBeforeApi?.editedHtml || latestBeforeApi?.diff_html,
         });
 
         // Re-read current state (may have been updated above)
@@ -163,17 +168,24 @@ export function useRevision() {
 
   /**
    * Reopen an accepted revision for further editing.
-   * Synchronous, no API call. Keeps editedHtml so user continues where they left off.
+   * Syncs to backend via POST /api/unaccept. Keeps editedHtml for continuity.
    */
-  const reopen = useCallback((paraId: string) => {
-    const { revisions, setRevision } = useAppStore.getState();
+  const reopen = useCallback(async (paraId: string) => {
+    const { sessionId, revisions, setRevision } = useAppStore.getState();
     const current = revisions[paraId];
-    if (!current) return;
+    if (!current || !sessionId) return;
 
-    // Mark as not accepted — keep editedHtml for continuity
+    // Optimistically update frontend immediately
     setRevision(paraId, { ...current, accepted: false });
 
-    toast.info("Revision reopened for editing");
+    try {
+      await unacceptRevision({ session_id: sessionId, para_id: paraId });
+      toast.info("Revision reopened for editing");
+    } catch (err) {
+      // Revert on failure
+      setRevision(paraId, { ...current, accepted: true });
+      toast.error(err instanceof Error ? err.message : "Failed to reopen revision");
+    }
   }, []);
 
   return { generate, accept, reject, reopen, generating };
