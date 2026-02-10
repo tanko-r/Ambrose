@@ -1303,13 +1303,23 @@ def save_session_endpoint(session_id):
 @api_bp.route('/session/<session_id>', methods=['DELETE'])
 def discard_session(session_id):
     """
-    Discard a session without saving (NEW-01).
+    Discard a session, removing from memory and disk (NEW-01).
 
-    Removes session from memory. If it was never saved to disk,
-    all progress is lost.
+    Removes session from memory and deletes the saved JSON file
+    from disk if it exists.
     """
-    if session_id in sessions:
+    found = session_id in sessions
+    if found:
         del sessions[session_id]
+
+    # Also remove from disk
+    session_folder = current_app.config['SESSION_FOLDER']
+    session_path = session_folder / f'{session_id}.json'
+    if session_path.exists():
+        session_path.unlink()
+        found = True
+
+    if found:
         return jsonify({
             'status': 'discarded',
             'session_id': session_id,

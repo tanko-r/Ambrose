@@ -26,6 +26,7 @@ import { RiskAccordion } from "./risk-accordion";
 import { DefinitionsTab } from "./definitions-tab";
 import { RelatedClausesTab } from "./related-clauses-tab";
 import { FlagsTab } from "./flags-tab";
+import { FlagDialog } from "@/components/dialogs/flag-dialog";
 
 const GENERATING_VERBS = [
   "Analyzing risk exposure",
@@ -103,6 +104,8 @@ export function Sidebar() {
   const removePrecedentSnippet = useAppStore((s) => s.removePrecedentSnippet);
 
   const [activeTab, setActiveTab] = useState<SidebarTab>("risks");
+  const [flagDialogOpen, setFlagDialogOpen] = useState(false);
+  const [flagDialogParaId, setFlagDialogParaId] = useState<string | null>(null);
 
   // Revision hook and ref for collecting included risk IDs
   const { generate, generating } = useRevision();
@@ -148,20 +151,7 @@ export function Sidebar() {
 
   // --- Collapsed mode: show restore tab ---
   if (!sidebarOpen) {
-    // When precedent is open: show left-edge restore tab
-    if (precedentPanelOpen) {
-      return (
-        <button
-          onClick={toggleSidebar}
-          className="fixed left-0 top-1/2 z-30 -translate-y-1/2 rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
-          aria-label="Open sidebar"
-        >
-          <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
-        </button>
-      );
-    }
-
-    // Normal mode (precedent closed): show right-edge restore tab
+    // Always show right-edge restore tab (whether precedent is open or not)
     return (
       <button
         onClick={toggleSidebar}
@@ -267,6 +257,21 @@ export function Sidebar() {
                 : "No risks identified"}
             </span>
             <div className="flex items-center gap-1.5">
+              {/* Flag button */}
+              {selectedParaId && !generating && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  title="Flag this clause"
+                  onClick={() => {
+                    setFlagDialogParaId(selectedParaId);
+                    setFlagDialogOpen(true);
+                  }}
+                >
+                  <Flag className="h-3.5 w-3.5" />
+                </Button>
+              )}
               {/* Snippet badge */}
               {snippetsForPara.length > 0 && !generating && (
                 <Popover>
@@ -366,20 +371,30 @@ export function Sidebar() {
           </div>
         </div>
       )}
+
+      {/* Flag dialog (opened from sidebar footer) */}
+      <FlagDialog
+        open={flagDialogOpen}
+        onOpenChange={(isOpen) => {
+          setFlagDialogOpen(isOpen);
+          if (!isOpen) setFlagDialogParaId(null);
+        }}
+        paraId={flagDialogParaId || ""}
+      />
     </>
   );
 
-  // --- Overlay mode: sidebar is a fixed overlay on the LEFT ---
+  // --- Overlay mode: sidebar is a fixed overlay on the RIGHT ---
   if (precedentPanelOpen) {
     return (
       <>
         {/* Backdrop to dismiss */}
         <div
-          className="fixed inset-0 z-30 bg-black/5"
+          className="fixed inset-0 z-30 bg-black/10"
           onClick={toggleSidebar}
         />
-        {/* Overlay sidebar */}
-        <aside className="fixed top-[49px] left-0 bottom-0 z-40 flex w-[380px] flex-col bg-card shadow-2xl">
+        {/* Overlay sidebar on right edge */}
+        <aside className="fixed top-[49px] right-0 bottom-0 z-40 flex w-[380px] flex-col border-l bg-card shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
           {sidebarContent}
         </aside>
       </>
