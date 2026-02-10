@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,8 +8,10 @@ import {
   ChevronRight,
   FileDown,
 } from "lucide-react";
+import { FinalizeDialog } from "@/components/dialogs/finalize-dialog";
 
 export function BottomBar() {
+  const [finalizeOpen, setFinalizeOpen] = useState(false);
   const {
     paragraphs,
     risks,
@@ -35,6 +37,10 @@ export function BottomBar() {
   const reviewedCount = riskParaIds.filter(
     (p) => revisions[p.id]?.accepted === true
   ).length;
+
+  const hasAcceptedRevisions = Object.values(revisions).some(
+    (r) => r.accepted
+  );
 
   // Risk severity counts
   const severityCounts = useMemo(() => {
@@ -68,6 +74,7 @@ export function BottomBar() {
   if (bottomSheetOpen) return null;
 
   return (
+    <>
     <div className="flex h-11 shrink-0 items-center justify-between border-t bg-card px-4">
       {/* Left: progress */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -137,10 +144,18 @@ export function BottomBar() {
       </div>
 
       {/* Right: finalize */}
-      <Button size="sm" className="h-7 text-xs" disabled>
+      <Button
+        size="sm"
+        className="h-7 text-xs"
+        disabled={!hasAcceptedRevisions}
+        onClick={() => setFinalizeOpen(true)}
+      >
         <FileDown className="mr-1.5 h-3.5 w-3.5" />
         Finalize Redline
       </Button>
+
     </div>
+    <FinalizeDialog open={finalizeOpen} onOpenChange={setFinalizeOpen} />
+    </>
   );
 }
