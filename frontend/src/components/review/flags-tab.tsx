@@ -6,7 +6,7 @@ import { useFlags } from "@/hooks/use-flags";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FlagDialog } from "@/components/dialogs/flag-dialog";
-import { Flag as FlagIcon, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Flag as FlagIcon, Pencil, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
 import { FLAG_CATEGORY_LABELS } from "@/lib/types";
 import type { Flag } from "@/lib/types";
 
@@ -36,26 +36,40 @@ interface FlagsTabProps {
 function FlagCard({
   flag,
   onRemove,
+  onEdit,
   onClickSection,
 }: {
   flag: Flag;
   onRemove: (paraId: string) => void;
+  onEdit?: (flag: Flag) => void;
   onClickSection?: (paraId: string) => void;
 }) {
-  const categoryLabel =
-    FLAG_CATEGORY_LABELS[flag.category] ?? flag.category ?? "Flag";
-  const badgeClasses =
-    CATEGORY_BADGE_CLASSES[flag.category] ?? "border-gray-300 text-gray-700 bg-gray-50";
+  const isAttorney = flag.flag_type === "attorney";
+  const categoryLabel = isAttorney
+    ? "Attorney"
+    : flag.category
+      ? (FLAG_CATEGORY_LABELS[flag.category] ?? flag.category)
+      : "Flag";
+  const badgeClasses = isAttorney
+    ? "border-gray-300 text-gray-600 bg-gray-50"
+    : (flag.category ? CATEGORY_BADGE_CLASSES[flag.category] : null) ??
+      "border-gray-300 text-gray-700 bg-gray-50";
 
   return (
-    <div className="group relative rounded-lg border p-3 transition-colors hover:bg-accent/30">
+    <div
+      className="group relative cursor-pointer rounded-lg border p-3 transition-colors hover:bg-accent/30"
+      onClick={() => onClickSection?.(flag.para_id)}
+    >
       {/* Top row: section_ref + category + timestamp */}
-      <div className="mb-1.5 flex items-center gap-1.5 pr-6">
+      <div className="mb-1.5 flex items-center gap-1.5 pr-12">
         {flag.section_ref && (
           <Badge
             variant="secondary"
             className="cursor-pointer text-[10px] hover:bg-secondary/80"
-            onClick={() => onClickSection?.(flag.para_id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClickSection?.(flag.para_id);
+            }}
           >
             {flag.section_ref}
           </Badge>
@@ -63,6 +77,7 @@ function FlagCard({
         <Badge variant="outline" className={`text-[10px] ${badgeClasses}`}>
           {categoryLabel}
         </Badge>
+        {/* TODO: Add locale preference to user settings (currently uses browser locale) */}
         {flag.timestamp && (
           <span className="ml-auto text-[10px] text-muted-foreground">
             {new Date(flag.timestamp).toLocaleDateString()}
@@ -77,21 +92,29 @@ function FlagCard({
         </p>
       )}
 
-      {/* Text excerpt */}
-      {flag.text_excerpt && (
-        <p className="mt-1 text-[10px] italic text-muted-foreground/70 line-clamp-2">
-          &ldquo;{flag.text_excerpt}&rdquo;
-        </p>
-      )}
-
-      {/* Remove button (top right) */}
-      <button
-        onClick={() => onRemove(flag.para_id)}
-        className="absolute right-2 top-2 rounded p-0.5 text-muted-foreground/50 opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-        title="Remove flag"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      {/* Action buttons (top right) */}
+      <div className="absolute right-2 top-2 flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit?.(flag);
+          }}
+          className="rounded p-0.5 text-muted-foreground/50 hover:bg-accent hover:text-foreground"
+          title="Edit flag"
+        >
+          <Pencil className="h-3 w-3" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(flag.para_id);
+          }}
+          className="rounded p-0.5 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive"
+          title="Remove flag"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -107,6 +130,7 @@ export function FlagsTab({ paraId }: FlagsTabProps) {
 
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [allFlagsExpanded, setAllFlagsExpanded] = useState(true);
+  const [editingFlag, setEditingFlag] = useState<Flag | null>(null);
 
   // Split flags into current paragraph and all others
   const { paraFlags, otherFlags } = useMemo(() => {
@@ -133,6 +157,11 @@ export function FlagsTab({ paraId }: FlagsTabProps) {
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+  };
+
+  const handleEdit = (flag: Flag) => {
+    setEditingFlag(flag);
+    setFlagDialogOpen(true);
   };
 
   // ---- No paragraph selected: show ALL flags ----
@@ -171,9 +200,24 @@ export function FlagsTab({ paraId }: FlagsTabProps) {
             key={`${flag.para_id}-${flag.flag_type}-${idx}`}
             flag={flag}
             onRemove={handleRemove}
+            onEdit={handleEdit}
             onClickSection={handleClickSection}
           />
         ))}
+
+        {/* Shared flag dialog for editing */}
+        {editingFlag && (
+          <FlagDialog
+            open={flagDialogOpen}
+            onOpenChange={(open) => {
+              setFlagDialogOpen(open);
+              if (!open) setEditingFlag(null);
+            }}
+            paraId={editingFlag.para_id}
+            defaultCategory={editingFlag.category}
+            defaultNote={editingFlag.note}
+          />
+        )}
       </div>
     );
   }
@@ -190,7 +234,10 @@ export function FlagsTab({ paraId }: FlagsTabProps) {
           variant="outline"
           size="sm"
           className="h-7 text-xs"
-          onClick={() => setFlagDialogOpen(true)}
+          onClick={() => {
+            setEditingFlag(null);
+            setFlagDialogOpen(true);
+          }}
         >
           <Plus className="mr-1 h-3 w-3" />
           Add Flag
@@ -204,6 +251,7 @@ export function FlagsTab({ paraId }: FlagsTabProps) {
             key={`${flag.para_id}-${flag.flag_type}-${idx}`}
             flag={flag}
             onRemove={handleRemove}
+            onEdit={handleEdit}
             onClickSection={handleClickSection}
           />
         ))
@@ -237,17 +285,23 @@ export function FlagsTab({ paraId }: FlagsTabProps) {
                 key={`other-${flag.para_id}-${flag.flag_type}-${idx}`}
                 flag={flag}
                 onRemove={handleRemove}
+                onEdit={handleEdit}
                 onClickSection={handleClickSection}
               />
             ))}
         </>
       )}
 
-      {/* Flag dialog */}
+      {/* Flag dialog -- handles both create (new flag) and edit (existing flag) */}
       <FlagDialog
         open={flagDialogOpen}
-        onOpenChange={setFlagDialogOpen}
-        paraId={paraId}
+        onOpenChange={(open) => {
+          setFlagDialogOpen(open);
+          if (!open) setEditingFlag(null);
+        }}
+        paraId={editingFlag?.para_id ?? paraId}
+        defaultCategory={editingFlag?.category}
+        defaultNote={editingFlag?.note}
       />
     </div>
   );
