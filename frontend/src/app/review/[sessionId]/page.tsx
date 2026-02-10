@@ -81,7 +81,7 @@ export default function ReviewPage({
   }, []);
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-hidden">
       {/* Header */}
       <Header />
 

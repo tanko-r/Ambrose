@@ -106,6 +106,8 @@ export function Sidebar() {
   const [activeTab, setActiveTab] = useState<SidebarTab>("risks");
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [flagDialogParaId, setFlagDialogParaId] = useState<string | null>(null);
+  const [flagDialogNote, setFlagDialogNote] = useState<string | undefined>(undefined);
+  const [flagDialogDefaultCategory, setFlagDialogDefaultCategory] = useState<"risk-alert" | undefined>(undefined);
 
   // Revision hook and ref for collecting included risk IDs
   const { generate, generating } = useRevision();
@@ -237,6 +239,12 @@ export function Sidebar() {
             riskMap={riskMap}
             paraId={selectedParaId}
             onIncludedRiskIdsRef={getIncludedRiskIdsRef}
+            onFlag={(_riskId, riskTitle, riskDescription) => {
+              setFlagDialogParaId(selectedParaId);
+              setFlagDialogNote(`${riskTitle}: ${riskDescription}`);
+              setFlagDialogDefaultCategory("risk-alert");
+              setFlagDialogOpen(true);
+            }}
           />
         ) : activeTab === "related" ? (
           <RelatedClausesTab sessionId={sessionId} paraId={selectedParaId} />
@@ -266,6 +274,8 @@ export function Sidebar() {
                   title="Flag this clause"
                   onClick={() => {
                     setFlagDialogParaId(selectedParaId);
+                    setFlagDialogNote(undefined);
+                    setFlagDialogDefaultCategory(undefined);
                     setFlagDialogOpen(true);
                   }}
                 >
@@ -372,14 +382,20 @@ export function Sidebar() {
         </div>
       )}
 
-      {/* Flag dialog (opened from sidebar footer) */}
+      {/* Flag dialog (opened from sidebar footer or risk card) */}
       <FlagDialog
         open={flagDialogOpen}
         onOpenChange={(isOpen) => {
           setFlagDialogOpen(isOpen);
-          if (!isOpen) setFlagDialogParaId(null);
+          if (!isOpen) {
+            setFlagDialogParaId(null);
+            setFlagDialogNote(undefined);
+            setFlagDialogDefaultCategory(undefined);
+          }
         }}
         paraId={flagDialogParaId || ""}
+        defaultNote={flagDialogNote}
+        defaultCategory={flagDialogDefaultCategory}
       />
     </>
   );
@@ -394,7 +410,7 @@ export function Sidebar() {
           onClick={toggleSidebar}
         />
         {/* Overlay sidebar on right edge */}
-        <aside className="fixed top-[49px] right-0 bottom-0 z-40 flex w-[380px] flex-col border-l bg-card shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
+        <aside className="fixed top-14 right-0 bottom-0 z-40 flex w-[380px] flex-col border-l bg-card shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
           {sidebarContent}
         </aside>
       </>
