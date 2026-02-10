@@ -138,9 +138,8 @@ export function NavigationPanel() {
           onMouseEnter={() => { clearGhostTimeout(); setGhostVisible(true); }}
           onMouseLeave={startGhostHide}
         >
-          <div className="flex items-center gap-1 rounded-r-md border border-l-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
+          <div className="rounded-r-md border border-l-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors" title="Show navigator">
             <PanelLeftOpen className="h-3.5 w-3.5" />
-            <span className="text-[10px] font-medium">Show</span>
           </div>
         </div>
         {/* Ghost slide-in panel */}
@@ -160,12 +159,13 @@ export function NavigationPanel() {
               </span>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-7 w-7"
+                size="sm"
+                className="h-7 gap-1 px-2 text-[10px] text-muted-foreground"
                 onClick={() => { setGhostVisible(false); toggleNavPanel(); }}
                 title="Dock navigator"
               >
-                <PanelLeftClose className="h-3.5 w-3.5" />
+                <PanelLeftOpen className="h-3.5 w-3.5" />
+                Show
               </Button>
             </div>
 
