@@ -115,29 +115,29 @@ Deferred to future release.
 | PREC-01..04 | v1.0 Phase 5 | Complete |
 | NEW-01..04 | v1.0 Phase 6 | In Progress |
 | RENDER-01..04 | v1.0 Phase A | Complete |
-| DOCK-01 | v1.1 Phase TBD | Pending |
-| DOCK-02 | v1.1 Phase TBD | Pending |
-| DOCK-03 | v1.1 Phase TBD | Pending |
-| DOCK-04 | v1.1 Phase TBD | Pending |
-| CONF-01 | v1.1 Phase TBD | Pending |
-| CONF-02 | v1.1 Phase TBD | Pending |
-| CONF-03 | v1.1 Phase TBD | Pending |
-| CONF-04 | v1.1 Phase TBD | Pending |
-| PROX-01 | v1.1 Phase TBD | Pending |
-| PROX-02 | v1.1 Phase TBD | Pending |
-| SESS-01 | v1.1 Phase TBD | Pending |
-| SESS-02 | v1.1 Phase TBD | Pending |
-| RAIL-01 | v1.1 Phase TBD | Pending |
-| RAIL-02 | v1.1 Phase TBD | Pending |
-| RAIL-03 | v1.1 Phase TBD | Pending |
-| ASYNC-01 | v1.1 Phase TBD | Pending |
-| ASYNC-02 | v1.1 Phase TBD | Pending |
+| DOCK-01 | v1.1 Phase 9 | Pending |
+| DOCK-02 | v1.1 Phase 9 | Pending |
+| DOCK-03 | v1.1 Phase 9 | Pending |
+| DOCK-04 | v1.1 Phase 9 | Pending |
+| CONF-01 | v1.1 Phase 9 | Pending |
+| CONF-02 | v1.1 Phase 9 | Pending |
+| CONF-03 | v1.1 Phase 10 | Pending |
+| CONF-04 | v1.1 Phase 9 | Pending |
+| PROX-01 | v1.1 Phase 10 | Pending |
+| PROX-02 | v1.1 Phase 10 | Pending |
+| SESS-01 | v1.1 Phase 11 | Pending |
+| SESS-02 | v1.1 Phase 11 | Pending |
+| RAIL-01 | v1.1 Phase 12 | Pending |
+| RAIL-02 | v1.1 Phase 12 | Pending |
+| RAIL-03 | v1.1 Phase 12 | Pending |
+| ASYNC-01 | v1.1 Phase 13 | Pending |
+| ASYNC-02 | v1.1 Phase 13 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 20 total (12 complete, 8 in progress)
-- v1.1 requirements: 15 total
-- Unmapped: 15 (awaiting roadmap)
+- v1.1 requirements: 17 total, all mapped to phases
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-11 after v1.1 milestone requirements*
+*Last updated: 2026-02-11 after v1.1 roadmap creation*
