@@ -2,7 +2,7 @@
 
 **Project:** Ambrose (Contract Redlining)
 **Branch:** nextjs-migration
-**Last Updated:** 2026-02-11
+**Last Updated:** 2026-02-12
 
 ## Project Reference
 
@@ -34,7 +34,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 3 | Sidebar + Risk Analysis | Complete | 100% |
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
-| 6 | Dialogs + Finalization | In Progress | 80% |
+| 6 | Dialogs + Finalization | Complete | 100% |
 | 7 | Polish + Validation | Pending | 0% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
@@ -48,6 +48,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 0 | Zustand over Redux | Simpler API for single-user app |
 | 5 | react-resizable-panels v4 | Library already installed |
 | 6 | Store-sourced revision list in finalize dialog | Store is single source of truth |
+| 6 | Transmittal default: flagged items only (revisions opt-in) | Keeps email concise, user controls detail level |
+| 6 | Auto-save on new project (no Save/Discard) | Simpler UX, reduces user confusion |
+| 6 | Finalized banner informational, not read-only | Less friction for post-finalize edits |
 | v1.1 | Railway over Vercel/Fly.io | PaaS simplicity, persistent volumes |
 | v1.1 | Gunicorn gthread (not gevent) | asyncio.run() conflicts with gevent monkey-patching |
 | v1.1 | proxy.ts over rewrites() | Next.js 16 standalone mode bug #87071 |
@@ -64,9 +67,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 
 ## Session Continuity
 
-Last session: 2026-02-11
-Last activity: 2026-02-11 - Created v1.1 Cloud Deployment roadmap (Phases 9-13)
+Last session: 2026-02-12
+Last activity: 2026-02-12 - Completed 06-03-PLAN.md (transmittal + project management dialogs)
 Resume file: None
 
 ---
-*State updated: 2026-02-11*
+*State updated: 2026-02-12*
