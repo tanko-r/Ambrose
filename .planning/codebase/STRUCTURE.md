@@ -10,9 +10,9 @@ claude-redlining/
 │   └── codebase/                    # This analysis
 │       ├── ARCHITECTURE.md
 │       └── STRUCTURE.md
-├── app/                             # Main Flask application
+├── app/                             # Flask API backend
 │   ├── __init__.py                  # Package initialization
-│   ├── server.py                    # Flask app factory and entry point
+│   ├── server.py                    # Flask app factory (API-only, no static serving)
 │   ├── api/                         # API routes
 │   │   ├── __init__.py
 │   │   └── routes.py                # All HTTP endpoints (intake, analysis, revise, finalize, etc.)
@@ -27,28 +27,30 @@ claude-redlining/
 │   │   ├── __init__.py
 │   │   ├── concept_map.py           # ConceptMap: provisions grouped by legal concept
 │   │   └── risk_map.py              # RiskMap: risks with dependency relationships
-│   ├── data/                        # Runtime data storage
-│   │   ├── uploads/                 # Session-specific uploaded files
-│   │   │   └── {session_id}/
-│   │   │       ├── target.docx
-│   │   │       ├── precedent.docx (optional)
-│   │   │       ├── target_parsed.json
-│   │   │       └── precedent_parsed.json (optional)
-│   │   └── sessions/                # Session state JSON files
-│   │       └── {session_id}.json
-│   └── static/                      # Frontend assets
-│       ├── index.html               # Single-page app HTML
-│       ├── css/
-│       │   └── main.css             # Styling (legal document theme)
-│       └── js/
-│           └── analysis.js          # Frontend logic
+│   └── data/                        # Runtime data storage
+│       ├── uploads/                 # Session-specific uploaded files
+│       │   └── {session_id}/
+│       │       ├── target.docx
+│       │       ├── precedent.docx (optional)
+│       │       ├── target_parsed.json
+│       │       └── precedent_parsed.json (optional)
+│       └── sessions/                # Session state JSON files
+│           └── {session_id}.json
+├── frontend/                        # Next.js frontend
+│   ├── src/app/                     # Pages (App Router)
+│   ├── src/components/              # React components
+│   ├── src/hooks/                   # Custom hooks
+│   └── src/lib/                     # Types, API client, Zustand store
+├── _archived/                       # Retired vanilla JS frontend (reference only)
+│   └── static/                      # Original index.html, css/, js/
 ├── .claude/                         # Claude Code CLI configuration
 │   └── commands/
 │       └── redline.md               # Original redline skill (reference)
 ├── docs/                            # Documentation
 ├── tests/                           # Test files
+├── package.json                     # Dev orchestrator (concurrently)
 ├── requirements.txt                 # Python dependencies
-├── run.py                           # Quick start script
+├── run.py                           # Backend quick start script
 ├── CLAUDE.md                        # Project planning and context
 ├── README.md                        # User-facing documentation
 ├── NOTES.md                         # Development notes
@@ -90,12 +92,19 @@ claude-redlining/
 - Generated: Yes (created at runtime)
 - Committed: No (git-ignored)
 
-**`app/static/`:**
-- Purpose: Frontend HTML, CSS, JavaScript
+**`frontend/`:**
+- Purpose: Next.js 16 React frontend application
 - Contains:
-  - `index.html`: Single-page app with intake form, document viewer, analysis sidebar, revision UI
-  - `css/main.css`: Legal document styling (serif fonts, appropriate spacing)
-  - `js/analysis.js`: Frontend state management, API calls, UI interactions
+  - `src/app/`: App Router pages (dashboard, review interface)
+  - `src/components/`: React components (layout, dashboard, review, dialogs)
+  - `src/hooks/`: Custom React hooks for data loading and UI state
+  - `src/lib/`: TypeScript types, API client, Zustand store
+- Entry point: `npm run dev` (via root package.json) or `npm run dev --prefix frontend`
+
+**`_archived/static/`:**
+- Purpose: Retired vanilla JS frontend, preserved for historical reference
+- Contains: Original index.html, css/main.css, js/analysis.js
+- Note: Not active code; the frontend is now in `frontend/`
 
 **`.planning/codebase/`:**
 - Purpose: GSD analysis documents consumed by orchestrator
@@ -105,7 +114,7 @@ claude-redlining/
 
 **Entry Points:**
 - `C:\Users\david\Documents\claude-redlining\run.py`: Quick start script that checks dependencies and starts Flask server
-- `C:\Users\david\Documents\claude-redlining\app\server.py`: Flask app factory (create_app() function), registered blueprints, static file serving
+- `C:\Users\david\Documents\claude-redlining\app\server.py`: Flask app factory (create_app() function), registered API blueprints, upload/session folder config
 
 **Configuration:**
 - `C:\Users\david\Documents\claude-redlining\requirements.txt`: Python package dependencies (flask, python-docx, anthropic, google-genai, diff-match-patch)
@@ -123,8 +132,10 @@ claude-redlining/
 - `C:\Users\david\Documents\claude-redlining\app\models\risk_map.py`: Risk dependency tracking (210 lines)
 
 **Frontend:**
-- `C:\Users\david\Documents\claude-redlining\app\static\index.html`: Complete single-page app
-- `C:\Users\david\Documents\claude-redlining\app\static\css\main.css`: Application styling
+- `C:\Users\david\Documents\claude-redlining\frontend\src\app\`: Next.js App Router pages
+- `C:\Users\david\Documents\claude-redlining\frontend\src\components\`: React components
+- `C:\Users\david\Documents\claude-redlining\frontend\src\lib\store.ts`: Zustand state management
+- `C:\Users\david\Documents\claude-redlining\frontend\src\lib\api.ts`: Typed API client
 
 **Testing:**
 - `C:\Users\david\Documents\claude-redlining\tests/`: Test directory (currently minimal)
@@ -162,7 +173,7 @@ claude-redlining/
 **New Feature:**
 - Primary code: `C:\Users\david\Documents\claude-redlining\app\services\` (new service module if external integration) or existing service if enhancing current logic
 - API endpoint: Add method to `C:\Users\david\Documents\claude-redlining\app\api\routes.py` with appropriate route decorator
-- Frontend: Add UI to `C:\Users\david\Documents\claude-redlining\app\static\index.html` and logic to `js/analysis.js`
+- Frontend: Add React components in `C:\Users\david\Documents\claude-redlining\frontend\src\components\`
 - Tests: `C:\Users\david\Documents\claude-redlining\tests\test_[feature].py`
 
 **New Contract Type Support:**
