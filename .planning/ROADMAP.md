@@ -98,7 +98,14 @@ Plans:
   8. Accessibility audit passes: keyboard navigation works, screen reader announces content, ARIA labels present, color contrast meets WCAG 2.1 AA
   9. Next.js UI visually matches the original Flask app (fonts, colors, spacing, component styling)
 
-**Plans**: TBD
+**Plans:** 5 plans
+
+Plans:
+- [ ] 07-01-PLAN.md -- Theme infrastructure (next-themes, dark mode CSS, preferences, settings dialog)
+- [ ] 07-02-PLAN.md -- Keyboard shortcuts, command palette (Cmd/Ctrl+K), help dialog
+- [ ] 07-03-PLAN.md -- Loading/error/empty states, bottom bar filters, compact mode visuals
+- [ ] 07-04-PLAN.md -- Small screen warning, accessibility ARIA pass, axe-core, color contrast
+- [ ] 07-05-PLAN.md -- Verification checkpoint (human verify all deliverables)
 
 ---
 
@@ -260,7 +267,7 @@ Plans:
 | 4. Revision Sheet | v1.0 | 3/3 | Complete | - |
 | 5. Precedent Split | v1.0 | 0/3 | In progress | - |
 | 6. Dialogs + Finalize | v1.0 | 2/5 | In progress | - |
-| 7. Polish | v1.0 | 0/? | Not started | - |
+| 7. Polish | v1.0 | 0/5 | Not started | - |
 | 8. Cleanup | v1.0 | 0/? | Not started | - |
 | 9. Containerization | v1.1 | 0/? | Not started | - |
 | 10. API Routing | v1.1 | 0/? | Not started | - |
