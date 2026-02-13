@@ -21,6 +21,7 @@ import {
   Flag,
   Eye,
   Loader2,
+  Square,
   X,
   Info,
   CheckCircle,
@@ -115,7 +116,7 @@ export function Sidebar() {
   const [flagDialogDefaultCategory, setFlagDialogDefaultCategory] = useState<"risk-alert" | undefined>(undefined);
 
   // Revision hook and ref for collecting included risk IDs
-  const { generate, generating } = useRevision();
+  const { generate, generating, stopGeneration } = useRevision();
   const getIncludedRiskIdsRef = useRef<(() => string[]) | null>(null);
   const { verb: generatingVerb, fading: verbFading } = useRotatingVerb(generating);
 
@@ -370,14 +371,26 @@ export function Sidebar() {
                 </Button>
               )}
               {generating ? (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                  <span
-                    className="transition-opacity duration-200"
-                    style={{ opacity: verbFading ? 0 : 1 }}
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                    <span
+                      className="transition-opacity duration-200"
+                      style={{ opacity: verbFading ? 0 : 1 }}
+                    >
+                      {generatingVerb}...
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={stopGeneration}
+                    aria-label="Stop generating revision"
                   >
-                    {generatingVerb}...
-                  </span>
+                    <Square className="size-3 fill-current" />
+                    Stop
+                  </Button>
                 </div>
               ) : (
                 <Button
