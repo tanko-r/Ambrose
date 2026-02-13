@@ -3,6 +3,7 @@
 import type { Risk, RiskMap, RiskMapEntry, Severity } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AccordionItem,
   AccordionTrigger,
@@ -279,5 +280,23 @@ export function RiskCard({
         </div>
       </AccordionContent>
     </AccordionItem>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RiskCardSkeleton - loading placeholder for risk cards
+// ---------------------------------------------------------------------------
+
+export function RiskCardSkeleton() {
+  return (
+    <div className="rounded-lg border px-3 py-3 space-y-2.5">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-14 rounded" />
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="ml-auto h-4 w-16 rounded" />
+      </div>
+      <Skeleton className="h-3 w-full" />
+      <Skeleton className="h-3 w-4/5" />
+    </div>
   );
 }

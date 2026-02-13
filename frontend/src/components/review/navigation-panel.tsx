@@ -14,6 +14,7 @@ import {
   PanelLeftOpen,
   Check,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Paragraph, Risk, Severity } from "@/lib/types";
 
 type ReviewMode = "linear" | "by-risk" | "by-category";
@@ -215,9 +216,7 @@ export function NavigationPanel() {
             {/* Outline */}
             <div className="flex-1 overflow-y-auto px-1 py-1">
               {contentParas.length === 0 ? (
-                <p className="p-4 text-center text-xs italic text-muted-foreground">
-                  Load a document to see outline
-                </p>
+                <NavigatorEmptyState />
               ) : reviewMode === "linear" ? (
                 <LinearOutline
                   paragraphs={filteredParas}
@@ -590,6 +589,29 @@ function OutlineItem({
         <Check className="ml-auto h-3 w-3 shrink-0 text-green-500" />
       )}
     </button>
+  );
+}
+
+function NavigatorEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+      <List className="h-5 w-5 text-muted-foreground/60" />
+      <p className="max-w-[200px] text-xs text-muted-foreground">
+        No document loaded. Start by uploading a contract.
+      </p>
+    </div>
+  );
+}
+
+export function NavigatorSkeleton() {
+  return (
+    <div className="space-y-1.5 p-3">
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-2/3" />
+      <Skeleton className="h-4 w-4/5" />
+    </div>
   );
 }
 
