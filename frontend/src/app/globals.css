@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -334,6 +334,78 @@
     text-decoration: line-through;
     text-decoration-color: #dc2626;
     padding: 0 1px;
+  }
+
+  /* ========================================================================
+     Dark mode overrides for document viewer
+     ======================================================================== */
+
+  .dark .document-container [data-para-id]:hover {
+    background-color: oklch(0.25 0.003 264 / 0.5);
+  }
+
+  .dark .document-container [data-para-id].selected {
+    background-color: oklch(0.25 0.04 264 / 0.4);
+    border-color: oklch(0.623 0.214 264);
+  }
+
+  .dark .document-container [data-para-id].has-revision {
+    background-color: oklch(0.22 0.02 27 / 0.4);
+    border-color: oklch(0.45 0.12 27 / 0.5);
+  }
+
+  .dark .document-container [data-para-id].revision-accepted {
+    background-color: oklch(0.22 0.03 155 / 0.3);
+    border-color: oklch(0.45 0.12 155 / 0.4);
+  }
+
+  .dark .revision-diff {
+    background: oklch(0.2 0 0);
+    border-color: oklch(0.28 0 0);
+  }
+
+  .dark .revision-diff:hover {
+    background: oklch(0.22 0 0);
+    border-color: oklch(0.623 0.214 264);
+    box-shadow: 0 0 0 2px oklch(0.623 0.214 264 / 0.15);
+  }
+
+  .dark .revision-diff.user-modified {
+    border-color: oklch(0.795 0.184 86.047);
+    background: oklch(0.22 0 0);
+  }
+
+  .dark .risk-highlight {
+    background: linear-gradient(180deg, transparent 60%, oklch(0.35 0.1 27 / 0.5) 60%);
+  }
+
+  .dark .risk-highlight-active {
+    background: oklch(0.3 0.08 27 / 0.5);
+    outline-color: oklch(0.704 0.191 22.216);
+  }
+
+  .dark .diff-del,
+  .dark del.diff-del {
+    color: #f87171;
+    text-decoration-color: #f87171;
+  }
+
+  .dark .diff-ins,
+  .dark ins.diff-ins {
+    color: #60a5fa;
+    text-decoration-color: #60a5fa;
+  }
+
+  .dark .user-addition {
+    background: oklch(0.3 0.05 264 / 0.4);
+    color: #60a5fa;
+    text-decoration-color: #60a5fa;
+  }
+
+  .dark .user-deletion {
+    background: oklch(0.3 0.05 27 / 0.4);
+    color: #f87171;
+    text-decoration-color: #f87171;
   }
 }
 
