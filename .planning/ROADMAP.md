@@ -76,19 +76,47 @@ Plans:
 - [ ] 06-04-PLAN.md -- Gap closure: flag card navigation, text selection fixes, flag icon position/tooltip
 - [ ] 06-05-PLAN.md -- Gap closure: finalize dialog data sync, UI fixes, export dropdown, author autofill
 
-### Phase 7: Polish + Validation
-**Goal**: Production-quality UX polish and accessibility
-**Status**: Pending
+</details>
 
-Tasks: Keyboard shortcuts, light/dark mode, compact mode, localStorage preferences, bottom bar filters, loading/error/empty states, responsive behavior, accessibility audit, visual parity check.
+---
+
+### Phase 7: Polish + Validation
+
+**Goal**: Deliver production-quality UX polish, accessibility compliance, and visual parity with the original app.
+
+**Depends on**: Phase 6 (core features complete)
+**Requirements**: None (polish and validation phase)
+
+**Success Criteria** (what must be TRUE):
+  1. Common actions (generate revisions, toggle panels, navigate risks) have keyboard shortcuts that are discoverable
+  2. Light/dark mode toggle works correctly and persists across sessions
+  3. Compact mode reduces UI density for power users (smaller cards, tighter spacing)
+  4. User preferences (theme, mode, filters) persist via localStorage and restore on page load
+  5. Bottom bar has working filters to show/hide revisions, flags, and risks
+  6. All async operations show loading states, errors display helpful messages, and empty states guide users to next actions
+  7. App layout adapts correctly to mobile, tablet, and desktop viewports (responsive design)
+  8. Accessibility audit passes: keyboard navigation works, screen reader announces content, ARIA labels present, color contrast meets WCAG 2.1 AA
+  9. Next.js UI visually matches the original Flask app (fonts, colors, spacing, component styling)
+
+**Plans**: TBD
+
+---
 
 ### Phase 8: Cleanup + Cutover
-**Goal**: Remove old frontend, finalize dev setup
-**Status**: Pending
 
-Tasks: Archive app/static/, remove Flask static serving, dev startup script, README update.
+**Goal**: Remove the old Flask-rendered frontend and finalize the development setup for Next.js-only workflow.
 
-</details>
+**Depends on**: Phase 7 (UI polish complete and validated)
+**Requirements**: None (cleanup phase)
+
+**Success Criteria** (what must be TRUE):
+  1. `app/static/` directory is archived (not deleted) and Flask no longer serves static files
+  2. Flask backend only serves API endpoints under `/api/*` — no HTML templates or frontend routes
+  3. Development startup is streamlined: one command starts both backend and frontend
+  4. README.md updated with Next.js setup instructions, tech stack, and development workflow
+  5. All references to the old frontend removed from code, docs, and config files
+
+**Plans**: TBD
 
 ---
 
