@@ -11,7 +11,7 @@ import { useAppStore } from "@/lib/store";
 import { usePrecedent } from "@/hooks/use-precedent";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Lock, Unlock, X, List } from "lucide-react";
+import { Lock, Unlock, X, PanelRight } from "lucide-react";
 import {
   PrecedentContent,
   type PrecedentContentHandle,
@@ -39,8 +39,9 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
 
   const contentRef = useRef<PrecedentContentHandle>(null);
 
-  // Overlay toggle state
-  const [overlayVisible, setOverlayVisible] = useState(false);
+  // Ghost navigator hover state
+  const [ghostVisible, setGhostVisible] = useState(false);
+  const ghostTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // =========================================================================
   // Compute relatedParaIds and pulsingParaIds
@@ -143,15 +144,19 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
     return (
       <div className="flex h-full flex-col bg-card">
         <header className="flex h-10 items-center justify-between border-b px-3">
-          <Skeleton className="h-4 w-40" />
-          <div className="flex items-center gap-1">
-            <Skeleton className="h-6 w-6 rounded" />
-            <Skeleton className="h-6 w-6 rounded" />
-          </div>
+          <span className="text-sm text-muted-foreground">Loading precedent...</span>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={closePrecedentPanel}
+            title="Close precedent panel"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
         </header>
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 p-8">
-            <div className="mx-auto max-w-3xl space-y-4">
+            <div className="space-y-4">
               <Skeleton className="h-6 w-48" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
@@ -199,17 +204,6 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
           {precedentFilename || "Precedent Document"}
         </span>
         <div className="flex items-center gap-1">
-          {/* Overlay toggle (only in overlay mode) */}
-          {navigatorPosition === "overlay" && (
-            <Button
-              variant={overlayVisible ? "default" : "ghost"}
-              size="icon-xs"
-              onClick={() => setOverlayVisible(!overlayVisible)}
-              title="Toggle navigator"
-            >
-              <List className="h-3.5 w-3.5" />
-            </Button>
-          )}
           {/* Lock toggle */}
           <Button
             variant={isLocked ? "default" : "ghost"}
@@ -243,6 +237,8 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
             <PrecedentContent
               ref={contentRef}
               onScrollToClause={handleContentScrollToClause}
+              relatedClauses={relatedClauses}
+              isLocked={isLocked}
             />
             <div className="w-[220px] shrink-0 border-l overflow-hidden">
               {navigatorElement}
@@ -256,6 +252,8 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
             <PrecedentContent
               ref={contentRef}
               onScrollToClause={handleContentScrollToClause}
+              relatedClauses={relatedClauses}
+              isLocked={isLocked}
             />
             <div className="h-[200px] shrink-0 border-t overflow-hidden">
               {navigatorElement}
@@ -263,26 +261,56 @@ export function PrecedentPanel({ initialScrollTarget }: PrecedentPanelProps) {
           </div>
         )}
 
-        {/* Overlay mode */}
-        {navigatorPosition === "overlay" && (
+        {/* Ghost hover mode */}
+        {navigatorPosition === "ghost" && (
           <>
             <PrecedentContent
               ref={contentRef}
               onScrollToClause={handleContentScrollToClause}
+              relatedClauses={relatedClauses}
+              isLocked={isLocked}
             />
-            {overlayVisible && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="absolute inset-0 z-20 bg-black/10"
-                  onClick={() => setOverlayVisible(false)}
-                />
-                {/* Navigator overlay */}
-                <div className="absolute right-0 top-0 bottom-0 z-30 w-[260px] border-l bg-card shadow-xl">
-                  {navigatorElement}
-                </div>
-              </>
-            )}
+            {/* Top-right trigger tab */}
+            <div
+              className="absolute right-0 top-2 z-20 flex items-center"
+              onMouseEnter={() => {
+                if (ghostTimeoutRef.current) {
+                  clearTimeout(ghostTimeoutRef.current);
+                  ghostTimeoutRef.current = null;
+                }
+                setGhostVisible(true);
+              }}
+              onMouseLeave={() => {
+                ghostTimeoutRef.current = setTimeout(() => {
+                  setGhostVisible(false);
+                  ghostTimeoutRef.current = null;
+                }, 300);
+              }}
+            >
+              <div className="rounded-l-md border border-r-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
+                <PanelRight className="h-3.5 w-3.5" />
+              </div>
+            </div>
+            {/* Ghost navigator panel */}
+            <div
+              className={`absolute right-0 top-0 bottom-0 z-30 w-[260px] border-l bg-card/80 backdrop-blur-md shadow-xl transition-transform duration-200 ease-out ${
+                ghostVisible ? "translate-x-0" : "translate-x-full"
+              }`}
+              onMouseEnter={() => {
+                if (ghostTimeoutRef.current) {
+                  clearTimeout(ghostTimeoutRef.current);
+                  ghostTimeoutRef.current = null;
+                }
+              }}
+              onMouseLeave={() => {
+                ghostTimeoutRef.current = setTimeout(() => {
+                  setGhostVisible(false);
+                  ghostTimeoutRef.current = null;
+                }, 300);
+              }}
+            >
+              {navigatorElement}
+            </div>
           </>
         )}
       </div>

@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useAppStore } from "@/lib/store";
 import { flagItem, unflagItem } from "@/lib/api";
-import type { FlagCategory } from "@/lib/types";
+import type { FlagCategory, FlagType } from "@/lib/types";
 import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
@@ -15,7 +15,7 @@ export function useFlags() {
   const flags = useAppStore((s) => s.flags);
 
   const create = useCallback(
-    async (paraId: string, category: FlagCategory, note: string) => {
+    async (paraId: string, flagType: FlagType, category: FlagCategory | undefined, note: string) => {
       if (!sessionId) {
         toast.error("No active session");
         return;
@@ -25,7 +25,7 @@ export function useFlags() {
           session_id: sessionId,
           para_id: paraId,
           note,
-          flag_type: "client",
+          flag_type: flagType,
           category,
         });
         useAppStore.getState().addFlag(response.flag);

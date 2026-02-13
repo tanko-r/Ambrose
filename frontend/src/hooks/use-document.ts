@@ -53,6 +53,7 @@ export function useDocument(sessionId: string | null) {
 
       setSession({
         targetFilename: doc.filename,
+        hasPrecedent: doc.has_precedent ?? false,
       });
 
       // Load flags and revisions from document response

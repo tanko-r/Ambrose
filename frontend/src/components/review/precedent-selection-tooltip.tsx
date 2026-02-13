@@ -172,7 +172,6 @@ export function PrecedentSelectionTooltip({
         para_id: selectedParaId,
         note,
         flag_type: "attorney",
-        category: "fyi",
       });
       toast.success("Flagged for reference");
     } catch {

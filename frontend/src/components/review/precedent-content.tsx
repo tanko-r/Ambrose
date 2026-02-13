@@ -14,9 +14,9 @@ import {
   useRef,
 } from "react";
 import { useAppStore } from "@/lib/store";
-import { usePrecedent } from "@/hooks/use-precedent";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PrecedentSelectionTooltip } from "./precedent-selection-tooltip";
+import type { RelatedClause } from "@/lib/types";
 
 export interface PrecedentContentHandle {
   scrollToClause: (paraId: string) => void;
@@ -24,14 +24,15 @@ export interface PrecedentContentHandle {
 
 interface PrecedentContentProps {
   onScrollToClause?: (paraId: string) => void;
+  relatedClauses: RelatedClause[];
+  isLocked: boolean;
 }
 
 export const PrecedentContent = forwardRef<
   PrecedentContentHandle,
   PrecedentContentProps
->(function PrecedentContent({ onScrollToClause }, ref) {
+>(function PrecedentContent({ onScrollToClause, relatedClauses, isLocked }, ref) {
   const precedentHtml = useAppStore((s) => s.precedentHtml);
-  const { relatedClauses, isLocked } = usePrecedent();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -126,7 +127,7 @@ export const PrecedentContent = forwardRef<
 
   if (!precedentHtml) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4 p-8">
+      <div className="space-y-4 p-8">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-full" />
@@ -140,15 +141,13 @@ export const PrecedentContent = forwardRef<
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-secondary/30">
-      <div className="mx-auto max-w-3xl rounded border bg-card p-10 my-6 shadow-sm">
-        <div
-          ref={containerRef}
-          className="document-container"
-          dangerouslySetInnerHTML={{ __html: precedentHtml }}
-        />
-        <PrecedentSelectionTooltip containerRef={containerRef} />
-      </div>
+    <div className="flex-1 overflow-y-auto bg-card px-6 py-4">
+      <div
+        ref={containerRef}
+        className="document-container"
+        dangerouslySetInnerHTML={{ __html: precedentHtml }}
+      />
+      <PrecedentSelectionTooltip containerRef={containerRef} />
     </div>
   );
 });

@@ -28,6 +28,8 @@ export function RelatedClausesTab({
 }: RelatedClausesTabProps) {
   const hasPrecedent = useAppStore((s) => s.hasPrecedent);
   const openPrecedentPanel = useAppStore((s) => s.openPrecedentPanel);
+  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const setPrecedentScrollTarget = useAppStore((s) => s.setPrecedentScrollTarget);
 
   const [relatedClauses, setRelatedClauses] = useState<RelatedClause[]>([]);
@@ -142,6 +144,7 @@ export function RelatedClausesTab({
   const handleClauseClick = (clauseParaId: string) => {
     setPrecedentScrollTarget(clauseParaId);
     openPrecedentPanel();
+    if (sidebarOpen) toggleSidebar();
   };
 
   // No results -- show "Open Precedent" link

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useFlags } from "@/hooks/use-flags";
-import type { FlagCategory } from "@/lib/types";
+import type { FlagCategory, FlagType } from "@/lib/types";
 import { FLAG_CATEGORY_LABELS } from "@/lib/types";
 import {
   Dialog,
@@ -17,21 +17,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// Category color mapping for the selector buttons
+// Category pill colors
 // ---------------------------------------------------------------------------
 
-const CATEGORY_DOT_COLORS: Record<FlagCategory, string> = {
-  "business-decision": "bg-blue-500",
-  "risk-alert": "bg-orange-500",
-  "for-discussion": "bg-purple-500",
-  fyi: "bg-gray-500",
-};
-
-const CATEGORY_SELECTED_BORDER: Record<FlagCategory, string> = {
-  "business-decision": "border-blue-500 bg-blue-50",
-  "risk-alert": "border-orange-500 bg-orange-50",
-  "for-discussion": "border-purple-500 bg-purple-50",
-  fyi: "border-gray-500 bg-gray-50",
+const CATEGORY_PILL_CLASSES: Record<FlagCategory, { active: string; inactive: string }> = {
+  "business-decision": {
+    active: "bg-blue-100 text-blue-800 border-blue-300",
+    inactive: "text-muted-foreground hover:bg-accent",
+  },
+  "risk-alert": {
+    active: "bg-orange-100 text-orange-800 border-orange-300",
+    inactive: "text-muted-foreground hover:bg-accent",
+  },
+  "for-discussion": {
+    active: "bg-purple-100 text-purple-800 border-purple-300",
+    inactive: "text-muted-foreground hover:bg-accent",
+  },
+  fyi: {
+    active: "bg-gray-100 text-gray-800 border-gray-300",
+    inactive: "text-muted-foreground hover:bg-accent",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -44,10 +49,12 @@ interface FlagDialogProps {
   paraId: string;
   sectionRef?: string;
   defaultCategory?: FlagCategory;
+  defaultNote?: string;
+  defaultFlagType?: FlagType;
 }
 
 // ---------------------------------------------------------------------------
-// FlagDialog - Category picker + note input for flagging a paragraph
+// FlagDialog - Type toggle (Attorney/Client) + category pills + note
 // ---------------------------------------------------------------------------
 
 const ALL_CATEGORIES: FlagCategory[] = [
@@ -63,28 +70,37 @@ export function FlagDialog({
   paraId,
   sectionRef,
   defaultCategory,
+  defaultNote,
+  defaultFlagType,
 }: FlagDialogProps) {
   const { create } = useFlags();
 
+  const [flagType, setFlagType] = useState<FlagType>(defaultFlagType ?? "client");
   const [category, setCategory] = useState<FlagCategory>(
     defaultCategory ?? "for-discussion"
   );
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(defaultNote ?? "");
   const [saving, setSaving] = useState(false);
 
   // Reset state when dialog opens
   useEffect(() => {
     if (open) {
+      setFlagType(defaultFlagType ?? "client");
       setCategory(defaultCategory ?? "for-discussion");
-      setNote("");
+      setNote(defaultNote ?? "");
       setSaving(false);
     }
-  }, [open, defaultCategory]);
+  }, [open, defaultCategory, defaultNote, defaultFlagType]);
 
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      await create(paraId, category, note);
+      await create(
+        paraId,
+        flagType,
+        flagType === "client" ? category : undefined,
+        note
+      );
       onOpenChange(false);
     } finally {
       setSaving(false);
@@ -101,35 +117,61 @@ export function FlagDialog({
           )}
         </DialogHeader>
 
-        {/* Category selector: 2x2 grid */}
-        <div className="grid grid-cols-2 gap-2">
-          {ALL_CATEGORIES.map((cat) => {
-            const isSelected = category === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                className={`flex items-center gap-2 rounded-md border-2 px-3 py-2.5 text-left text-sm transition-colors ${
-                  isSelected
-                    ? CATEGORY_SELECTED_BORDER[cat]
-                    : "border-border hover:border-muted-foreground/30 hover:bg-accent/50"
-                }`}
-              >
-                <span
-                  className={`inline-block h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_DOT_COLORS[cat]}`}
-                />
-                <span className="font-medium">
-                  {FLAG_CATEGORY_LABELS[cat]}
-                </span>
-              </button>
-            );
-          })}
+        {/* Flag type toggle: Attorney / Client */}
+        <div className="flex rounded-lg border bg-secondary/50 p-0.5">
+          <button
+            type="button"
+            onClick={() => setFlagType("attorney")}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+              flagType === "attorney"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Attorney
+          </button>
+          <button
+            type="button"
+            onClick={() => setFlagType("client")}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+              flagType === "client"
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Client
+          </button>
         </div>
+
+        {/* Category pills — only for client flags */}
+        {flagType === "client" && (
+          <div className="flex gap-1">
+            {ALL_CATEGORIES.map((cat) => {
+              const isSelected = category === cat;
+              const classes = CATEGORY_PILL_CLASSES[cat];
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setCategory(cat)}
+                  className={`rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                    isSelected ? classes.active : `border-transparent ${classes.inactive}`
+                  }`}
+                >
+                  {FLAG_CATEGORY_LABELS[cat]}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Note input */}
         <Textarea
-          placeholder="Add a note for the client (optional)..."
+          placeholder={
+            flagType === "attorney"
+              ? "Add a note (optional)..."
+              : "Add a note for the client (optional)..."
+          }
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}

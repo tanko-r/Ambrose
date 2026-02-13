@@ -37,9 +37,6 @@ export function usePrecedent() {
   const [relatedClauses, setRelatedClauses] = useState<RelatedClause[]>([]);
   const [allRelatedClauses, setAllRelatedClauses] = useState<RelatedClause[]>([]);
 
-  // Prevent double-fetch of precedent data
-  const loadedRef = useRef(false);
-
   // Cache for related clauses keyed by paraId
   const cacheRef = useRef<Map<string, RelatedClause[]>>(new Map());
 
@@ -48,11 +45,18 @@ export function usePrecedent() {
 
   // ==========================================================================
   // 1. Load precedent data on mount
+  // NOTE: Uses store state check (not ref) to prevent double-fetch.
+  // A ref-based guard breaks with React strict mode's double-invocation:
+  // the first run sets the ref but its fetch gets cancelled by cleanup,
+  // then the second run sees the ref and skips, leaving data unloaded.
   // ==========================================================================
 
   useEffect(() => {
-    if (!sessionId || !hasPrecedent || loadedRef.current) return;
-    loadedRef.current = true;
+    if (!sessionId || !hasPrecedent) return;
+
+    // Already loaded — check store state (works correctly with strict mode)
+    const { precedentFilename: alreadyLoaded } = useAppStore.getState();
+    if (alreadyLoaded) return;
 
     let cancelled = false;
 
@@ -61,7 +65,7 @@ export function usePrecedent() {
       try {
         const [data, html] = await Promise.all([
           getPrecedent(sessionId!),
-          getPrecedentHtml(sessionId!).catch(() => null),
+          getPrecedentHtml(sessionId!),
         ]);
 
         if (cancelled) return;
@@ -77,6 +81,7 @@ export function usePrecedent() {
         });
       } catch (err) {
         if (!cancelled) {
+          console.error("Failed to load precedent:", err);
           toast.error(
             err instanceof Error ? err.message : "Failed to load precedent"
           );

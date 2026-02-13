@@ -76,6 +76,15 @@
 - [ ] Visual parity check
 - [ ] Design token audit
 
+## Post-Migration: UX Polish (from 2026-02-09 session)
+- [ ] Full-width document rendering — backend `.document-preview` CSS has `padding: 0.75in` and library emits `body { padding: 72pt; margin: 0 auto }` that leaks into host page. Fix is in html_renderer.py (scope library `body` selectors to `.document-preview`, reduce padding) + delete cached .rendered.html/.precedent.html files. Frontend paper card wrappers already removed (no more `max-w-3xl mx-auto`).
+- [ ] Ghost navigator for precedent panel — implemented (hover trigger top-right, frosted glass slide-in, 300ms dismiss delay). Needs visual verification after full-width fix lands.
+- [ ] Ghost navigator for target doc nav panel — implemented (same pattern, left side). Needs visual verification.
+- [ ] Split pane sizing — localStorage persistence removed, always resets to 60/40. Verify behavior.
+- [ ] Sidebar auto-close on related clause click — implemented (toggleSidebar when clicking related clause in precedent tab).
+- [ ] Restore nav + sidebar on precedent close — implemented (closePrecedentPanel sets navPanelOpen/sidebarOpen to true).
+- [ ] Navigator mode: overlay renamed to ghost, overlay button removed, match highlighting added (bg-primary/[0.06]).
+
 ## Phase 8: Cleanup + Cutover
 - [ ] Archive app/static/ to _archived/
 - [ ] Remove Flask send_from_directory for index.html

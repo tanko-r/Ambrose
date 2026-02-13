@@ -14,7 +14,7 @@ import {
   Filter,
   PanelRight,
   PanelBottom,
-  Layers,
+  X,
 } from "lucide-react";
 import type { Paragraph, Section, NavigatorPosition } from "@/lib/types";
 
@@ -63,7 +63,7 @@ export function PrecedentNavigator({
     // Build a map of paragraph IDs to their parent section
     const paraToSection = new Map<string, Section>();
     for (const sec of precedentSections) {
-      for (const pid of sec.paragraph_ids) {
+      for (const pid of sec.paragraph_ids ?? []) {
         paraToSection.set(pid, sec);
       }
     }
@@ -175,11 +175,6 @@ export function PrecedentNavigator({
       icon: <PanelBottom className="h-3 w-3" />,
       label: "Drawer",
     },
-    {
-      value: "overlay",
-      icon: <Layers className="h-3 w-3" />,
-      label: "Overlay",
-    },
   ];
 
   // =========================================================================
@@ -222,6 +217,14 @@ export function PrecedentNavigator({
               {mode.icon}
             </button>
           ))}
+          {/* Close navigator → ghost mode */}
+          <button
+            onClick={() => setNavigatorPosition("ghost")}
+            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            title="Hide navigator"
+          >
+            <X className="h-3 w-3" />
+          </button>
         </div>
       </div>
 
@@ -278,7 +281,7 @@ export function PrecedentNavigator({
                   key={item.id}
                   onClick={() => item.paraId && onNavigate(item.paraId)}
                   className={`flex w-full items-center gap-1 rounded px-1.5 py-1 text-left text-xs transition-colors hover:bg-accent ${
-                    isMatch ? "nav-match-dot" : ""
+                    isMatch ? "nav-match-dot bg-primary/[0.06]" : ""
                   } ${isPulsing ? "pulse-highlight" : ""}`}
                   style={{ paddingLeft: `${4 + item.level * 12}px` }}
                   onAnimationEnd={

@@ -338,5 +338,7 @@ export const useAppStore = create<AppStore>((set) => ({
       lockedParaId: null,
       lockedRelatedClauses: null,
       precedentScrollTarget: null,
+      navPanelOpen: true,
+      sidebarOpen: true,
     }),
 }));
