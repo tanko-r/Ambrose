@@ -2,7 +2,7 @@
 
 // =============================================================================
 // useRevision — Revision lifecycle hook
-// Encapsulates generate, accept, reject, and reopen operations.
+// Encapsulates generate, accept, reject, reopen, and stop operations.
 // Components call these methods; the hook manages store + API coordination.
 // =============================================================================
 
@@ -11,6 +11,10 @@ import { useAppStore } from "@/lib/store";
 import { revise, acceptRevision, rejectRevision, unacceptRevision } from "@/lib/api";
 import { extractFinalText } from "@/lib/track-changes";
 import { toast } from "sonner";
+
+// Module-scoped AbortController so all consumers of useRevision share
+// the same cancellation handle for the current in-flight generation.
+let abortController: AbortController | null = null;
 
 export function useRevision() {
   // Subscribe to generatingRevision for reactivity
@@ -32,16 +36,26 @@ export function useRevision() {
 
       if (!sessionId || riskIds.length === 0) return;
 
+      // Abort any existing in-flight generation
+      abortController?.abort();
+
+      // Create a new controller for this request
+      const controller = new AbortController();
+      abortController = controller;
+
       useAppStore.getState().setGeneratingRevision(true);
 
       try {
-        const result = await revise({
-          session_id: sessionId,
-          para_id: paraId,
-          risk_ids: riskIds,
-          include_related_ids: includeRelatedIds,
-          custom_instruction: customInstruction,
-        });
+        const result = await revise(
+          {
+            session_id: sessionId,
+            para_id: paraId,
+            risk_ids: riskIds,
+            include_related_ids: includeRelatedIds,
+            custom_instruction: customInstruction,
+          },
+          controller.signal
+        );
 
         const store = useAppStore.getState();
 
@@ -64,15 +78,36 @@ export function useRevision() {
 
         toast.success("Revision generated");
       } catch (err) {
+        // If the request was aborted (user clicked Stop), exit silently
+        if (controller.signal.aborted) {
+          return;
+        }
         toast.error(
           err instanceof Error ? err.message : "Revision failed"
         );
       } finally {
-        useAppStore.getState().setGeneratingRevision(false);
+        // Only reset state if this controller is still the active one
+        // (i.e., not replaced by a newer generate call)
+        if (abortController === controller) {
+          useAppStore.getState().setGeneratingRevision(false);
+          abortController = null;
+        }
       }
     },
     []
   );
+
+  /**
+   * Stop the current in-flight revision generation.
+   * Aborts the fetch and resets generatingRevision to false.
+   */
+  const stopGeneration = useCallback(() => {
+    if (abortController) {
+      abortController.abort();
+      abortController = null;
+    }
+    useAppStore.getState().setGeneratingRevision(false);
+  }, []);
 
   /**
    * Accept a revision, optionally persisting user inline edits from the editor element.
@@ -188,5 +223,5 @@ export function useRevision() {
     }
   }, []);
 
-  return { generate, accept, reject, reopen, generating };
+  return { generate, accept, reject, reopen, generating, stopGeneration };
 }
