@@ -93,8 +93,10 @@ export default function ReviewPage({
     return unsub;
   }, []);
 
+  const compactMode = useAppStore((s) => s.compactMode);
+
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className={`flex h-screen flex-col overflow-hidden${compactMode ? " compact" : ""}`}>
       {/* Header */}
       <Header />
 
