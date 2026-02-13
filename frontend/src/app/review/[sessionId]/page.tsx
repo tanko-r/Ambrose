@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useEffect } from "react";
+import { use, useEffect, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { useDocument } from "@/hooks/use-document";
 import { useAnalysis } from "@/hooks/use-analysis";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { NavigationPanel } from "@/components/review/navigation-panel";
 import { DocumentViewer } from "@/components/review/document-viewer";
 import { Sidebar } from "@/components/review/sidebar";
@@ -13,6 +14,8 @@ import { Header } from "@/components/layout/header";
 import { AnalysisOverlay } from "@/components/review/analysis-overlay";
 import { SplitLayout } from "@/components/review/split-layout";
 import { PrecedentPanel } from "@/components/review/precedent-panel";
+import { CommandPalette } from "@/components/command-palette";
+import { KeyboardHelp } from "@/components/keyboard-help";
 import type { NavigatorPosition } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
@@ -39,6 +42,16 @@ export default function ReviewPage({
 
   // Read session status for finalized banner
   const status = useAppStore((s) => s.status);
+
+  // Command palette + keyboard help dialog state
+  const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // Register keyboard shortcuts
+  useKeyboardShortcuts({
+    openCommandPalette: () => setCmdPaletteOpen(true),
+    openHelpDialog: () => setHelpOpen(true),
+  });
 
   // Auto-start analysis when document finishes loading and analysis hasn't run
   useEffect(() => {
@@ -80,8 +93,10 @@ export default function ReviewPage({
     return unsub;
   }, []);
 
+  const compactMode = useAppStore((s) => s.compactMode);
+
   return (
-    <div className="flex h-screen flex-col overflow-hidden">
+    <div className={`flex h-screen flex-col overflow-hidden${compactMode ? " compact" : ""}`}>
       {/* Header */}
       <Header />
 
@@ -134,6 +149,12 @@ export default function ReviewPage({
 
       {/* Analysis progress overlay (renders only during analysis) */}
       <AnalysisOverlay />
+
+      {/* Command palette (Cmd/Ctrl+K) */}
+      <CommandPalette open={cmdPaletteOpen} onOpenChange={setCmdPaletteOpen} />
+
+      {/* Keyboard shortcuts help dialog (? key) */}
+      <KeyboardHelp open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }

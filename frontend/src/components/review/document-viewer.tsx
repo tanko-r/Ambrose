@@ -4,7 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FlagDialog } from "@/components/dialogs/flag-dialog";
-import { Flag as FlagIcon } from "lucide-react";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { useDelayedLoading } from "@/hooks/use-delayed-loading";
+import { Flag as FlagIcon, FileText } from "lucide-react";
 
 interface DocumentViewerProps {
   loading: boolean;
@@ -50,6 +52,22 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
     clickableParas.forEach((el) => {
       el.style.cursor = "pointer";
+
+      // Accessibility: make paragraphs keyboard-navigable
+      el.setAttribute("role", "button");
+      el.setAttribute("tabindex", "0");
+      const sectionRef = el.getAttribute("data-section-ref") || el.querySelector(".section-ref")?.textContent || "";
+      el.setAttribute("aria-label", sectionRef ? `Paragraph: ${sectionRef}` : "Document paragraph");
+
+      // Keyboard handler: Enter/Space triggers same as click
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          const paraId = el.getAttribute("data-para-id");
+          if (paraId) selectParagraph(paraId);
+        }
+      });
+
       el.addEventListener("click", (e) => {
         // Don't fire paragraph selection when user is selecting text
         const selection = window.getSelection();
@@ -96,7 +114,9 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       if (!paraId) return;
 
       // Selection state
-      el.classList.toggle("selected", paraId === selectedParaId);
+      const isSelected = paraId === selectedParaId;
+      el.classList.toggle("selected", isSelected);
+      el.setAttribute("aria-selected", String(isSelected));
 
       // Risk state
       el.classList.toggle("has-risk", riskParaIds.has(paraId));
@@ -387,7 +407,13 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     });
   }, [selectionContext]);
 
+  const showSkeleton = useDelayedLoading(loading);
+
   if (loading) {
+    if (!showSkeleton) {
+      // Delay skeleton to avoid flash for instant loads
+      return <div className="flex-1" />;
+    }
     return (
       <div className="space-y-4 p-8">
         <Skeleton className="h-6 w-48" />
@@ -407,7 +433,8 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   // High-fidelity HTML mode (preferred)
   if (documentHtml) {
     return (
-      <div className="flex-1 overflow-y-auto bg-card px-6 py-4">
+      <ErrorBoundary friendlyMessage="Failed to render the document. The HTML content may be malformed.">
+      <div role="main" aria-label="Document viewer" className="flex-1 overflow-y-auto bg-card px-6 py-4">
         <div className="relative">
           <div
             ref={containerRef}
@@ -424,6 +451,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
                 e.preventDefault();
               }}
               onClick={handleSelectionFlag}
+              aria-label="Flag selected text"
               className="absolute z-40 flex items-center gap-1 rounded-md border bg-card px-2 py-1.5 text-xs font-medium shadow-lg transition-colors hover:bg-accent"
               style={{
                 top: selectionContext.rect.top,
@@ -454,6 +482,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
           )}
         </div>
       </div>
+      </ErrorBoundary>
     );
   }
 
@@ -468,12 +497,22 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
                 <div
                   key={para.id}
                   data-para-id={para.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-selected={para.id === selectedParaId}
+                  aria-label={para.section_ref ? `Paragraph: ${para.section_ref}` : "Document paragraph"}
                   className={`group relative my-2 cursor-pointer rounded border border-transparent px-4 py-2.5 transition-colors hover:border-border hover:bg-accent/50 ${
                     para.id === selectedParaId
                       ? "border-primary bg-primary/5 shadow-sm"
                       : ""
                   }`}
                   onClick={() => selectParagraph(para.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      selectParagraph(para.id);
+                    }
+                  }}
                 >
                   {para.section_ref && (
                     <div className="mb-1 text-xs font-medium tracking-wider text-muted-foreground">
@@ -492,8 +531,16 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
   // Empty state
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <p className="text-sm text-muted-foreground">No document loaded</p>
+    <div className="flex flex-1 flex-col items-center justify-center gap-3">
+      <FileText className="h-8 w-8 text-muted-foreground/40" />
+      <div className="text-center">
+        <p className="text-sm font-medium text-muted-foreground">
+          No document loaded
+        </p>
+        <p className="mt-1 max-w-[260px] text-xs text-muted-foreground/70">
+          Upload a contract on the dashboard to begin your review.
+        </p>
+      </div>
     </div>
   );
 }

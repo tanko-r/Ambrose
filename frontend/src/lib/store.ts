@@ -81,6 +81,8 @@ interface ReviewState {
 type View = 'dashboard' | 'review';
 type ReviewMode = 'linear' | 'by-risk' | 'by-category';
 
+type SidebarTab = 'risks' | 'related' | 'definitions' | 'flags';
+
 interface UIState {
   view: View;
   navPanelOpen: boolean;
@@ -89,9 +91,14 @@ interface UIState {
   precedentPanelOpen: boolean;
   reviewMode: ReviewMode;
   compactMode: boolean;
+  showRisks: boolean;
+  showRevisions: boolean;
+  showFlags: boolean;
   hoveredRiskId: string | null;
   focusedRiskId: string | null;
   generatingRevision: boolean;
+  defaultSidebarTab: SidebarTab;
+  navPanelVisibleDefault: boolean;
 }
 
 // --- Precedent State ---
@@ -140,6 +147,9 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   togglePrecedentPanel: () => void;
   setReviewMode: (mode: ReviewMode) => void;
   toggleCompactMode: () => void;
+  toggleShowRisks: () => void;
+  toggleShowRevisions: () => void;
+  toggleShowFlags: () => void;
   setHoveredRiskId: (riskId: string | null) => void;
   setFocusedRiskId: (riskId: string | null) => void;
   setGeneratingRevision: (v: boolean) => void;
@@ -207,9 +217,14 @@ const initialUIState: UIState = {
   precedentPanelOpen: false,
   reviewMode: 'linear',
   compactMode: false,
+  showRisks: true,
+  showRevisions: true,
+  showFlags: true,
   hoveredRiskId: null,
   focusedRiskId: null,
   generatingRevision: false,
+  defaultSidebarTab: 'risks',
+  navPanelVisibleDefault: true,
 };
 
 const initialPrecedentState: PrecedentState = {
@@ -293,6 +308,9 @@ export const useAppStore = create<AppStore>((set) => ({
     }),
   setReviewMode: (mode) => set({ reviewMode: mode }),
   toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
+  toggleShowRisks: () => set((state) => ({ showRisks: !state.showRisks })),
+  toggleShowRevisions: () => set((state) => ({ showRevisions: !state.showRevisions })),
+  toggleShowFlags: () => set((state) => ({ showFlags: !state.showFlags })),
   setHoveredRiskId: (riskId) => set({ hoveredRiskId: riskId }),
   setFocusedRiskId: (riskId) =>
     set((state) => ({
