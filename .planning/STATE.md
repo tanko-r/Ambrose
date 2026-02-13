@@ -38,7 +38,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 7 | Polish + Validation | In Progress | 80% |
 | 8 | Cleanup + Cutover | Complete | 100% |
 
-**Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
+**Note:** v1.0 phases 5 and 7 have remaining plans. Phase 8 complete. v1.1 planning proceeds in parallel.
 
 ## Accumulated Decisions
 
