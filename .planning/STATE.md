@@ -35,7 +35,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
 | 6 | Dialogs + Finalization | Complete | 100% |
-| 7 | Polish + Validation | In Progress | 40% |
+| 7 | Polish + Validation | In Progress | 60% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
 **Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
@@ -59,6 +59,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 7 | Manual localStorage preferences (no Zustand persist) | Cleaner separation, simpler debugging |
 | 7 | react-hotkeys-hook for keyboard shortcuts | Mature library with built-in form field protection |
 | 7 | Custom DOM events for cross-component shortcut communication | Decouples keyboard hook from specific UI components |
+| 7 | useDelayedLoading with 200ms threshold for skeleton screens | Balances avoiding flash vs. perceived responsiveness |
+| 7 | Compact mode: CSS class overrides + Tailwind conditional classes | Card spacing only, no font/icon changes per user decision |
+| 7 | Filter toggles default all-on, show-all fallback when all off | Safety fallback prevents empty navigator |
 
 ### Quick Tasks Completed
 
@@ -72,7 +75,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed 07-02-PLAN.md (keyboard shortcuts + command palette)
+Last activity: 2026-02-13 - Completed 07-03-PLAN.md (loading states, error boundary, filters, compact mode)
 Resume file: None
 
 ---
