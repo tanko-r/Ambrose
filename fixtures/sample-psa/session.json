@@ -1,0 +1,22 @@
+{
+  "session_id": "test-sample-psa",
+  "created_at": "2026-02-07T16:24:32.102070",
+  "status": "analyzed",
+  "representation": "buyer",
+  "contract_type": "psa",
+  "approach": "competitive-bid",
+  "aggressiveness": 4,
+  "deal_context": "Buyer acquiring commercial property in competitive bid scenario. Need aggressive buyer protections.",
+  "include_exhibits": false,
+  "target_filename": "Sample PSA - Seller Side.docx",
+  "source_session_id": "a81fd280-7ba2-417c-8835-47a65e0f782c",
+  "analysis_summary": {
+    "total_risks": 270,
+    "high_severity": 49,
+    "medium_severity": 86,
+    "info_items": 100,
+    "paragraphs_analyzed": 197,
+    "elapsed_seconds": 145,
+    "estimated_cost": "$6"
+  }
+}

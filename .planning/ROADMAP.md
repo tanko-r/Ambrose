@@ -1,245 +1,247 @@
-# Roadmap: Claude Redlining
+# Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Milestone:** v1.0 — Complete Placeholder Features
+**Updated:** 2026-02-11
+**Branch:** `nextjs-migration`
 
-## Overview
+## Milestones
 
-4 phases implementing placeholder UI features. Each phase is **independent** and can run in parallel with separate agents.
+- **v1.0 Next.js Migration + Feature Completion** - Phases A, B, 0-8 (in progress)
+- **v1.1 Cloud Deployment** - Phases 9-13 (planned)
+
+## Phases
+
+<details>
+<summary>v1.0 Next.js Migration + Feature Completion (Phases A, B, 0-8)</summary>
+
+### Phase A: High-Fidelity Document Rendering
+**Goal**: Exact Word formatting in both document panels
+**Status**: Complete
+**Requirements**: RENDER-01..04
+
+Pure Python DOCX-to-HTML conversion via docx-parser-converter. Preserves numbering, fonts, indentation, styles. ~100ms conversion with caching. Used in both main panel and precedent panel.
+
+### Phase B: Analysis Acceleration
+**Goal**: Analysis time from 30+ min to <2 min
+**Status**: Complete
+
+Conversation forking architecture: initial full-document analysis with Claude Opus + 30 parallel batch forks. Pre-filters non-substantive paragraphs. ~90 seconds, ~$2.50/doc with prompt caching. Real-time progress UI.
+
+### Phase 0: Scaffolding + Foundation
+**Goal**: Next.js app, types, API client, store, design tokens
+**Status**: Complete
+
+Next.js 16 scaffold, 16 shadcn/ui components, Zustand store, typed API client for all 30+ endpoints, design tokens, API proxy config.
+
+### Phase 1: Core Layout + Intake
+**Goal**: Header, intake form, recent projects, new project dialog
+**Status**: Complete
+
+### Phase 2: Document Viewer + Navigation
+**Goal**: HTML rendering, nav panel, sidebar shell, bottom bar
+**Status**: Complete
+
+### Phase 3: Sidebar + Risk Analysis
+**Goal**: Risk accordion, analysis overlay, hover highlights
+**Status**: Complete
+
+### Phase 4: Revision Bottom Sheet + Track Changes
+**Goal**: Diff display, accept/reject, inline editing
+**Status**: Complete
+
+Plans:
+- [x] 04-01-PLAN.md -- Infrastructure: shadcn Drawer, track-changes.ts DOM utils, useRevision hook, store/type extensions, CSS
+- [x] 04-02-PLAN.md -- Components: TrackChangesEditor (contentEditable), RevisionSheet (Drawer), RevisionActions
+- [x] 04-03-PLAN.md -- Wiring: Generate button, page layout, auto-open, BottomBar visibility
+
+### Phase 5: Precedent Split View
+**Goal**: Side-by-side precedent viewing with resizable split pane, related clause highlighting, text selection actions
+**Status**: In Progress
+**Requirements**: PREC-01..04
+
+Plans:
+- [ ] 05-01-PLAN.md -- Foundation: types, store extensions, use-precedent hook, split-layout, CSS
+- [ ] 05-02-PLAN.md -- Components: precedent-content, precedent-navigator, precedent-panel, selection tooltip
+- [ ] 05-03-PLAN.md -- Integration: page layout, sidebar overlay/collapse, related tab wiring, snippet badge
+
+### Phase 6: Dialogs + Finalization
+**Goal**: Complete end-to-end workflow with export, transmittal, and project management
+**Status**: In Progress
+**Requirements**: FIN-01..04, TRANS-01..04, NEW-01..04
+
+Plans:
+- [x] 06-01-PLAN.md -- Flag system: types, backend category, use-flags hook, flag dialog, flags-tab rewrite, margin icons
+- [x] 06-02-PLAN.md -- Finalize & export: use-finalize hook, finalize dialog, bottom bar wiring, sidebar flag button
+- [ ] 06-03-PLAN.md -- Transmittal + new project: transmittal dialog, new project enhancement, delete dialog
+- [ ] 06-04-PLAN.md -- Gap closure: flag card navigation, text selection fixes, flag icon position/tooltip
+- [ ] 06-05-PLAN.md -- Gap closure: finalize dialog data sync, UI fixes, export dropdown, author autofill
+
+### Phase 7: Polish + Validation
+**Goal**: Production-quality UX polish and accessibility
+**Status**: Pending
+
+Tasks: Keyboard shortcuts, light/dark mode, compact mode, localStorage preferences, bottom bar filters, loading/error/empty states, responsive behavior, accessibility audit, visual parity check.
+
+### Phase 8: Cleanup + Cutover
+**Goal**: Remove old frontend, finalize dev setup
+**Status**: Pending
+
+Tasks: Archive app/static/, remove Flask static serving, dev startup script, README update.
+
+</details>
+
+---
+
+## v1.1 Cloud Deployment
+
+**Milestone Goal:** Make the app deployable to Railway as a two-service project (Flask backend + Next.js frontend) while preserving the local dev workflow.
+
+**Phase Overview:**
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 1 | Finalize Redline | Export Word docs with track changes | FIN-01, FIN-02, FIN-03, FIN-04 | Pending |
-| 2 | Generate Transmittal | Create summary email for client | TRANS-01, TRANS-02, TRANS-03, TRANS-04 | Pending |
-| 3 | Compare Precedent | Side-by-side precedent viewing | PREC-01, PREC-02, PREC-03, PREC-04 | Pending |
-| 4 | New Project | Session management and reset | NEW-01, NEW-02, NEW-03, NEW-04 | Pending |
-| 5 | High-Fidelity Document Rendering | Exact Word formatting in both panels | RENDER-01, RENDER-02, RENDER-03, RENDER-04 | Complete |
-| 6 | Analysis Acceleration | Reduce analysis time from 30+ min to <2 min | ACCEL-01, ACCEL-02, ACCEL-03, ACCEL-04 | Complete |
-
-## Phase Details
-
-### Phase 1: Finalize Redline
-
-**Goal:** Enable users to export their review as Word documents ready to send to opposing counsel.
-
-**Requirements:**
-- FIN-01: Export Word doc with track changes
-- FIN-02: Export clean Word doc (final text only)
-- FIN-03: Preserve original formatting exactly
-- FIN-04: Show modal to review before export
-
-**Success Criteria:**
-1. User clicks "Finalize Redline" and sees modal listing all accepted revisions
-2. User can download .docx with track changes that opens correctly in Microsoft Word
-3. User can download clean .docx showing final text without markup
-4. Downloaded documents preserve original numbering, fonts, and styles
-5. Download includes all paragraphs that had revisions accepted
-
-**Dependencies:** None (uses existing revision data in session)
-
-**Implementation Notes:**
-- Use python-redlines library for track changes (uncomment in requirements.txt)
-- Backend endpoint: POST /api/finalize with response containing download links
-- Frontend: Modal component showing revision summary, download buttons
+| 9 | Containerization | Both services run in Docker with env-var-driven config | DOCK-01..04, CONF-01, CONF-02, CONF-04 | Not started |
+| 10 | API Routing Migration | Frontend routes API via proxy.ts with runtime backend URL | PROX-01, PROX-02, CONF-03 | Not started |
+| 11 | Session Resilience | Sessions survive server restarts | SESS-01, SESS-02 | Not started |
+| 12 | Railway Deployment | App runs on Railway with persistent storage and health checks | RAIL-01, RAIL-02, RAIL-03 | Not started |
+| 13 | Background Analysis | Long-running analysis avoids HTTP timeouts | ASYNC-01, ASYNC-02 | Not started |
 
 ---
 
-### Phase 2: Generate Transmittal
+### Phase 9: Containerization
 
-**Goal:** Automate creation of the cover email attorneys send with redlined documents.
+**Goal**: Both services build and run as Docker containers with all configuration driven by environment variables, while local development works exactly as before.
 
-**Requirements:**
-- TRANS-01: Generate transmittal email
-- TRANS-02: Include summary of key revisions
-- TRANS-03: Include flagged paragraphs with notes
-- TRANS-04: Open default email client
+**Depends on**: v1.0 complete (Phases 5-8)
+**Requirements**: DOCK-01, DOCK-02, DOCK-03, DOCK-04, CONF-01, CONF-02, CONF-04
 
-**Success Criteria:**
-1. User clicks "Generate Transmittal" and email client opens
-2. Email body contains high-level summary of major revisions made
-3. Email body lists all client-flagged paragraphs with their notes
-4. Email format is professional and ready to send
-5. Works with Outlook, Gmail, and other standard email clients
+**Success Criteria** (what must be TRUE):
+  1. `docker compose up` starts both services and the app is usable at localhost
+  2. `python run.py` + `npm run dev` still works exactly as before with zero additional configuration
+  3. Backend container uses gunicorn with gthread workers (not the Flask dev server)
+  4. Docker images build in under 5 minutes and do not contain node_modules, .git, or data directories
 
-**Dependencies:** None (uses existing flags and revisions in session)
-
-**Implementation Notes:**
-- Backend: Generate email content from session data
-- Frontend: Use mailto: URL with encoded subject/body
-- Consider HTML vs plain text based on email client compatibility
+**Plans**: TBD
 
 ---
 
-### Phase 3: Compare Precedent
+### Phase 10: API Routing Migration
 
-**Goal:** Let attorneys view their preferred form alongside the current document for reference.
+**Goal**: Frontend uses Next.js proxy.ts for all API routing, reading the backend URL from an environment variable at runtime, eliminating the standalone-mode rewrites bug.
 
-**Requirements:**
-- PREC-01: Open precedent in separate panel
-- PREC-02: Full document navigation
-- PREC-03: Highlight related clauses
-- PREC-04: Allow text copying
+**Depends on**: Phase 9
+**Requirements**: PROX-01, PROX-02, CONF-03
 
-**Success Criteria:**
-1. User clicks "Compare Precedent" in sidebar and panel opens
-2. Panel shows full precedent document with scroll navigation
-3. System highlights sections in precedent relevant to current paragraph
-4. User can select and copy text from precedent panel
-5. Panel can be closed/reopened without losing position
+**Success Criteria** (what must be TRUE):
+  1. All API calls from the frontend go through proxy.ts (no rewrites() in next.config.ts)
+  2. `npm run dev` routes API calls to localhost:5000 with no env vars set (default fallback)
+  3. Setting `BACKEND_URL` env var changes where API calls are routed without rebuilding the frontend
 
-**Dependencies:** Requires precedent document uploaded during intake
-
-**Implementation Notes:**
-- Frontend: New panel component (slide-in or split view)
-- Backend: Endpoint to get precedent paragraph by ID
-- Use existing document parsing to match sections between docs
+**Plans**: TBD
 
 ---
 
-### Phase 4: New Project
+### Phase 11: Session Resilience
 
-**Goal:** Allow attorneys to start a fresh review without restarting the application.
+**Goal**: Sessions persist across server restarts by auto-loading from disk when not found in memory, with optimized serialization that excludes large parsed document objects.
 
-**Requirements:**
-- NEW-01: Prompt to save/discard current work
-- NEW-02: Save current session to disk
-- NEW-03: Return to fresh intake form
-- NEW-04: Optional session history
+**Depends on**: Phase 9 (containers must exist to test restart behavior)
+**Requirements**: SESS-01, SESS-02
 
-**Success Criteria:**
-1. User clicks "New Project" and sees confirmation dialog
-2. If "Save" selected, current session persists and can be accessed later
-3. If "Discard" selected, session is cleared without saving
-4. After either choice, UI shows fresh intake form
-5. Previous session data is not mixed with new project
+**Success Criteria** (what must be TRUE):
+  1. User can restart the backend server and resume their session without re-uploading documents
+  2. Session JSON files on disk do not contain parsed_doc or parsed_precedent (keeping file sizes small)
+  3. Large objects (parsed_doc, parsed_precedent) are re-derived from source files on session reload
 
-**Dependencies:** None
-
-**Implementation Notes:**
-- Frontend: Confirmation modal with Save/Discard/Cancel
-- Backend: Session save endpoint (already exists, may need enhancement)
-- Reset AppState and reload intake view
-- Session history (NEW-04) is optional enhancement
+**Plans**: TBD
 
 ---
 
-### Phase 5: High-Fidelity Document Rendering
+### Phase 12: Railway Deployment
 
-**Goal:** Render Word documents in both the main document panel and Compare Precedent panel with maximum fidelity — preserving exact formatting, indentation, automatic numbering, styles, fonts, and visual layout identical to Microsoft Word.
+**Goal**: The app runs on Railway as two services with persistent storage, health checks, and automatic restarts.
 
-**Requirements:**
-- RENDER-01: Document preview matches Word formatting exactly (fonts, sizes, spacing)
-- RENDER-02: Automatic numbering renders correctly (1.1, (a), (i), etc.)
-- RENDER-03: Indentation and margins preserved precisely
-- RENDER-04: Both main panel and precedent panel use same rendering engine
+**Depends on**: Phase 10 (proxy.ts required for standalone mode), Phase 11 (session resilience required for deploy restarts)
+**Requirements**: RAIL-01, RAIL-02, RAIL-03
 
-**Success Criteria:**
-1. Opening a document in the app produces visually identical rendering to Microsoft Word
-2. Automatic numbering schemes (legal, outline, lettered) display correctly
-3. Nested indentation levels are preserved
-4. Font families, sizes, and styles match the source document
-5. Precedent panel renders with same fidelity as main document panel
+**Success Criteria** (what must be TRUE):
+  1. Frontend is accessible at a public Railway URL and API calls reach the Flask backend via private networking
+  2. Uploaded documents and session data survive a Railway redeploy
+  3. `/api/version` returns git commit info from environment variables (not from .git directory)
+  4. Health check endpoints respond correctly and Railway auto-restarts crashed services
 
-**Dependencies:** Phase 3 (Compare Precedent panel exists)
-
-**Plans:** 2 plans
-
-Plans:
-- [x] 05-01-PLAN.md — Backend HTML rendering service with docx-parser-converter
-- [x] 05-02-PLAN.md — Frontend HTML integration for both panels
-
-**Implementation Notes:**
-- docx-parser-converter (already installed v1.0.3) for server-side DOCX->HTML conversion
-- Preserves automatic numbering (1.1, 11.3.1 patterns), fonts, indentation, styles
-- Pure Python solution — no external dependencies (LibreOffice not needed)
-- HTML caching after first conversion
-- Paragraph ID injection for click-to-select functionality
-- ~100ms conversion time vs 2+ seconds with LibreOffice approach
+**Plans**: TBD
 
 ---
 
-### Phase 6: Analysis Acceleration
+### Phase 13: Background Analysis
 
-**Goal:** Dramatically reduce contract analysis time from 30+ minutes to under 2 minutes using conversation forking architecture for massive parallelism.
+**Goal**: Analysis endpoints return immediately with a job ID and process in a background thread, avoiding Railway's 15-minute HTTP timeout for large documents.
 
-**Requirements:**
-- ACCEL-01: Pre-filter non-substantive paragraphs (blank, headers, signatures, notice addresses)
-- ACCEL-02: Skip exhibit analysis when user indicates exhibits should be ignored
-- ACCEL-03: Parallel batch analysis via conversation forking (30 concurrent batches)
-- ACCEL-04: Implement progress indicators and incremental results display
+**Depends on**: Phase 12 (only needed in deployed environment; Railway timeout is the trigger)
+**Requirements**: ASYNC-01, ASYNC-02
 
-**Success Criteria:**
-1. Standard 30-page PSA completes analysis in under 2 minutes
-2. Blank paragraphs, signature blocks, notice addresses, and headers are auto-skipped
-3. When user selects "ignore exhibits" in intake, exhibit paragraphs are not sent to LLM
-4. Progress bar shows real-time analysis status with two stages (initial + parallel)
-5. User sees risks populate incrementally as analysis progresses
+**Success Criteria** (what must be TRUE):
+  1. Analysis request returns immediately with a job ID (no HTTP connection held open for minutes)
+  2. Frontend polls for analysis progress and displays incremental status updates
+  3. A 50+ page document completes analysis without being killed by HTTP timeout
+  4. Existing local development workflow (which does not hit the timeout) still works unchanged
 
-**Dependencies:** None (optimizes existing analysis pipeline)
-
-**Plans:** 4 plans
-
-Plans:
-- [x] 06-01-PLAN.md — Content pre-filtering service (ACCEL-01, ACCEL-02)
-- [x] 06-02-PLAN.md — Initial full-document analysis (establishes context for forking)
-- [x] 06-03-PLAN.md — Forked parallel batch analysis (30 concurrent batches)
-- [x] 06-04-PLAN.md — Progress streaming and incremental UI updates (ACCEL-04)
-
-**Wave Structure:**
-```
-Wave 1: 06-01 (filter) + 06-02 (initial analysis) — parallel
-Wave 2: 06-03 (forked batches) — depends on 01, 02
-Wave 3: 06-04 (progress UI) — depends on 03
-```
-
-**Architecture: Conversation Forking**
-1. **Initial Analysis (06-02):** Send entire document to Opus 4.5, extract concept map, defined terms, cross-references
-2. **Forked Batches (06-03):** 30 parallel "forks" from initial conversation, each inheriting full document context
-
-**Cost/Speed Tradeoff:**
-- Fast mode (this phase): ~$2.50/document, ~90 seconds (with prompt caching)
-- Economical mode (Phase 7): ~$2/document, ~15 minutes (sequential with document map)
-
-**Implementation Notes:**
-- Pre-parse pass to classify paragraphs as substantive vs mechanical
-- Regex patterns for signature blocks, notice addresses, exhibit markers
-- Initial analysis uses extended thinking for comprehensive document understanding
-- Each batch fork inherits conversation_messages from initial analysis
-- AsyncAnthropic with aiolimiter for rate-limited parallel execution
-- Phase 7 will add `analysis_mode: 'fast' | 'economical'` toggle in intake
+**Plans**: TBD
 
 ---
 
-## Parallel Execution Strategy
+## v1.1 Requirement Coverage
 
-All 4 phases are **independent** and will be executed with separate agents in parallel:
+| Requirement | Phase | Description |
+|-------------|-------|-------------|
+| DOCK-01 | Phase 9 | Backend Docker container with gunicorn gthread |
+| DOCK-02 | Phase 9 | Frontend Docker container with standalone output |
+| DOCK-03 | Phase 9 | docker-compose.yml for local integration testing |
+| DOCK-04 | Phase 9 | .dockerignore files prevent bloat |
+| CONF-01 | Phase 9 | CORS origins configurable via env var |
+| CONF-02 | Phase 9 | Data directory configurable via env var |
+| CONF-03 | Phase 10 | Backend URL configurable in frontend via env var |
+| CONF-04 | Phase 9 | Local dev workflow works unchanged |
+| PROX-01 | Phase 10 | Frontend uses proxy.ts instead of rewrites() |
+| PROX-02 | Phase 10 | proxy.ts reads backend URL from env var |
+| SESS-01 | Phase 11 | Sessions auto-load from disk on miss |
+| SESS-02 | Phase 11 | Large objects excluded from session JSON |
+| RAIL-01 | Phase 12 | railway.toml with health checks and restart policy |
+| RAIL-02 | Phase 12 | Persistent volume for sessions and uploads |
+| RAIL-03 | Phase 12 | Version endpoint via env vars |
+| ASYNC-01 | Phase 13 | Analysis returns immediately with job ID |
+| ASYNC-02 | Phase 13 | Background thread with progress polling |
 
-```
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│ Agent 1         │  │ Agent 2         │  │ Agent 3         │  │ Agent 4         │
-│ Finalize Redline│  │ Gen Transmittal │  │ Compare Preced. │  │ New Project     │
-│                 │  │                 │  │                 │  │                 │
-│ FIN-01..FIN-04  │  │ TRANS-01..04    │  │ PREC-01..04     │  │ NEW-01..04      │
-└────────┬────────┘  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
-         │                    │                    │                    │
-         ▼                    ▼                    ▼                    ▼
-    Commit to branch     Commit to branch     Commit to branch     Commit to branch
-```
+**Coverage: 17/17 v1.1 requirements mapped. No orphans.**
 
-Each agent:
-1. Implements its feature completely (backend + frontend)
-2. Tests the implementation
-3. Commits changes to the branch
+---
+
+## Progress
+
+**Execution Order:** 9 -> 10 -> 11 -> 12 -> 13
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| A. Document Rendering | v1.0 | - | Complete | - |
+| B. Analysis Acceleration | v1.0 | - | Complete | - |
+| 0. Scaffolding | v1.0 | - | Complete | - |
+| 1. Core Layout | v1.0 | - | Complete | - |
+| 2. Doc Viewer | v1.0 | - | Complete | - |
+| 3. Sidebar + Risk | v1.0 | - | Complete | - |
+| 4. Revision Sheet | v1.0 | 3/3 | Complete | - |
+| 5. Precedent Split | v1.0 | 0/3 | In progress | - |
+| 6. Dialogs + Finalize | v1.0 | 2/5 | In progress | - |
+| 7. Polish | v1.0 | 0/? | Not started | - |
+| 8. Cleanup | v1.0 | 0/? | Not started | - |
+| 9. Containerization | v1.1 | 0/? | Not started | - |
+| 10. API Routing | v1.1 | 0/? | Not started | - |
+| 11. Session Resilience | v1.1 | 0/? | Not started | - |
+| 12. Railway Deploy | v1.1 | 0/? | Not started | - |
+| 13. Background Analysis | v1.1 | 0/? | Not started | - |
 
 ---
 
-## Success Metrics
-
-- All 16 v1 requirements implemented
-- All placeholder "Coming soon!" messages replaced with working features
-- Each feature has at least basic error handling
-- No regressions in existing functionality
-
----
-*Roadmap created: 2026-02-01*
-*Updated: 2026-02-03 (Phase 6 complete - conversation forking with prompt caching)*
+_Roadmap created: 2026-02-01_
+_Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)_
+_v1.1 milestone added: 2026-02-11_

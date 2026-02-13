@@ -1,0 +1,421 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Severity colors for risk analysis */
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-high: var(--severity-high);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-low: var(--severity-low);
+  --color-severity-info: var(--severity-info);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Pure white background - Vercel aesthetic */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+
+  /* Blue primary accent - #2563eb */
+  --primary: oklch(0.546 0.215 264);
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.968 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+
+  --muted: oklch(0.968 0 0);
+  --muted-foreground: oklch(0.525 0 0);
+
+  --accent: oklch(0.968 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+
+  --destructive: oklch(0.577 0.245 27.325);
+
+  /* Cool neutral borders - #e5e7eb */
+  --border: oklch(0.915 0.002 240);
+  --input: oklch(0.915 0.002 240);
+  --ring: oklch(0.546 0.215 264);
+
+  /* Charts */
+  --chart-1: oklch(0.546 0.215 264);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+
+  /* Sidebar - slightly off-white */
+  --sidebar: oklch(0.99 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.546 0.215 264);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.968 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.915 0.002 240);
+  --sidebar-ring: oklch(0.546 0.215 264);
+
+  /* Risk severity palette */
+  --severity-critical: oklch(0.577 0.245 27.325);
+  --severity-high: oklch(0.705 0.213 47.604);
+  --severity-medium: oklch(0.795 0.184 86.047);
+  --severity-low: oklch(0.546 0.215 264);
+  --severity-info: oklch(0.525 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+
+  --card: oklch(0.175 0 0);
+  --card-foreground: oklch(0.985 0 0);
+
+  --popover: oklch(0.175 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+
+  --primary: oklch(0.623 0.214 264);
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.22 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+
+  --muted: oklch(0.22 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+
+  --accent: oklch(0.22 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  --destructive: oklch(0.704 0.191 22.216);
+
+  --border: oklch(0.28 0 0);
+  --input: oklch(0.28 0 0);
+  --ring: oklch(0.623 0.214 264);
+
+  --chart-1: oklch(0.623 0.214 264);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+
+  --sidebar: oklch(0.175 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.623 0.214 264);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.22 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.28 0 0);
+  --sidebar-ring: oklch(0.623 0.214 264);
+
+  --severity-critical: oklch(0.704 0.191 22.216);
+  --severity-high: oklch(0.795 0.184 86.047);
+  --severity-medium: oklch(0.828 0.189 84.429);
+  --severity-low: oklch(0.623 0.214 264);
+  --severity-info: oklch(0.708 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* Document rendering styles - preserved from original app */
+/* These styles are needed for faithful DOCX HTML rendering */
+@layer components {
+  .document-container {
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* Track changes styles */
+  .track-changes-insert {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+  .track-changes-delete {
+    color: #dc2626;
+    text-decoration: line-through;
+  }
+
+  /* Document paragraph state styles */
+  .document-container [data-para-id] {
+    cursor: pointer;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
+  }
+
+  .document-container [data-para-id]:hover {
+    background-color: oklch(0.97 0.003 264 / 0.5);
+  }
+
+  .document-container [data-para-id].selected {
+    background-color: oklch(0.95 0.02 264 / 0.3);
+    border-color: oklch(0.546 0.215 264);
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .document-container [data-para-id].has-risk {
+    box-shadow: inset 3px 0 0 oklch(0.705 0.213 47.604);
+  }
+
+  .document-container [data-para-id].selected.has-risk {
+    background-color: oklch(0.95 0.02 264 / 0.3);
+    border-color: oklch(0.546 0.215 264);
+    box-shadow: inset 3px 0 0 oklch(0.705 0.213 47.604), 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .document-container [data-para-id].has-revision {
+    background-color: oklch(0.98 0.01 27 / 0.3);
+    border-color: oklch(0.85 0.1 27 / 0.5);
+  }
+
+  .document-container [data-para-id].revision-accepted {
+    background-color: oklch(0.97 0.02 155 / 0.2);
+    border-color: oklch(0.7 0.15 155 / 0.3);
+  }
+
+  .document-container [data-para-id].flagged {
+    position: relative;
+    box-shadow: inset -3px 0 0 oklch(0.795 0.184 86.047);
+  }
+
+  .document-container [data-para-id].flagged::after {
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: 4px;
+    width: 14px;
+    height: 14px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.7;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: opacity 150ms, transform 150ms;
+  }
+
+  .document-container [data-para-id].flagged::after:hover {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  .document-container [data-para-id][data-flag-category="business-decision"]::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/%3E%3Cline x1='4' y1='22' x2='4' y2='15'/%3E%3C/svg%3E");
+  }
+
+  .document-container [data-para-id][data-flag-category="risk-alert"]::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/%3E%3Cline x1='4' y1='22' x2='4' y2='15'/%3E%3C/svg%3E");
+  }
+
+  .document-container [data-para-id][data-flag-category="for-discussion"]::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/%3E%3Cline x1='4' y1='22' x2='4' y2='15'/%3E%3C/svg%3E");
+  }
+
+  .document-container [data-para-id][data-flag-category="fyi"]::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/%3E%3Cline x1='4' y1='22' x2='4' y2='15'/%3E%3C/svg%3E");
+  }
+
+  /* Risk text highlighting */
+  .risk-highlight {
+    background: linear-gradient(180deg, transparent 60%, oklch(0.85 0.1 27 / 0.5) 60%);
+    padding: 0 2px;
+  }
+
+  .risk-highlight-active {
+    background: oklch(0.9 0.08 27 / 0.4);
+    outline: 2px solid oklch(0.577 0.245 27.325);
+    outline-offset: 1px;
+    border-radius: 2px;
+  }
+
+  /* Track changes in revision editor */
+  .revision-diff {
+    background: oklch(0.98 0 0);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    font-family: 'Calibri', 'Carlito', 'Arial', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    max-height: none;
+    flex: 1;
+    overflow-y: auto;
+    transition: all 150ms;
+  }
+  .revision-diff:hover {
+    background: oklch(1 0 0);
+    border-color: oklch(0.546 0.215 264);
+    box-shadow: 0 0 0 2px oklch(0.546 0.215 264 / 0.1);
+  }
+  .revision-diff[contenteditable="true"] {
+    cursor: text;
+    outline: none;
+  }
+  .revision-diff[contenteditable="true"]:focus {
+    box-shadow: 0 0 0 2px oklch(0.546 0.215 264 / 0.2);
+  }
+  .revision-diff.user-modified {
+    border-color: oklch(0.705 0.213 47.604);
+    background: oklch(1 0 0);
+  }
+  .diff-del, del.diff-del {
+    color: #b91c1c;
+    text-decoration: line-through;
+    text-decoration-color: #b91c1c;
+  }
+  .diff-ins, ins.diff-ins {
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-decoration-style: solid;
+  }
+  .user-addition {
+    background: #fef9c3;
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-decoration-color: #1d4ed8;
+    padding: 0 1px;
+  }
+  .user-deletion {
+    background: #fef9c3;
+    color: #dc2626;
+    text-decoration: line-through;
+    text-decoration-color: #dc2626;
+    padding: 0 1px;
+  }
+}
+
+/* ==========================================================================
+   Precedent Split View
+   ========================================================================== */
+
+/* Related clause highlight in precedent content */
+[data-para-id].related-clause {
+  border-left: 3px solid oklch(0.546 0.215 264);
+  background: oklch(0.95 0.02 264 / 0.12);
+  transition: background-color 300ms ease;
+}
+
+[data-para-id].related-clause-locked {
+  border-left: 3px solid oklch(0.546 0.215 264);
+  background: oklch(0.93 0.04 264 / 0.18);
+}
+
+/* Pulse animation for navigator items when related clauses update */
+@keyframes clause-pulse {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: oklch(0.546 0.215 264 / 0.12); }
+}
+
+.pulse-highlight {
+  animation: clause-pulse 750ms ease-in-out 2;
+}
+
+/* Flash animation for precedent content scroll-to target */
+@keyframes clause-flash {
+  0% { background-color: oklch(0.546 0.215 264 / 0.25); }
+  100% { background-color: transparent; }
+}
+
+.flash-highlight {
+  animation: clause-flash 1s ease-out 1;
+}
+
+/* Sidebar restore tab (when collapsed for precedent view) */
+.sidebar-restore-tab {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+}
+
+/* Sidebar overlay (when expanded during precedent view) */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+  width: 380px;
+}
+
+/* Precedent navigator matched item indicator */
+.nav-match-dot::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: oklch(0.546 0.215 264);
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Precedent selection tooltip */
+.precedent-selection-tooltip {
+  pointer-events: auto;
+}
+
+/* react-resizable-panels separator styling */
+[data-panel-group] > [data-resize-handle] {
+  position: relative;
+}
+
+[data-panel-group] > [data-resize-handle]::after {
+  content: '';
+  position: absolute;
+  inset: 0 -2px;
+}

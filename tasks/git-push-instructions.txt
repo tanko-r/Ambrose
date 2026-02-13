@@ -1,0 +1,22 @@
+Git Push Instructions (one-time setup)
+=======================================
+
+1. Open your terminal (Git Bash or PowerShell)
+
+2. cd to the repo:
+   cd C:\Users\david\Documents\claude-redlining
+
+3. Push main:
+   git push origin main
+
+   -> A browser window will open for GitHub login. Authenticate once.
+   -> Credentials are saved after that (dpapi store).
+
+4. Delete the old remote branch:
+   git push origin --delete app-redesign-01-29-2026
+
+5. Push the new feature branch:
+   git checkout nextjs-migration
+   git push -u origin nextjs-migration
+
+Done. Future pushes should work without prompts.

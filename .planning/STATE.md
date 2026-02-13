@@ -1,102 +1,75 @@
 # Project State
 
-**Project:** Claude Redlining
-**Branch:** app-redesign-01-29-2026
-**Last Updated:** 2026-02-03
+**Project:** Ambrose (Contract Redlining)
+**Branch:** nextjs-migration
+**Last Updated:** 2026-02-12
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-01)
+See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** Completing remaining v1.0 placeholder features (Phases 1, 2, 3, 4)
+**Current focus:** v1.1 Cloud Deployment -- Phase 9 pending
 
 ## Current Milestone
 
-**v1.0 — Complete Placeholder Features**
+**v1.1 -- Cloud Deployment**
+
+Phase: 9 of 13 (Containerization)
+Plan: --
+Status: Ready to plan
+Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
+
+## Previous Milestone (v1.0)
+
+**v1.0 -- Next.js Migration + Feature Completion**
 
 | Phase | Name | Status | Progress |
 |-------|------|--------|----------|
-| 1 | Finalize Redline | Pending | 0% |
-| 2 | Generate Transmittal | Pending | 0% |
-| 3 | Compare Precedent | In Progress | 67% (2/3 plans) |
-| 4 | New Project | Pending | 0% |
-| 5 | High-Fidelity Document Rendering | Complete | 100% (2/2 plans) |
-| 6 | Analysis Acceleration | Complete | 100% (4/4 plans) |
+| A | High-Fidelity Document Rendering | Complete | 100% |
+| B | Analysis Acceleration | Complete | 100% |
+| 0 | Scaffolding + Foundation | Complete | 100% |
+| 1 | Core Layout + Intake | Complete | 100% |
+| 2 | Document Viewer + Navigation | Complete | 100% |
+| 3 | Sidebar + Risk Analysis | Complete | 100% |
+| 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
+| 5 | Precedent Split View | In Progress | 67% |
+| 6 | Dialogs + Finalization | Complete | 100% |
+| 7 | Polish + Validation | Pending | 0% |
+| 8 | Cleanup + Cutover | Pending | 0% |
 
-**Overall:** 2/6 phases complete (Phase 3 in progress)
-
-Progress: [########            ] 40% (8/~20 estimated plans)
-
-## Execution Strategy
-
-Parallel execution with 4 independent agents, each implementing one feature and committing to branch when complete.
-
-## Recent Activity
-
-- 2026-02-03: Phase 6 complete (4/4 plans) - Analysis acceleration with conversation forking
-- 2026-02-03: Phase 6 Plan 04 complete - Real-time progress UI with incremental results
-- 2026-02-03: Phase 6 Plan 03 complete - Forked parallel batch analysis with 30 concurrent forks
-- 2026-02-03: Phase 6 Plan 02 complete - Initial full-document analysis with forking context
-- 2026-02-03: Phase 6 Plan 01 complete - Content pre-filtering
-- 2026-02-03: Phase 5 complete (2/2 plans) - High-fidelity document rendering
-- 2026-02-03: Phase 3 Plan 02 complete - TF-IDF matching and auto-jump
-- 2026-02-03: Phase 3 Plan 01 complete - Split.js split-pane layout
-- 2026-02-01: Project initialized
-
-## Next Action
-
-Phase 6 complete. Next options:
-- `/gsd:execute-plan 03-03` to implement drag-and-drop correlation editing (completes Phase 3)
-- `/gsd:execute-phase 1` to implement Finalize Redline feature
-- `/gsd:execute-phase 2` to implement Generate Transmittal feature
-- `/gsd:execute-phase 4` to implement New Project flow
+**Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
 
 ## Accumulated Decisions
 
 | Phase | Decision | Rationale |
 |-------|----------|-----------|
-| 03-01 | Split.js via CDN | No build step required, simplifies integration |
-| 03-01 | 55/45 default split | Gives main document slightly more space |
-| 03-01 | Navigator on right side | Natural reading flow, mirrors main doc nav panel |
-| 03-02 | TF-IDF with bigrams | Better phrase matching than unigrams alone |
-| 03-02 | Legal stop words | Filter common contract language for better similarity |
-| 03-02 | Score boost for metadata | Section/hierarchy matches provide strong relevance signal |
-| 05-01 | docx-parser-converter for HTML | Pure Python, already installed, preserves all formatting |
-| 05-01 | Server-side rendering with caching | Convert once, serve cached HTML, ~100ms conversion |
-| 05-02 | Direct DOM injection (no iframe) | Better event handling, native text selection |
-| 05-02 | Graceful fallback to plain text | Ensures app works even if HTML endpoint fails |
-| 05-01 | Cache HTML without IDs, inject on request | IDs may change on re-analysis; cached HTML stays valid |
-| 06-01 | 20 char minimum threshold for analysis | Paragraphs under 20 chars cannot contain meaningful legal language |
-| 06-01 | Regex patterns for content filtering | Fast and reliable detection of non-substantive content |
-| 06-01 | State machine for exhibit tracking | Track in_exhibit_section to skip all content after EXHIBIT header |
-| 06-02 | Extended thinking with 10000 token budget | Full document analysis requires thorough comprehension |
-| 06-02 | Graceful fallback on initial analysis failure | Ensure robustness - analysis should complete even if initial fails |
-| 06-02 | Use initial analysis terms if richer | Initial analysis can extract more complete term definitions |
-| 06-03 | Conversation forking (not continuation) | Forking allows independent parallel execution; continuation would be sequential |
-| 06-03 | 150 RPM rate limit with AsyncLimiter | Conservative rate limit for Tier 1 accounts; prevents 429 errors |
-| 06-03 | Max 30 concurrent forks | Matches typical batch count for 150-paragraph document at batch_size=5 |
-| 06-03 | Keep sequential as fallback | Ensures robustness when forking fails; future "economical" mode for Phase 7 |
-| 06-03 | Prompt caching on assistant response | 60% cost reduction ($6 → $2.50) using cache_control: ephemeral |
-| 06-04 | CSS-only completion | Backend and JavaScript for incremental results already implemented in prior work |
-| 06-04 | Two-stage indicator with active/complete states | Visual distinction between initial analysis and parallel batch phases |
-| 06-04 | Fade-in animation at 0.4s | Smooth appearance of incremental risks without being distracting |
+| 0 | Next.js 16 + Tailwind v4 + shadcn/ui | Modern stack, Vercel aesthetic |
+| 0 | Zustand over Redux | Simpler API for single-user app |
+| 5 | react-resizable-panels v4 | Library already installed |
+| 6 | Store-sourced revision list in finalize dialog | Store is single source of truth |
+| 6 | Transmittal default: flagged items only (revisions opt-in) | Keeps email concise, user controls detail level |
+| 6 | Auto-save on new project (no Save/Discard) | Simpler UX, reduces user confusion |
+| 6 | Finalized banner informational, not read-only | Less friction for post-finalize edits |
+| v1.1 | Railway over Vercel/Fly.io | PaaS simplicity, persistent volumes |
+| v1.1 | Gunicorn gthread (not gevent) | asyncio.run() conflicts with gevent monkey-patching |
+| v1.1 | proxy.ts over rewrites() | Next.js 16 standalone mode bug #87071 |
+| v1.1 | File-based sessions (no Redis/DB) | Single user, adequate for current scale |
 
-## Roadmap Evolution
+### Quick Tasks Completed
 
-- Phase 5 simplified: Reduced from 4 plans to 2 plans using docx-parser-converter
-- Phase 5 complete: High-fidelity document rendering for both main and precedent panels
-- Phase 6 complete: Full analysis acceleration pipeline operational
-  - Plan 01: Content pre-filtering (skip non-substantive paragraphs)
-  - Plan 02: Initial full-document analysis with extended thinking
-  - Plan 03: Forked parallel batch analysis (30 concurrent forks, 90s total, $2.50/doc with caching)
-  - Plan 04: Real-time progress UI with incremental results
+| # | Description | Date | Commit |
+|---|-------------|------|--------|
+| 1 | Flag button on risk card shows red fill when risk is flagged | 2026-02-10 | 081b6c9 |
+| 2 | Toggle to hide target doc panel nav bar | 2026-02-10 | 4703579 |
+| 3 | Fix layout so app renders fullscreen within viewport | 2026-02-10 | 17ba4c9 |
+| 4 | Navigator toggle button shows right arrow and Show text when nav bar is hidden | 2026-02-10 | 3981aa2 |
 
 ## Session Continuity
 
-Last session: 2026-02-03
-Stopped at: Completed 06-04-PLAN.md (Phase 6 complete)
+Last session: 2026-02-12
+Last activity: 2026-02-12 - Completed 06-03-PLAN.md (transmittal + project management dialogs)
 Resume file: None
 
 ---
-*State updated: 2026-02-03*
+*State updated: 2026-02-12*
