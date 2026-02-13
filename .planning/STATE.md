@@ -77,11 +77,12 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 2 | Toggle to hide target doc panel nav bar | 2026-02-10 | 4703579 |
 | 3 | Fix layout so app renders fullscreen within viewport | 2026-02-10 | 17ba4c9 |
 | 4 | Navigator toggle button shows right arrow and Show text when nav bar is hidden | 2026-02-10 | 3981aa2 |
+| 5 | Stop clause generation button for revision sidebar | 2026-02-13 | a32fdab |
 
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed 08-02-PLAN.md (documentation update for Next.js architecture)
+Last activity: 2026-02-13 - Completed quick task 5 (Stop button for revision generation)
 Resume file: None
 
 ---
