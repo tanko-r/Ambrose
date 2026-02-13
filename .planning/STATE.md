@@ -2,7 +2,7 @@
 
 **Project:** Ambrose (Contract Redlining)
 **Branch:** nextjs-migration
-**Last Updated:** 2026-02-12
+**Last Updated:** 2026-02-13
 
 ## Project Reference
 
@@ -35,7 +35,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
 | 6 | Dialogs + Finalization | Complete | 100% |
-| 7 | Polish + Validation | Pending | 0% |
+| 7 | Polish + Validation | In Progress | 20% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
 **Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
@@ -55,6 +55,8 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | v1.1 | Gunicorn gthread (not gevent) | asyncio.run() conflicts with gevent monkey-patching |
 | v1.1 | proxy.ts over rewrites() | Next.js 16 standalone mode bug #87071 |
 | v1.1 | File-based sessions (no Redis/DB) | Single user, adequate for current scale |
+| 7 | next-themes with attribute=class, defaultTheme=system | Standard pattern for Tailwind CSS dark mode |
+| 7 | Manual localStorage preferences (no Zustand persist) | Cleaner separation, simpler debugging |
 
 ### Quick Tasks Completed
 
@@ -67,9 +69,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 
 ## Session Continuity
 
-Last session: 2026-02-12
-Last activity: 2026-02-12 - Completed 06-03-PLAN.md (transmittal + project management dialogs)
+Last session: 2026-02-13
+Last activity: 2026-02-13 - Completed 07-01-PLAN.md (theme & preferences)
 Resume file: None
 
 ---
-*State updated: 2026-02-12*
+*State updated: 2026-02-13*
