@@ -123,7 +123,11 @@ Plans:
   4. README.md updated with Next.js setup instructions, tech stack, and development workflow
   5. All references to the old frontend removed from code, docs, and config files
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md -- Archive old frontend, strip Flask static serving, add concurrently dev script
+- [ ] 08-02-PLAN.md -- Update all documentation to reflect Next.js-only architecture
 
 ---
 
@@ -268,7 +272,7 @@ Plans:
 | 5. Precedent Split | v1.0 | 0/3 | In progress | - |
 | 6. Dialogs + Finalize | v1.0 | 2/5 | In progress | - |
 | 7. Polish | v1.0 | 0/5 | Not started | - |
-| 8. Cleanup | v1.0 | 0/? | Not started | - |
+| 8. Cleanup | v1.0 | 0/2 | Not started | - |
 | 9. Containerization | v1.1 | 0/? | Not started | - |
 | 10. API Routing | v1.1 | 0/? | Not started | - |
 | 11. Session Resilience | v1.1 | 0/? | Not started | - |
