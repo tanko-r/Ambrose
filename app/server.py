@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Collaborative Contract Review Server
+Contract Review API Server
 
-Flask-based backend for the contract redlining webapp.
-Serves the frontend and provides API endpoints for document analysis and revision.
+Flask-based backend providing REST API endpoints for the contract redlining webapp.
+The frontend is served separately by Next.js.
 """
 
 import os
@@ -14,15 +14,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from flask import Flask, send_from_directory
+from flask import Flask
 from flask_cors import CORS
 from app.api.routes import api_bp
 
 def create_app():
     """Create and configure the Flask application."""
-    app = Flask(__name__,
-                static_folder='static',
-                static_url_path='/static')
+    app = Flask(__name__)
 
     # Allow cross-origin requests from Next.js dev server (any localhost port)
     CORS(app, origins=[r"http://localhost:\d+"])
@@ -38,11 +36,6 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix='/api')
-
-    # Serve frontend
-    @app.route('/')
-    def index():
-        return send_from_directory(app.static_folder, 'index.html')
 
     @app.route('/health')
     def health():
@@ -60,11 +53,12 @@ def main():
 
     print(f"""
 +==================================================================+
-|           Collaborative Contract Review Application              |
+|           Contract Review API Server                             |
 +==================================================================+
-|  Server running at: http://localhost:{port:<5}                       |
-|  Open this URL in your browser to begin.                        |
+|  API running at:  http://localhost:{port:<5}                        |
+|  Frontend at:     http://localhost:3000                          |
 |                                                                  |
+|  Start both with: npm run dev (from project root)               |
 |  Press Ctrl+C to stop the server.                               |
 +==================================================================+
     """)
