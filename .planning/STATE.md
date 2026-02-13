@@ -36,7 +36,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 5 | Precedent Split View | In Progress | 67% |
 | 6 | Dialogs + Finalization | Complete | 100% |
 | 7 | Polish + Validation | In Progress | 80% |
-| 8 | Cleanup + Cutover | In Progress | 50% |
+| 8 | Cleanup + Cutover | Complete | 100% |
 
 **Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
 
@@ -67,6 +67,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 7 | AxeAccessibility as separate client component | Tree-shaken in production, cleaner separation |
 | 8 | Archive old frontend to _archived/ (not delete) | Preserves history for reference |
 | 8 | Track package-lock.json for root concurrently | Reproducible dev tooling installs |
+| 8 | Annotate CONCERNS.md references rather than delete | Preserves audit trail and historical context |
 
 ### Quick Tasks Completed
 
@@ -80,7 +81,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed 08-01-PLAN.md (archive frontend + API-only Flask)
+Last activity: 2026-02-13 - Completed 08-02-PLAN.md (documentation update for Next.js architecture)
 Resume file: None
 
 ---
