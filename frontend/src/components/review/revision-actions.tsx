@@ -32,7 +32,7 @@ export function RevisionActions({
           <Check className="size-4" />
           Approved
         </span>
-        <Button variant="secondary" size="sm" onClick={onReopen}>
+        <Button variant="secondary" size="sm" onClick={onReopen} aria-label="Reopen revision for editing">
           <RotateCw className="size-3.5" />
           Reopen
         </Button>
@@ -42,17 +42,17 @@ export function RevisionActions({
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="default" size="sm" onClick={onAccept}>
+      <Button variant="default" size="sm" onClick={onAccept} aria-label="Approve revision">
         <Check className="size-3.5" />
         Approve
       </Button>
       {isModified && (
-        <Button variant="outline" size="sm" onClick={onReset}>
+        <Button variant="outline" size="sm" onClick={onReset} aria-label="Reset revision edits">
           <RotateCcw className="size-3.5" />
           Reset
         </Button>
       )}
-      <Button variant="destructive" size="sm" onClick={onReject}>
+      <Button variant="destructive" size="sm" onClick={onReject} aria-label="Reject revision">
         <X className="size-3.5" />
         Reject
       </Button>

@@ -497,12 +497,22 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
                 <div
                   key={para.id}
                   data-para-id={para.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-selected={para.id === selectedParaId}
+                  aria-label={para.section_ref ? `Paragraph: ${para.section_ref}` : "Document paragraph"}
                   className={`group relative my-2 cursor-pointer rounded border border-transparent px-4 py-2.5 transition-colors hover:border-border hover:bg-accent/50 ${
                     para.id === selectedParaId
                       ? "border-primary bg-primary/5 shadow-sm"
                       : ""
                   }`}
                   onClick={() => selectParagraph(para.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      selectParagraph(para.id);
+                    }
+                  }}
                 >
                   {para.section_ref && (
                     <div className="mb-1 text-xs font-medium tracking-wider text-muted-foreground">

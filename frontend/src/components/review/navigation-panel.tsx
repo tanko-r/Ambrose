@@ -39,12 +39,16 @@ export function NavigationPanel() {
     sections,
     risks,
     revisions,
+    flags,
     selectedParaId,
     selectParagraph,
     navPanelOpen,
     toggleNavPanel,
     reviewMode,
     setReviewMode,
+    showRisks,
+    showRevisions,
+    showFlags,
   } = useAppStore();
 
   const [search, setSearch] = useState("");
@@ -103,7 +107,7 @@ export function NavigationPanel() {
   );
 
   // Filtered by search
-  const filteredParas = useMemo(() => {
+  const searchFilteredParas = useMemo(() => {
     if (!search.trim()) return contentParas;
     const q = search.toLowerCase();
     return contentParas.filter(
@@ -112,6 +116,29 @@ export function NavigationPanel() {
         p.section_ref.toLowerCase().includes(q)
     );
   }, [contentParas, search]);
+
+  // Filtered by bottom bar filter toggles (risks, revisions, flags)
+  const flaggedParaIds = useMemo(
+    () => new Set(flags.map((f) => f.para_id)),
+    [flags]
+  );
+  const revisedParaIds = useMemo(
+    () => new Set(Object.keys(revisions)),
+    [revisions]
+  );
+
+  const filteredParas = useMemo(() => {
+    const anyFilterActive = showRisks || showRevisions || showFlags;
+    // Safety fallback: if all filters off, show everything
+    if (!anyFilterActive) return searchFilteredParas;
+
+    return searchFilteredParas.filter((p) => {
+      if (showRisks && risksByPara.has(p.id)) return true;
+      if (showRevisions && revisedParaIds.has(p.id)) return true;
+      if (showFlags && flaggedParaIds.has(p.id)) return true;
+      return false;
+    });
+  }, [searchFilteredParas, showRisks, showRevisions, showFlags, risksByPara, revisedParaIds, flaggedParaIds]);
 
   // Progress stats
   const riskyParas = contentParas.filter((p) => risksByPara.has(p.id));
@@ -139,7 +166,7 @@ export function NavigationPanel() {
           onMouseEnter={() => { clearGhostTimeout(); setGhostVisible(true); }}
           onMouseLeave={startGhostHide}
         >
-          <div className="rounded-r-md border border-l-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors" title="Show navigator">
+          <div className="rounded-r-md border border-l-0 bg-card px-1.5 py-1 shadow-sm cursor-pointer text-muted-foreground hover:text-foreground transition-colors" title="Show navigator" role="button" aria-label="Show document navigator">
             <PanelLeftOpen className="h-3.5 w-3.5" />
           </div>
         </div>
@@ -152,7 +179,7 @@ export function NavigationPanel() {
           onMouseEnter={clearGhostTimeout}
           onMouseLeave={startGhostHide}
         >
-          <aside className="flex h-full flex-col">
+          <aside role="navigation" aria-label="Document navigator" className="flex h-full flex-col">
             {/* Header — click to dock */}
             <div className="flex items-center justify-between border-b px-3 py-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -253,7 +280,7 @@ export function NavigationPanel() {
   }
 
   return (
-    <aside className="flex h-full w-[260px] shrink-0 flex-col border-r bg-card">
+    <aside role="navigation" aria-label="Document navigator" className="flex h-full w-[260px] shrink-0 flex-col border-r bg-card">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

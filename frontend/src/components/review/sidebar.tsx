@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 import { useRevision } from "@/hooks/use-revision";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +101,7 @@ export function Sidebar() {
     riskMap,
     sidebarOpen,
     toggleSidebar,
+    compactMode,
   } = useAppStore();
 
   const precedentPanelOpen = useAppStore((s) => s.precedentPanelOpen);
@@ -237,7 +239,7 @@ export function Sidebar() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4" role="tabpanel" id={`tabpanel-${activeTab}`} aria-label={`${activeTab} panel`}>
+      <div className={cn("flex-1 overflow-y-auto", compactMode ? "p-2" : "p-4")} role="tabpanel" id={`tabpanel-${activeTab}`} aria-label={`${activeTab} panel`}>
         {!selectedParaId ? (
           risks.length === 0 ? (
             <EmptyState
@@ -279,7 +281,7 @@ export function Sidebar() {
 
       {/* Footer */}
       {selectedParaId && (
-        <div className="border-t px-4 py-3">
+        <div className={cn("border-t", compactMode ? "px-3 py-2" : "px-4 py-3")}>
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
               {paraRisks.length > 0

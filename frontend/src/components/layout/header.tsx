@@ -58,7 +58,7 @@ export function Header({ onNewProject }: HeaderProps) {
         <div className="flex items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Main menu">
                 <Menu className="h-4 w-4" />
                 <span className="sr-only">Open menu</span>
               </Button>
@@ -109,6 +109,7 @@ export function Header({ onNewProject }: HeaderProps) {
             className="h-8 w-8"
             onClick={cycleTheme}
             title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label="Toggle color theme"
           >
             <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:rotate-90 dark:scale-0" />
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
@@ -120,6 +121,7 @@ export function Header({ onNewProject }: HeaderProps) {
             size="sm"
             className="h-8 gap-1.5 text-xs"
             onClick={handleNewProject}
+            aria-label="Create new project"
           >
             <Plus className="h-3.5 w-3.5" />
             New
@@ -127,7 +129,7 @@ export function Header({ onNewProject }: HeaderProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="User menu">
                 <User className="h-4 w-4" />
                 <span className="sr-only">User menu</span>
               </Button>

@@ -54,6 +54,7 @@ export function SeverityBadge({ severity }: { severity: string }) {
         "inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-bold uppercase",
         SEVERITY_CLASSES[severity] || SEVERITY_CLASSES.info,
       )}
+      aria-label={`${severity} severity`}
     >
       {severity}
     </span>
