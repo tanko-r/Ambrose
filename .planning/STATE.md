@@ -35,7 +35,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
 | 6 | Dialogs + Finalization | Complete | 100% |
-| 7 | Polish + Validation | In Progress | 60% |
+| 7 | Polish + Validation | In Progress | 80% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
 **Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
@@ -62,6 +62,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 7 | useDelayedLoading with 200ms threshold for skeleton screens | Balances avoiding flash vs. perceived responsiveness |
 | 7 | Compact mode: CSS class overrides + Tailwind conditional classes | Card spacing only, no font/icon changes per user decision |
 | 7 | Filter toggles default all-on, show-all fallback when all off | Safety fallback prevents empty navigator |
+| 7 | Darkened muted-foreground oklch 0.525 -> 0.49 | WCAG AA 4.5:1 contrast on white |
+| 7 | Darkened severity-high oklch 0.705 -> 0.62 | White text badge contrast 3:1 |
+| 7 | AxeAccessibility as separate client component | Tree-shaken in production, cleaner separation |
 
 ### Quick Tasks Completed
 
@@ -75,7 +78,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed 07-03-PLAN.md (loading states, error boundary, filters, compact mode)
+Last activity: 2026-02-13 - Completed 07-04-PLAN.md (accessibility + small screen warning)
 Resume file: None
 
 ---
