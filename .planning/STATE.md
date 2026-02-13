@@ -36,7 +36,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 5 | Precedent Split View | In Progress | 67% |
 | 6 | Dialogs + Finalization | Complete | 100% |
 | 7 | Polish + Validation | In Progress | 80% |
-| 8 | Cleanup + Cutover | Pending | 0% |
+| 8 | Cleanup + Cutover | In Progress | 50% |
 
 **Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
 
@@ -65,6 +65,8 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 7 | Darkened muted-foreground oklch 0.525 -> 0.49 | WCAG AA 4.5:1 contrast on white |
 | 7 | Darkened severity-high oklch 0.705 -> 0.62 | White text badge contrast 3:1 |
 | 7 | AxeAccessibility as separate client component | Tree-shaken in production, cleaner separation |
+| 8 | Archive old frontend to _archived/ (not delete) | Preserves history for reference |
+| 8 | Track package-lock.json for root concurrently | Reproducible dev tooling installs |
 
 ### Quick Tasks Completed
 
@@ -78,7 +80,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed 07-04-PLAN.md (accessibility + small screen warning)
+Last activity: 2026-02-13 - Completed 08-01-PLAN.md (archive frontend + API-only Flask)
 Resume file: None
 
 ---
