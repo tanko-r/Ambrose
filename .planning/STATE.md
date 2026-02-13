@@ -35,7 +35,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
 | 5 | Precedent Split View | In Progress | 67% |
 | 6 | Dialogs + Finalization | Complete | 100% |
-| 7 | Polish + Validation | In Progress | 20% |
+| 7 | Polish + Validation | In Progress | 40% |
 | 8 | Cleanup + Cutover | Pending | 0% |
 
 **Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
@@ -57,6 +57,8 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | v1.1 | File-based sessions (no Redis/DB) | Single user, adequate for current scale |
 | 7 | next-themes with attribute=class, defaultTheme=system | Standard pattern for Tailwind CSS dark mode |
 | 7 | Manual localStorage preferences (no Zustand persist) | Cleaner separation, simpler debugging |
+| 7 | react-hotkeys-hook for keyboard shortcuts | Mature library with built-in form field protection |
+| 7 | Custom DOM events for cross-component shortcut communication | Decouples keyboard hook from specific UI components |
 
 ### Quick Tasks Completed
 
@@ -70,7 +72,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed 07-01-PLAN.md (theme & preferences)
+Last activity: 2026-02-13 - Completed 07-02-PLAN.md (keyboard shortcuts + command palette)
 Resume file: None
 
 ---
