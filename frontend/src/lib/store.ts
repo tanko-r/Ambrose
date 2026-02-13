@@ -81,6 +81,8 @@ interface ReviewState {
 type View = 'dashboard' | 'review';
 type ReviewMode = 'linear' | 'by-risk' | 'by-category';
 
+type SidebarTab = 'risks' | 'related' | 'definitions' | 'flags';
+
 interface UIState {
   view: View;
   navPanelOpen: boolean;
@@ -92,6 +94,8 @@ interface UIState {
   hoveredRiskId: string | null;
   focusedRiskId: string | null;
   generatingRevision: boolean;
+  defaultSidebarTab: SidebarTab;
+  navPanelVisibleDefault: boolean;
 }
 
 // --- Precedent State ---
@@ -210,6 +214,8 @@ const initialUIState: UIState = {
   hoveredRiskId: null,
   focusedRiskId: null,
   generatingRevision: false,
+  defaultSidebarTab: 'risks',
+  navPanelVisibleDefault: true,
 };
 
 const initialPrecedentState: PrecedentState = {
