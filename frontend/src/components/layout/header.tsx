@@ -53,7 +53,7 @@ export function Header({ onNewProject }: HeaderProps) {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 z-40">
+      <header className="no-print flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 z-40">
         {/* Left: menu + title */}
         <div className="flex items-center gap-3">
           <DropdownMenu>

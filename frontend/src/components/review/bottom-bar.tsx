@@ -90,7 +90,7 @@ export function BottomBar() {
 
   return (
     <>
-    <div role="toolbar" aria-label="Review toolbar" className={cn("flex shrink-0 items-center justify-between border-t bg-card", compactMode ? "h-9 px-3" : "h-11 px-4")}>
+    <div role="toolbar" aria-label="Review toolbar" className={cn("no-print flex shrink-0 items-center justify-between border-t bg-card", compactMode ? "h-9 px-3" : "h-11 px-4")}>
       {/* Left: progress + filter pills */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span>
