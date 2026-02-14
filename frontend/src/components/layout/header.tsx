@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useAppStore } from "@/lib/store";
+import { usePreferences } from "@/hooks/use-preferences";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,8 +34,16 @@ interface HeaderProps {
 
 export function Header({ onNewProject }: HeaderProps) {
   const { targetFilename, view } = useAppStore();
-  const { resolvedTheme, setTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
+  const { setThemePreference } = usePreferences();
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Listen for cross-component "open settings" event (fired by Ctrl+, shortcut and command palette)
+  useEffect(() => {
+    const handler = () => setSettingsOpen(true);
+    window.addEventListener("command:open-settings", handler);
+    return () => window.removeEventListener("command:open-settings", handler);
+  }, []);
 
   const handleNewProject = () => {
     if (onNewProject) {
@@ -43,11 +52,11 @@ export function Header({ onNewProject }: HeaderProps) {
   };
 
   const cycleTheme = () => {
-    // Cycle: light -> dark -> system -> light
+    // Cycle: light -> dark -> light
     if (resolvedTheme === "light") {
-      setTheme("dark");
+      setThemePreference("dark");
     } else {
-      setTheme("light");
+      setThemePreference("light");
     }
   };
 

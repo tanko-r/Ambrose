@@ -182,7 +182,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         icon: Settings,
         shortcut: `${modSymbol}+,`,
         action: () => {
-          // Settings not yet implemented - placeholder
+          window.dispatchEvent(new CustomEvent("command:open-settings"));
         },
       },
     ],

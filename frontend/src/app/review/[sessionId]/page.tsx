@@ -18,7 +18,8 @@ import { CommandPalette } from "@/components/command-palette";
 import { KeyboardHelp } from "@/components/keyboard-help";
 import type { NavigatorPosition } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
 
 export default function ReviewPage({
   params,
@@ -33,7 +34,7 @@ export default function ReviewPage({
     setSession({ sessionId });
   }
 
-  const { loading } = useDocument(sessionId);
+  const { loading, error: documentError } = useDocument(sessionId);
   const { startAnalysis } = useAnalysis(sessionId);
   const analysisStatus = useAppStore((s) => s.analysisStatus);
 
@@ -51,14 +52,15 @@ export default function ReviewPage({
   useKeyboardShortcuts({
     openCommandPalette: () => setCmdPaletteOpen(true),
     openHelpDialog: () => setHelpOpen(true),
+    openSettings: () => window.dispatchEvent(new CustomEvent("command:open-settings")),
   });
 
   // Auto-start analysis when document finishes loading and analysis hasn't run
   useEffect(() => {
-    if (!loading && sessionId && analysisStatus === "not_started") {
+    if (!loading && !documentError && sessionId && analysisStatus === "not_started") {
       startAnalysis();
     }
-  }, [loading, sessionId, analysisStatus, startAnalysis]);
+  }, [loading, documentError, sessionId, analysisStatus, startAnalysis]);
 
   // Auto-collapse left nav panel when precedent panel opens (reclaim space)
   const precedentPanelOpen = useAppStore((s) => s.precedentPanelOpen);
@@ -94,6 +96,27 @@ export default function ReviewPage({
   }, []);
 
   const compactMode = useAppStore((s) => s.compactMode);
+
+  // Show error page when session/document fails to load
+  if (documentError && !loading) {
+    return (
+      <div className="flex h-screen flex-col overflow-hidden">
+        <Header />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <AlertTriangle className="h-10 w-10 text-destructive" />
+            <h2 className="text-lg font-semibold">Session Not Found</h2>
+            <p className="max-w-sm text-sm text-muted-foreground">
+              {documentError}
+            </p>
+            <Button asChild variant="outline">
+              <Link href="/">Back to Home</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex h-screen flex-col overflow-hidden${compactMode ? " compact" : ""}`}>

@@ -2,7 +2,7 @@
 
 import { useHotkeys } from "react-hotkeys-hook";
 import { useAppStore } from "@/lib/store";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 interface KeyboardShortcutCallbacks {
   openCommandPalette: () => void;
@@ -84,36 +84,41 @@ export function useKeyboardShortcuts({
 
   // --- Single-char shortcuts (disabled in form fields) ---
   const singleCharOpts = {
-    enableOnFormTags: false as const,
+    enableOnFormTags: false,
     enableOnContentEditable: false,
-  };
+  } as const;
 
   // ? (Shift+/): Open keyboard help
   useHotkeys(
     "shift+/",
-    () => {
+    (e) => {
+      e.preventDefault();
       openHelpDialog();
     },
-    singleCharOpts
+    { ...singleCharOpts, preventDefault: true }
   );
 
-  // [: Toggle navigator panel
-  useHotkeys(
-    "[",
-    () => {
-      useAppStore.getState().toggleNavPanel();
-    },
-    singleCharOpts
-  );
+  // [ and ]: Toggle navigator panel and sidebar
+  // Using native keydown listener because react-hotkeys-hook may parse brackets
+  // as special syntax (modifier grouping).
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Skip if in a form field or contenteditable
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if ((e.target as HTMLElement)?.isContentEditable) return;
 
-  // ]: Toggle sidebar
-  useHotkeys(
-    "]",
-    () => {
-      useAppStore.getState().toggleSidebar();
-    },
-    singleCharOpts
-  );
+      if (e.key === "[" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        useAppStore.getState().toggleNavPanel();
+      } else if (e.key === "]" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        useAppStore.getState().toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   // J: Navigate to next risk paragraph
   useHotkeys("j", goNext, singleCharOpts);
