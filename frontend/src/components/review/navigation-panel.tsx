@@ -112,8 +112,8 @@ export function NavigationPanel() {
     const q = search.toLowerCase();
     return contentParas.filter(
       (p) =>
-        p.text.toLowerCase().includes(q) ||
-        p.section_ref.toLowerCase().includes(q)
+        (p.text ?? "").toLowerCase().includes(q) ||
+        (p.section_ref ?? "").toLowerCase().includes(q)
     );
   }, [contentParas, search]);
 
@@ -179,7 +179,7 @@ export function NavigationPanel() {
           onMouseEnter={clearGhostTimeout}
           onMouseLeave={startGhostHide}
         >
-          <aside role="navigation" aria-label="Document navigator" className="flex h-full flex-col">
+          <nav aria-label="Document navigator" className="flex h-full flex-col">
             {/* Header — click to dock */}
             <div className="flex items-center justify-between border-b px-3 py-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -273,14 +273,14 @@ export function NavigationPanel() {
                 />
               )}
             </div>
-          </aside>
+          </nav>
         </div>
       </div>
     );
   }
 
   return (
-    <aside role="navigation" aria-label="Document navigator" className="flex h-full w-[260px] shrink-0 flex-col border-r bg-card">
+    <nav aria-label="Document navigator" className="flex h-full w-[260px] shrink-0 flex-col border-r bg-card">
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -376,7 +376,7 @@ export function NavigationPanel() {
           />
         )}
       </div>
-    </aside>
+    </nav>
   );
 }
 
