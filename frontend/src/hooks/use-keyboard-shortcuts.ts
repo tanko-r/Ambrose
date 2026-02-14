@@ -88,19 +88,9 @@ export function useKeyboardShortcuts({
     enableOnContentEditable: false,
   } as const;
 
-  // ? (Shift+/): Open keyboard help
-  useHotkeys(
-    "shift+/",
-    (e) => {
-      e.preventDefault();
-      openHelpDialog();
-    },
-    { ...singleCharOpts, preventDefault: true }
-  );
-
-  // [ and ]: Toggle navigator panel and sidebar
-  // Using native keydown listener because react-hotkeys-hook may parse brackets
-  // as special syntax (modifier grouping).
+  // Native keydown listener for keys that react-hotkeys-hook can't handle:
+  // - ? key: event.key is "?" but react-hotkeys-hook "shift+/" expects key="/"
+  // - Ctrl/Cmd+[ and Ctrl/Cmd+]: brackets parsed as special syntax by the library
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       // Skip if in a form field or contenteditable
@@ -108,17 +98,26 @@ export function useKeyboardShortcuts({
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if ((e.target as HTMLElement)?.isContentEditable) return;
 
-      if (e.key === "[" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // ? key (Shift+/): Open keyboard help
+      if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openHelpDialog();
+        return;
+      }
+
+      // Ctrl/Cmd+[: Toggle navigator panel
+      if (e.key === "[" && (e.ctrlKey || e.metaKey) && !e.altKey) {
         e.preventDefault();
         useAppStore.getState().toggleNavPanel();
-      } else if (e.key === "]" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Ctrl/Cmd+]: Toggle sidebar
+      } else if (e.key === "]" && (e.ctrlKey || e.metaKey) && !e.altKey) {
         e.preventDefault();
         useAppStore.getState().toggleSidebar();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [openHelpDialog]);
 
   // J: Navigate to next risk paragraph
   useHotkeys("j", goNext, singleCharOpts);
