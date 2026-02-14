@@ -2,14 +2,14 @@
 
 **Project:** Ambrose (Contract Redlining)
 **Branch:** nextjs-migration
-**Last Updated:** 2026-02-13
+**Last Updated:** 2026-02-14
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** v1.1 Cloud Deployment -- Phase 9 pending
+**Current focus:** v1.0 Gap Closure -- Phase 8.1 in progress (plan 02 complete)
 
 ## Current Milestone
 
@@ -33,12 +33,13 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 2 | Document Viewer + Navigation | Complete | 100% |
 | 3 | Sidebar + Risk Analysis | Complete | 100% |
 | 4 | Revision Bottom Sheet + Track Changes | Complete | 100% |
-| 5 | Precedent Split View | In Progress | 67% |
+| 5 | Precedent Split View | Complete | 100% |
 | 6 | Dialogs + Finalization | Complete | 100% |
-| 7 | Polish + Validation | In Progress | 80% |
+| 7 | Polish + Validation | Complete | 100% |
 | 8 | Cleanup + Cutover | Complete | 100% |
+| 8.1 | Documentation Sync + Verification | In Progress | 67% |
 
-**Note:** v1.0 phases 5 and 7 have remaining plans. Phase 8 complete. v1.1 planning proceeds in parallel.
+**Note:** v1.0 core phases complete. Phase 8.1 gap closure underway (2/3 plans complete).
 
 ## Accumulated Decisions
 
@@ -68,6 +69,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 8 | Archive old frontend to _archived/ (not delete) | Preserves history for reference |
 | 8 | Track package-lock.json for root concurrently | Reproducible dev tooling installs |
 | 8 | Annotate CONCERNS.md references rather than delete | Preserves audit trail and historical context |
+| 8.1 | VERIFICATION.md files derived from SUMMARY evidence | Programmatic verification with human verification gates noted |
 
 ### Quick Tasks Completed
 
@@ -82,9 +84,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed quick task 6 (Critical/High QA fixes: theme persistence, keyboard shortcuts, ARIA, contrast, dark mode)
+Last session: 2026-02-14
+Last activity: 2026-02-14 - Completed plan 08.1-02 (Created VERIFICATION.md files for phases 5, 6, 7)
 Resume file: None
 
 ---
-*State updated: 2026-02-13*
+*State updated: 2026-02-14*
