@@ -78,11 +78,12 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 3 | Fix layout so app renders fullscreen within viewport | 2026-02-10 | 17ba4c9 |
 | 4 | Navigator toggle button shows right arrow and Show text when nav bar is hidden | 2026-02-10 | 3981aa2 |
 | 5 | Stop clause generation button for revision sidebar | 2026-02-13 | a32fdab |
+| 6 | Fix Critical/High QA items from Phase 7 regression | 2026-02-13 | b2e31f5, 41696b1 |
 
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed quick task 5 (Stop button for revision generation)
+Last activity: 2026-02-13 - Completed quick task 6 (Critical/High QA fixes: theme persistence, keyboard shortcuts, ARIA, contrast, dark mode)
 Resume file: None
 
 ---
