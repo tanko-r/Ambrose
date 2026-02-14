@@ -149,7 +149,12 @@ Plans:
   5. STATE.md: Progress percentages reflect actual execution status
   6. VERIFICATION.md files created for phases 5, 6, 7
 
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 08.1-01-PLAN.md -- Human verification of transmittal and new project features
+- [ ] 08.1-02-PLAN.md -- Create VERIFICATION.md files for phases 5, 6, 7
+- [ ] 08.1-03-PLAN.md -- Update tracking documents (REQUIREMENTS, ROADMAP, STATE)
 
 ---
 
@@ -295,7 +300,7 @@ Plans:
 | 6. Dialogs + Finalize | v1.0 | 2/5 | In progress | - |
 | 7. Polish | v1.0 | 0/5 | Not started | - |
 | 8. Cleanup | v1.0 | 2/2 | Complete | 2026-02-13 |
-| 8.1 Doc Sync + Verify | v1.0 | 0/? | Not started | - |
+| 8.1 Doc Sync + Verify | v1.0 | 0/3 | Not started | - |
 | 9. Containerization | v1.1 | 0/? | Not started | - |
 | 10. API Routing | v1.1 | 0/? | Not started | - |
 | 11. Session Resilience | v1.1 | 0/? | Not started | - |
