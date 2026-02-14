@@ -75,11 +75,23 @@ export function KeyboardHelp({ open, onOpenChange }: KeyboardHelpProps) {
           <ShortcutSection title="Navigation">
             <ShortcutRow
               label="Toggle Navigator Panel"
-              keys={<Kbd>[</Kbd>}
+              keys={
+                <>
+                  <Kbd>{mod}</Kbd>
+                  <span className="text-xs text-muted-foreground">+</span>
+                  <Kbd>[</Kbd>
+                </>
+              }
             />
             <ShortcutRow
               label="Toggle Sidebar"
-              keys={<Kbd>]</Kbd>}
+              keys={
+                <>
+                  <Kbd>{mod}</Kbd>
+                  <span className="text-xs text-muted-foreground">+</span>
+                  <Kbd>]</Kbd>
+                </>
+              }
             />
             <ShortcutRow
               label="Next Risk"

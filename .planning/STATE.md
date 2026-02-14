@@ -36,9 +36,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 5 | Precedent Split View | In Progress | 67% |
 | 6 | Dialogs + Finalization | Complete | 100% |
 | 7 | Polish + Validation | In Progress | 80% |
-| 8 | Cleanup + Cutover | Pending | 0% |
+| 8 | Cleanup + Cutover | Complete | 100% |
 
-**Note:** v1.0 phases 5-8 have remaining work. v1.1 planning proceeds in parallel.
+**Note:** v1.0 phases 5 and 7 have remaining plans. Phase 8 complete. v1.1 planning proceeds in parallel.
 
 ## Accumulated Decisions
 
@@ -65,6 +65,9 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 7 | Darkened muted-foreground oklch 0.525 -> 0.49 | WCAG AA 4.5:1 contrast on white |
 | 7 | Darkened severity-high oklch 0.705 -> 0.62 | White text badge contrast 3:1 |
 | 7 | AxeAccessibility as separate client component | Tree-shaken in production, cleaner separation |
+| 8 | Archive old frontend to _archived/ (not delete) | Preserves history for reference |
+| 8 | Track package-lock.json for root concurrently | Reproducible dev tooling installs |
+| 8 | Annotate CONCERNS.md references rather than delete | Preserves audit trail and historical context |
 
 ### Quick Tasks Completed
 
@@ -74,11 +77,13 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 2 | Toggle to hide target doc panel nav bar | 2026-02-10 | 4703579 |
 | 3 | Fix layout so app renders fullscreen within viewport | 2026-02-10 | 17ba4c9 |
 | 4 | Navigator toggle button shows right arrow and Show text when nav bar is hidden | 2026-02-10 | 3981aa2 |
+| 5 | Stop clause generation button for revision sidebar | 2026-02-13 | a32fdab |
+| 6 | Fix Critical/High QA items from Phase 7 regression | 2026-02-13 | b2e31f5, 41696b1 |
 
 ## Session Continuity
 
 Last session: 2026-02-13
-Last activity: 2026-02-13 - Completed 07-04-PLAN.md (accessibility + small screen warning)
+Last activity: 2026-02-13 - Completed quick task 6 (Critical/High QA fixes: theme persistence, keyboard shortcuts, ARIA, contrast, dark mode)
 Resume file: None
 
 ---

@@ -60,8 +60,8 @@ Plans:
 **Requirements**: PREC-01..04
 
 Plans:
-- [ ] 05-01-PLAN.md -- Foundation: types, store extensions, use-precedent hook, split-layout, CSS
-- [ ] 05-02-PLAN.md -- Components: precedent-content, precedent-navigator, precedent-panel, selection tooltip
+- [x] 05-01-PLAN.md -- Foundation: types, store extensions, use-precedent hook, split-layout, CSS
+- [x] 05-02-PLAN.md -- Components: precedent-content, precedent-navigator, precedent-panel, selection tooltip
 - [ ] 05-03-PLAN.md -- Integration: page layout, sidebar overlay/collapse, related tab wiring, snippet badge
 
 ### Phase 6: Dialogs + Finalization
@@ -112,6 +112,8 @@ Plans:
 ### Phase 8: Cleanup + Cutover
 
 **Goal**: Remove the old Flask-rendered frontend and finalize the development setup for Next.js-only workflow.
+**Status**: Complete
+**Completed**: 2026-02-13
 
 **Depends on**: Phase 7 (UI polish complete and validated)
 **Requirements**: None (cleanup phase)
@@ -123,7 +125,11 @@ Plans:
   4. README.md updated with Next.js setup instructions, tech stack, and development workflow
   5. All references to the old frontend removed from code, docs, and config files
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [x] 08-01-PLAN.md -- Archive old frontend, strip Flask static serving, add concurrently dev script
+- [x] 08-02-PLAN.md -- Update all documentation to reflect Next.js-only architecture
 
 ---
 
@@ -268,7 +274,7 @@ Plans:
 | 5. Precedent Split | v1.0 | 0/3 | In progress | - |
 | 6. Dialogs + Finalize | v1.0 | 2/5 | In progress | - |
 | 7. Polish | v1.0 | 0/5 | Not started | - |
-| 8. Cleanup | v1.0 | 0/? | Not started | - |
+| 8. Cleanup | v1.0 | 2/2 | Complete | 2026-02-13 |
 | 9. Containerization | v1.1 | 0/? | Not started | - |
 | 10. API Routing | v1.1 | 0/? | Not started | - |
 | 11. Session Resilience | v1.1 | 0/? | Not started | - |

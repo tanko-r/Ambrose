@@ -1,116 +1,52 @@
-# Collaborative Contract Review App
+# Contract Review API Backend
 
-A Flask-based webapp for interactive contract review with AI-powered redlining.
+Flask REST API providing document parsing, AI-powered analysis, revision generation, and finalization endpoints for the Ambrose contract redlining tool.
 
-## Quick Start
+## Key Modules
+
+- **`api/routes.py`** -- All HTTP endpoints (intake, analysis, revision, flagging, finalization)
+- **`services/claude_service.py`** -- Claude Opus integration for document analysis and risk identification
+- **`services/gemini_service.py`** -- Gemini API integration for surgical redline generation
+- **`services/document_service.py`** -- DOCX parsing, structure extraction, and track-changes output
+- **`services/analysis_service.py`** -- Regex-based fallback analysis when LLM unavailable
+- **`services/map_updater.py`** -- Updates concept/risk maps when revisions are accepted
+- **`models/concept_map.py`** -- Provisions grouped by legal concept
+- **`models/risk_map.py`** -- Risk dependency tracking with relationship recalculation
+
+## API Overview
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/intake` | POST | Initialize session with document upload |
+| `/api/sessions` | GET | List saved sessions |
+| `/api/session/<id>` | GET/DELETE | Session metadata or deletion |
+| `/api/document/<id>` | GET | Parsed document structure |
+| `/api/document/<id>/html` | GET | Rendered HTML |
+| `/api/analysis/<id>` | GET | Risk/opportunity analysis |
+| `/api/revise` | POST | Generate AI revision for a clause |
+| `/api/accept` | POST | Accept a revision |
+| `/api/reject` | POST | Reject a revision |
+| `/api/flag` | POST | Flag item for client review |
+| `/api/finalize` | POST | Generate final outputs |
+| `/api/download/<id>/<type>` | GET | Download generated files |
+
+See `api/routes.py` for the complete endpoint documentation.
+
+## Running
 
 ```bash
-# Install dependencies
+# From project root
 pip install -r requirements.txt
-
-# Set your Gemini API key (one of these methods):
-# Option 1: Environment variable
-export GEMINI_API_KEY=your_key_here
-
-# Option 2: Create api.txt file with your key
-echo "your_key_here" > api.txt
-
-# Option 3: Create .env file
-echo "GEMINI_API_KEY=your_key_here" > .env
-
-# Run the app
 python run.py
 ```
 
-Then open http://localhost:5000 in your browser.
+The API starts on `http://localhost:5000`. The frontend is a separate Next.js application in `../frontend/`.
 
-## Features
+## Data Storage
 
-### Intake Phase
-- Upload target contract (.docx)
-- Optionally upload precedent/preferred form
-- Configure representation (seller, buyer, etc.)
-- Set aggressiveness level (1-5)
-- Choose review approach (quick-sale, competitive-bid, relationship, adversarial)
+Session state and uploads are stored on disk:
 
-### Analysis Phase
-- Automatic risk detection per clause
-- Opportunity identification
-- Conceptual document mapping
-- Contract-type specific analysis (PSA, Lease, Easement, Development Agreement)
+- **Sessions:** `data/sessions/{session_id}.json`
+- **Uploads:** `data/uploads/{session_id}/`
 
-### Collaborative Review
-- Click any clause to see analysis in sidebar
-- View identified risks and opportunities
-- Generate AI-powered revisions via Gemini
-- Accept/reject revisions
-- Flag items for client review
-- See rationale and AI reasoning
-
-### Finalization
-- Generate Word document with accepted revisions
-- Generate transmittal email draft
-- Generate change manifest
-
-## Project Structure
-
-```
-app/
-├── server.py           # Flask app and main entry point
-├── api/
-│   └── routes.py       # All API endpoints
-├── services/
-│   ├── document_service.py   # Document parsing and rebuilding
-│   ├── analysis_service.py   # Risk/opportunity detection
-│   └── gemini_service.py     # Gemini API integration
-├── static/
-│   └── index.html      # Frontend webapp (vanilla JS)
-└── data/               # Session data, uploads, feedback
-```
-
-## API Endpoints
-
-- `POST /api/intake` - Initialize session with document
-- `GET /api/document/<session_id>` - Get parsed document
-- `GET /api/analysis/<session_id>` - Get risk analysis
-- `POST /api/revise` - Generate revision for a clause
-- `POST /api/accept` - Accept a revision
-- `POST /api/reject` - Reject a revision
-- `POST /api/flag` - Flag item for client review
-- `POST /api/finalize` - Generate final outputs
-- `GET /api/download/<session_id>/<type>` - Download generated files
-
-## Contract Type Skills
-
-The app has built-in knowledge for:
-- **PSA** (Purchase and Sale Agreement) - closing escape risks, deposit traps, survival periods
-- **Lease** - rent escalation, tenant indemnity, access rights
-- **Easement** - perpetual grants, expansion rights, relocation
-- **Development Agreement** - completion deadlines, approval standards
-
-## Customization
-
-### Adding New Contract Skills
-
-Edit `app/services/analysis_service.py` and add to `CONTRACT_SKILLS`:
-
-```python
-'new_type': {
-    'name': 'New Contract Type',
-    'risks': [
-        {
-            'pattern': r'regex_pattern',
-            'type': 'risk_identifier',
-            'severity': 'high|medium|info',
-            'description': 'What this risk means'
-        }
-    ],
-    'opportunities': [...]
-}
-```
-
-### Modifying Prompts
-
-Edit `app/services/gemini_service.py`:
-- `build_system_prompt()` - Overall attorney persona
-- `build_revision_prompt()` - Per-clause revision task
+Both directories are gitignored and created at runtime.

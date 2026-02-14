@@ -1,0 +1,15 @@
+{
+  "name": "claude-redlining",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail -n flask,next -c blue,green \"python run.py\" \"npm run dev --prefix frontend\"",
+    "dev:flask": "python run.py",
+    "dev:next": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "test": "echo \"See pytest for backend tests\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

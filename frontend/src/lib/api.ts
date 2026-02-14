@@ -209,11 +209,12 @@ export async function getAnalysisProgress(
 // Revision
 // =============================================================================
 
-export async function revise(data: ReviseRequest): Promise<ReviseResponse> {
+export async function revise(data: ReviseRequest, signal?: AbortSignal): Promise<ReviseResponse> {
   return request(`${FLASK_DIRECT}/api/revise`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
+    signal,
   });
 }
 

@@ -37,6 +37,9 @@ app/data/uploads/
 # Logs
 *.log
 
+# Node.js
+node_modules/
+
 # Misc
 nul
 

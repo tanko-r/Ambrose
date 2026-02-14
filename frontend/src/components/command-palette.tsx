@@ -67,14 +67,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         id: "toggle-nav",
         label: "Toggle Navigator Panel",
         icon: PanelLeft,
-        shortcut: "[",
+        shortcut: `${modSymbol}+[`,
         action: () => useAppStore.getState().toggleNavPanel(),
       },
       {
         id: "toggle-sidebar",
         label: "Toggle Sidebar",
         icon: PanelRight,
-        shortcut: "]",
+        shortcut: `${modSymbol}+]`,
         action: () => useAppStore.getState().toggleSidebar(),
       },
       {
@@ -182,7 +182,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         icon: Settings,
         shortcut: `${modSymbol}+,`,
         action: () => {
-          // Settings not yet implemented - placeholder
+          window.dispatchEvent(new CustomEvent("command:open-settings"));
         },
       },
     ],

@@ -4,7 +4,7 @@
 
 ## Pattern Overview
 
-**Overall:** Layered client-server web application with Flask backend and HTML/JS frontend, orchestrating a collaborative contract review workflow across four distinct phases.
+**Overall:** Layered client-server web application with Flask API backend and Next.js React frontend, orchestrating a collaborative contract review workflow across four distinct phases.
 
 **Key Characteristics:**
 - Session-based architecture for maintaining state across multi-step workflows
@@ -17,9 +17,9 @@
 
 **Presentation Layer (Frontend):**
 - Purpose: Provide interactive UI for intake, document browsing, risk review, and revision acceptance
-- Location: `C:\Users\david\Documents\claude-redlining\app\static\`
-- Contains: Single-page application (index.html, analysis.js, main.css)
-- Depends on: Flask backend API endpoints
+- Location: `C:\Users\david\Documents\claude-redlining\frontend\`
+- Contains: Next.js 16 App Router with React components, Zustand store, shadcn/ui
+- Depends on: Flask backend API endpoints (proxied via Next.js rewrites)
 - Used by: End users (legal professionals)
 
 **API/Routing Layer:**
@@ -59,7 +59,7 @@
 
 **Entry Point:**
 - Location: `C:\Users\david\Documents\claude-redlining\app\server.py`
-- Creates Flask app, registers API blueprint, configures upload/session folders, serves static files
+- Creates Flask app, registers API blueprint, configures upload/session folders
 
 ## Data Flow
 

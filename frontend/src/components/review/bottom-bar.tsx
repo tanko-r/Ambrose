@@ -165,7 +165,7 @@ export function BottomBar() {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="min-w-[60px] text-center text-xs tabular-nums text-muted-foreground">
+        <span className="min-w-[60px] text-center text-xs tabular-nums text-foreground">
           {riskParaIds.length > 0
             ? `${currentIndex + 1} of ${riskParaIds.length}`
             : "—"}

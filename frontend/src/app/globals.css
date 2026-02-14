@@ -343,22 +343,42 @@
      Dark mode overrides for document viewer
      ======================================================================== */
 
+  /* Override inline DOCX styles that embed white backgrounds */
+  .dark .document-container {
+    color: oklch(0.985 0 0);
+  }
+
+  .dark .document-container * {
+    background-color: transparent !important;
+    color: inherit;
+  }
+
+  /* Preserve colors for track-changes and risk highlights in dark mode */
+  .dark .document-container .diff-del,
+  .dark .document-container .diff-ins,
+  .dark .document-container .track-changes-insert,
+  .dark .document-container .track-changes-delete,
+  .dark .document-container .risk-highlight,
+  .dark .document-container .risk-highlight-active {
+    color: revert-layer;
+  }
+
   .dark .document-container [data-para-id]:hover {
-    background-color: oklch(0.25 0.003 264 / 0.5);
+    background-color: oklch(0.25 0.003 264 / 0.5) !important;
   }
 
   .dark .document-container [data-para-id].selected {
-    background-color: oklch(0.25 0.04 264 / 0.4);
+    background-color: oklch(0.25 0.04 264 / 0.4) !important;
     border-color: oklch(0.623 0.214 264);
   }
 
   .dark .document-container [data-para-id].has-revision {
-    background-color: oklch(0.22 0.02 27 / 0.4);
+    background-color: oklch(0.22 0.02 27 / 0.4) !important;
     border-color: oklch(0.45 0.12 27 / 0.5);
   }
 
   .dark .document-container [data-para-id].revision-accepted {
-    background-color: oklch(0.22 0.03 155 / 0.3);
+    background-color: oklch(0.22 0.03 155 / 0.3) !important;
     border-color: oklch(0.45 0.12 155 / 0.4);
   }
 
@@ -379,35 +399,35 @@
   }
 
   .dark .risk-highlight {
-    background: linear-gradient(180deg, transparent 60%, oklch(0.35 0.1 27 / 0.5) 60%);
+    background: linear-gradient(180deg, transparent 60%, oklch(0.35 0.1 27 / 0.5) 60%) !important;
   }
 
   .dark .risk-highlight-active {
-    background: oklch(0.3 0.08 27 / 0.5);
+    background: oklch(0.3 0.08 27 / 0.5) !important;
     outline-color: oklch(0.704 0.191 22.216);
   }
 
   .dark .diff-del,
   .dark del.diff-del {
-    color: #f87171;
+    color: #f87171 !important;
     text-decoration-color: #f87171;
   }
 
   .dark .diff-ins,
   .dark ins.diff-ins {
-    color: #60a5fa;
+    color: #60a5fa !important;
     text-decoration-color: #60a5fa;
   }
 
   .dark .user-addition {
-    background: oklch(0.3 0.05 264 / 0.4);
-    color: #60a5fa;
+    background: oklch(0.3 0.05 264 / 0.4) !important;
+    color: #60a5fa !important;
     text-decoration-color: #60a5fa;
   }
 
   .dark .user-deletion {
-    background: oklch(0.3 0.05 27 / 0.4);
-    color: #f87171;
+    background: oklch(0.3 0.05 27 / 0.4) !important;
+    color: #f87171 !important;
     text-decoration-color: #f87171;
   }
 }

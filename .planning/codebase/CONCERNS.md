@@ -50,13 +50,13 @@
 
 **Risk ID Numbering Reset on Reruns:**
 - Symptoms: Running analysis multiple times on same session renumbers all risks (line 600 in claude_service.py: `risk['risk_id'] = f'R{i+1}'`). User-selected inclusions/exclusions for R5 become invalid when R5 changes identity.
-- Files: `app/services/claude_service.py` (lines 598-600), `app/static/js/sidebar.js` (lines 9-10 riskSelectionState uses risk_id as key)
+- Files: `app/services/claude_service.py` (lines 598-600), `_archived/static/js/sidebar.js` (lines 9-10 riskSelectionState uses risk_id as key) *(archived -- frontend now in frontend/)*
 - Trigger: Call /analysis twice on same session. First run creates R1-R20, user selects some. Second run creates different R1-R20, old selections orphaned.
 - Workaround: Delete session and restart if reanalysis needed. Never update analysis once risks are selected.
 
 **Sidebar Risk State Lost on Navigation:**
 - Symptoms: Risk inclusion/exclusion selections (stored in riskSelectionState object) are in-memory JavaScript only. Navigating to different paragraph and back forgets selections.
-- Files: `app/static/js/sidebar.js` (line 10: `const riskSelectionState = {}`)
+- Files: `_archived/static/js/sidebar.js` (line 10: `const riskSelectionState = {}`) *(archived -- frontend now in frontend/)*
 - Trigger: Select risks to exclude, click different paragraph, click back to original. Previous selections are reset.
 - Workaround: Complete all risk selections for a paragraph before moving to next. Save to server immediately.
 
@@ -126,9 +126,9 @@
 
 **Frontend Render of Large Document (1267-line sidebar.js):**
 - Problem: sidebar.js is 1267 lines with complex risk relationship rendering. Full rerender on each paragraph click triggers cascading DOM updates.
-- Files: `app/static/js/sidebar.js` (entire file, especially buildRiskRelationshipsHtml)
+- Files: `_archived/static/js/sidebar.js` (entire file, especially buildRiskRelationshipsHtml) *(archived -- frontend now in frontend/)*
 - Cause: jQuery-style full replacement instead of virtual DOM or delta updates.
-- Improvement path: (1) Migrate to React/Vue for efficient diffing. (2) Implement virtualization for risk lists. (3) Lazy-load risk details on expand.
+- Improvement path: Resolved -- migrated to Next.js React frontend with component-based rendering and Zustand state management.
 
 **Session Data Loaded Entirely into Memory:**
 - Problem: Full parsed document with all paragraphs and analysis kept in RAM (sessions dict, line 25 in routes.py). For 10 concurrent users with large contracts, hundreds of MB RAM.
@@ -157,9 +157,9 @@
 - Test coverage: No test for concurrent reads/writes or crash recovery.
 
 **Large JavaScript Files Without Module Boundaries:**
-- Files: `app/static/js/sidebar.js` (1267 lines), `app/static/js/revision.js` (1015 lines), `app/static/js/navigation.js` (515 lines)
+- Files: `_archived/static/js/sidebar.js` (1267 lines), `_archived/static/js/revision.js` (1015 lines), `_archived/static/js/navigation.js` (515 lines) *(archived -- frontend now in frontend/)*
 - Why fragile: Global variables (expandedRiskId, riskSelectionState, AppState). No encapsulation. Changes to sidebar affect revision and navigation unpredictably.
-- Safe modification: (1) Refactor into modules using ES6 import/export. (2) Use Webpack/Rollup for bundling. (3) Implement proper state management (Redux, Vuex). (4) Add TypeScript for type safety.
+- Status: Resolved -- migrated to Next.js React frontend with TypeScript, Zustand state management, and component-based architecture in `frontend/`.
 - Test coverage: No JavaScript unit tests. E2E testing only via UI.
 
 **Contract Type Detection with Regex Patterns:**

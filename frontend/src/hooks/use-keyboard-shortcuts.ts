@@ -2,7 +2,7 @@
 
 import { useHotkeys } from "react-hotkeys-hook";
 import { useAppStore } from "@/lib/store";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 interface KeyboardShortcutCallbacks {
   openCommandPalette: () => void;
@@ -84,36 +84,40 @@ export function useKeyboardShortcuts({
 
   // --- Single-char shortcuts (disabled in form fields) ---
   const singleCharOpts = {
-    enableOnFormTags: false as const,
+    enableOnFormTags: false,
     enableOnContentEditable: false,
-  };
+  } as const;
 
-  // ? (Shift+/): Open keyboard help
-  useHotkeys(
-    "shift+/",
-    () => {
-      openHelpDialog();
-    },
-    singleCharOpts
-  );
+  // Native keydown listener for keys that react-hotkeys-hook can't handle:
+  // - ? key: event.key is "?" but react-hotkeys-hook "shift+/" expects key="/"
+  // - Ctrl/Cmd+[ and Ctrl/Cmd+]: brackets parsed as special syntax by the library
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Skip if in a form field or contenteditable
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if ((e.target as HTMLElement)?.isContentEditable) return;
 
-  // [: Toggle navigator panel
-  useHotkeys(
-    "[",
-    () => {
-      useAppStore.getState().toggleNavPanel();
-    },
-    singleCharOpts
-  );
+      // ? key (Shift+/): Open keyboard help
+      if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        openHelpDialog();
+        return;
+      }
 
-  // ]: Toggle sidebar
-  useHotkeys(
-    "]",
-    () => {
-      useAppStore.getState().toggleSidebar();
-    },
-    singleCharOpts
-  );
+      // Ctrl/Cmd+[: Toggle navigator panel
+      if (e.key === "[" && (e.ctrlKey || e.metaKey) && !e.altKey) {
+        e.preventDefault();
+        useAppStore.getState().toggleNavPanel();
+      // Ctrl/Cmd+]: Toggle sidebar
+      } else if (e.key === "]" && (e.ctrlKey || e.metaKey) && !e.altKey) {
+        e.preventDefault();
+        useAppStore.getState().toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [openHelpDialog]);
 
   // J: Navigate to next risk paragraph
   useHotkeys("j", goNext, singleCharOpts);

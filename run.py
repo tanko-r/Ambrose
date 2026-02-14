@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-Quick start script for the Contract Review Application.
+Quick start script for the Contract Review API Server.
 
 Usage:
-    python run.py
+    python run.py          # Start API server only
+    npm run dev            # Start both API + frontend (recommended)
 
-This will start the server at http://localhost:5000
+API server runs at http://localhost:5000
+Frontend runs at http://localhost:3000 (via Next.js)
 """
 
 import sys
