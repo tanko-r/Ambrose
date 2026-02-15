@@ -1,18 +1,18 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-11
+**Updated:** 2026-02-14
 **Branch:** `nextjs-migration`
 
 ## Milestones
 
-- **v1.0 Next.js Migration + Feature Completion** - Phases A, B, 0-8 (in progress)
+- **v1.0 Next.js Migration + Feature Completion** - Phases A, B, 0-8, 8.1 (in progress)
 - **v1.1 Cloud Deployment** - Phases 9-13 (planned)
 
 ## Phases
 
 <details>
-<summary>v1.0 Next.js Migration + Feature Completion (Phases A, B, 0-8)</summary>
+<summary>v1.0 Next.js Migration + Feature Completion (Phases A, B, 0-8, 8.1)</summary>
 
 ### Phase A: High-Fidelity Document Rendering
 **Goal**: Exact Word formatting in both document panels
@@ -130,6 +130,31 @@ Plans:
 Plans:
 - [x] 08-01-PLAN.md -- Archive old frontend, strip Flask static serving, add concurrently dev script
 - [x] 08-02-PLAN.md -- Update all documentation to reflect Next.js-only architecture
+
+---
+
+### Phase 8.1: Documentation Sync + Verification
+
+**Goal**: Close v1.0 audit gaps — verify unconfirmed features (transmittal, new project), update stale tracking documents, and create missing verification files.
+
+**Depends on**: Phase 8 (all feature code complete)
+**Requirements**: TRANS-01..04, NEW-01..04 (verify and mark complete)
+**Gap Closure**: Closes all gaps from v1.0 milestone audit
+
+**Success Criteria** (what must be TRUE):
+  1. Transmittal feature (TRANS-01..04) human-verified working in browser
+  2. New project workflow (NEW-01..04) human-verified working in browser
+  3. REQUIREMENTS.md: TRANS-01..04 and NEW-01..04 marked complete
+  4. ROADMAP.md: Plan checkboxes accurate for phases 5, 6, 7
+  5. STATE.md: Progress percentages reflect actual execution status
+  6. VERIFICATION.md files created for phases 5, 6, 7
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 08.1-01-PLAN.md -- Human verification of transmittal and new project features
+- [ ] 08.1-02-PLAN.md -- Create VERIFICATION.md files for phases 5, 6, 7
+- [ ] 08.1-03-PLAN.md -- Update tracking documents (REQUIREMENTS, ROADMAP, STATE)
 
 ---
 
@@ -275,6 +300,7 @@ Plans:
 | 6. Dialogs + Finalize | v1.0 | 2/5 | In progress | - |
 | 7. Polish | v1.0 | 0/5 | Not started | - |
 | 8. Cleanup | v1.0 | 2/2 | Complete | 2026-02-13 |
+| 8.1 Doc Sync + Verify | v1.0 | 0/3 | Not started | - |
 | 9. Containerization | v1.1 | 0/? | Not started | - |
 | 10. API Routing | v1.1 | 0/? | Not started | - |
 | 11. Session Resilience | v1.1 | 0/? | Not started | - |

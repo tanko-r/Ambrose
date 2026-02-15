@@ -96,6 +96,7 @@ interface UIState {
   showFlags: boolean;
   hoveredRiskId: string | null;
   focusedRiskId: string | null;
+  focusedFlagParaId: string | null;
   generatingRevision: boolean;
   defaultSidebarTab: SidebarTab;
   navPanelVisibleDefault: boolean;
@@ -152,6 +153,7 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   toggleShowFlags: () => void;
   setHoveredRiskId: (riskId: string | null) => void;
   setFocusedRiskId: (riskId: string | null) => void;
+  setFocusedFlagParaId: (paraId: string | null) => void;
   setGeneratingRevision: (v: boolean) => void;
   setRevisionSheetParaId: (paraId: string | null) => void;
 
@@ -222,6 +224,7 @@ const initialUIState: UIState = {
   showFlags: true,
   hoveredRiskId: null,
   focusedRiskId: null,
+  focusedFlagParaId: null,
   generatingRevision: false,
   defaultSidebarTab: 'risks',
   navPanelVisibleDefault: true,
@@ -316,6 +319,7 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => ({
       focusedRiskId: state.focusedRiskId === riskId ? null : riskId,
     })),
+  setFocusedFlagParaId: (paraId) => set({ focusedFlagParaId: paraId }),
   setGeneratingRevision: (v) => set({ generatingRevision: v }),
   setRevisionSheetParaId: (paraId) => set({ revisionSheetParaId: paraId }),
 

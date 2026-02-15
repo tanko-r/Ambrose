@@ -60,3 +60,5 @@ test documents/.agents/
 test documents/.claude/
 test documents/.codex/
 test documents/.gemini/
+
+gha-creds-*.json

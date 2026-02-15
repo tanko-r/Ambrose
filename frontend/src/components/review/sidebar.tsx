@@ -109,6 +109,9 @@ export function Sidebar() {
   const precedentSnippets = useAppStore((s) => s.precedentSnippets);
   const removePrecedentSnippet = useAppStore((s) => s.removePrecedentSnippet);
 
+  const flags = useAppStore((s) => s.flags);
+  const setFocusedFlagParaId = useAppStore((s) => s.setFocusedFlagParaId);
+
   const [activeTab, setActiveTab] = useState<SidebarTab>("risks");
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
   const [flagDialogParaId, setFlagDialogParaId] = useState<string | null>(null);
@@ -157,19 +160,7 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [precedentPanelOpen]);
 
-  // --- Collapsed mode: show restore tab ---
-  if (!sidebarOpen) {
-    // Always show right-edge restore tab (whether precedent is open or not)
-    return (
-      <button
-        onClick={toggleSidebar}
-        className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
-        aria-label="Open sidebar"
-      >
-        <PanelRightOpen className="h-4 w-4 text-muted-foreground" />
-      </button>
-    );
-  }
+  // (collapsed tab and animated wrapper handled below in return)
 
   // --- Sidebar content (shared between normal and overlay modes) ---
 
@@ -264,7 +255,13 @@ export function Sidebar() {
             riskMap={riskMap}
             paraId={selectedParaId}
             onIncludedRiskIdsRef={getIncludedRiskIdsRef}
-            onFlag={(_riskId, riskTitle, riskDescription) => {
+            onFlag={(riskId, riskTitle, riskDescription) => {
+              // If already flagged, just focus it
+              const existingFlag = flags.find(f => f.para_id === selectedParaId);
+              if (existingFlag) {
+                setFocusedFlagParaId(selectedParaId);
+                return;
+              }
               setFlagDialogParaId(selectedParaId);
               setFlagDialogNote(`${riskTitle}: ${riskDescription}`);
               setFlagDialogDefaultCategory("risk-alert");
@@ -439,16 +436,14 @@ export function Sidebar() {
     </>
   );
 
-  // --- Overlay mode: sidebar is a fixed overlay on the RIGHT ---
-  if (precedentPanelOpen) {
+  // --- Overlay mode when precedent panel is open ---
+  if (precedentPanelOpen && sidebarOpen) {
     return (
       <>
-        {/* Backdrop to dismiss */}
         <div
           className="fixed inset-0 z-30 bg-black/10"
           onClick={toggleSidebar}
         />
-        {/* Overlay sidebar on right edge */}
         <aside role="complementary" aria-label="Analysis sidebar" className="fixed top-14 right-0 bottom-0 z-40 flex w-[380px] flex-col border-l bg-card shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
           {sidebarContent}
         </aside>
@@ -456,11 +451,30 @@ export function Sidebar() {
     );
   }
 
-  // --- Normal mode: sidebar as flex column on the right ---
+  // --- Normal mode: animated width sidebar + restore tab ---
   return (
-    <aside role="complementary" aria-label="Analysis sidebar" className="flex h-full w-[380px] shrink-0 flex-col border-l bg-card shadow-sm">
-      {sidebarContent}
-    </aside>
+    <>
+      {/* Restore tab when collapsed */}
+      {!sidebarOpen && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
+          aria-label="Open sidebar"
+        >
+          <PanelRightOpen className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
+
+      {/* Animated sidebar */}
+      <div
+        className="shrink-0 overflow-hidden border-l bg-card shadow-sm transition-[width] duration-200 ease-out"
+        style={{ width: sidebarOpen ? 380 : 0 }}
+      >
+        <aside role="complementary" aria-label="Analysis sidebar" className="flex h-full w-[380px] flex-col">
+          {sidebarContent}
+        </aside>
+      </div>
+    </>
   );
 }
 
