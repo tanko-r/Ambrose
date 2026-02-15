@@ -44,6 +44,7 @@ function FlagCard({
   onEdit?: (flag: Flag) => void;
   onClickSection?: (paraId: string) => void;
 }) {
+  const setFocusedFlagParaId = useAppStore((s) => s.setFocusedFlagParaId);
   const isAttorney = flag.flag_type === "attorney";
   const categoryLabel = isAttorney
     ? "Attorney"
@@ -59,6 +60,8 @@ function FlagCard({
     <div
       className="group relative cursor-pointer rounded-lg border p-3 transition-colors hover:bg-accent/30"
       onClick={() => onClickSection?.(flag.para_id)}
+      onMouseEnter={() => setFocusedFlagParaId(flag.para_id)}
+      onMouseLeave={() => setFocusedFlagParaId(null)}
     >
       {/* Top row: section_ref + category + timestamp */}
       <div className="mb-1.5 flex items-center gap-1.5 pr-12">

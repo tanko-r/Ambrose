@@ -15,11 +15,14 @@ export function useDocument(sessionId: string | null) {
   const setFlags = useAppStore((s) => s.setFlags);
   const setRevisions = useAppStore((s) => s.setRevisions);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!sessionId);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!sessionId) return;
+    if (!sessionId) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);

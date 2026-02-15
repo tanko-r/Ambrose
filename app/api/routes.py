@@ -898,6 +898,7 @@ def flag_item():
     note = data.get('note', '')
     flag_type = data.get('flag_type', 'client')  # 'client' or 'attorney'
     category = data.get('category')  # business-decision, risk-alert, for-discussion, fyi (None for attorney flags)
+    text_excerpt = data.get('text_excerpt')  # Optional: user-selected text snippet
 
     session = get_session(session_id)
     if not session:
@@ -911,10 +912,16 @@ def flag_item():
             paragraph = item
             break
 
+    # Use user-selected text excerpt if provided, otherwise fall back to paragraph start
+    if text_excerpt:
+        excerpt = text_excerpt[:200]
+    else:
+        excerpt = paragraph.get('text', '')[:200] if paragraph else ''
+
     flag_entry = {
         'para_id': para_id,
         'section_ref': paragraph.get('section_ref', '') if paragraph else '',
-        'text_excerpt': paragraph.get('text', '')[:200] if paragraph else '',
+        'text_excerpt': excerpt,
         'note': note,
         'flag_type': flag_type,  # 'client' = included in transmittal, 'attorney' = internal review
         'category': category,  # business-decision, risk-alert, for-discussion, fyi

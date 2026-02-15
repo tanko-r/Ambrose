@@ -47,6 +47,8 @@ export interface Paragraph {
   style?: string;
   indent_level?: number;
   numbering?: string;
+  is_numbered?: boolean;
+  caption?: string;
 }
 
 export interface Section {
@@ -242,6 +244,7 @@ export interface FlagRequest {
   note: string;
   flag_type: FlagType;
   category?: FlagCategory;
+  text_excerpt?: string;
 }
 
 export interface UnflagRequest {

@@ -103,7 +103,7 @@ def extract_caption(text, max_length=60):
     if len(text_to_use) > max_length:
         return text_to_use[:max_length].strip() + "..."
 
-    return text_to_use.strip() if text_to_use.strip() else None
+    return text_to_use.strip() if text_to_use.strip() else "(untitled)"
 
 
 class SectionTracker:
@@ -115,20 +115,26 @@ class SectionTracker:
         self.last_level = -1
         self.last_numId = None
 
-    def update(self, numbering_level, section_num, caption, numId=None):
+    def update(self, numbering_level, section_num, caption, numId=None, resolved_ordinal=None):
         """Update hierarchy based on new section encountered."""
         if numbering_level is not None and section_num is None:
-            if numId != self.last_numId:
-                self.counters = {}
-                self.last_numId = numId
+            # Use resolved ordinal from NumberingResolver if available
+            if resolved_ordinal:
+                section_num = resolved_ordinal
+                level = numbering_level
+            else:
+                # Fallback: generate section number from counters
+                if numId != self.last_numId:
+                    self.counters = {}
+                    self.last_numId = numId
 
-            levels_to_remove = [l for l in self.counters if l > numbering_level]
-            for l in levels_to_remove:
-                del self.counters[l]
+                levels_to_remove = [l for l in self.counters if l > numbering_level]
+                for l in levels_to_remove:
+                    del self.counters[l]
 
-            self.counters[numbering_level] = self.counters.get(numbering_level, 0) + 1
-            section_num = self._generate_section_number(numbering_level)
-            level = numbering_level
+                self.counters[numbering_level] = self.counters.get(numbering_level, 0) + 1
+                section_num = self._generate_section_number(numbering_level)
+                level = numbering_level
 
         elif section_num is not None:
             if numbering_level is not None:
@@ -194,8 +200,138 @@ class SectionTracker:
         """Return concise section reference for manifest."""
         if not self.hierarchy:
             return None
-        parts = [item["number"].rstrip('.') for item in self.hierarchy]
-        return "".join(parts)
+        # Use the deepest hierarchy item's number — resolved ordinals like "1.1"
+        # already encode the full path, so we just use the last entry
+        deepest = self.hierarchy[-1]["number"]
+        return deepest.rstrip('.')
+
+
+class NumberingResolver:
+    """
+    Reads Word's numbering.xml to resolve actual rendered ordinals.
+
+    Word stores numbering definitions in abstractNum elements, each with
+    level definitions containing numFmt (decimal, lowerLetter, etc.) and
+    lvlText patterns like "%1.%2" that produce "1.1", "1.2", etc.
+    """
+
+    def __init__(self, doc):
+        """Extract numbering definitions from the document's numbering.xml."""
+        self.abstract_nums = {}   # abstractNumId -> {level -> {fmt, text, start}}
+        self.num_to_abstract = {} # numId -> abstractNumId
+        self.counters = {}        # numId -> {level -> current_count}
+
+        try:
+            numbering_part = doc.part.numbering_part
+        except Exception:
+            return
+        if numbering_part is None:
+            return
+
+        numbering_xml = numbering_part._element
+
+        # Parse abstractNum definitions
+        for abstract in numbering_xml.findall(qn('w:abstractNum')):
+            abstract_id = abstract.get(qn('w:abstractNumId'))
+            levels = {}
+            for lvl in abstract.findall(qn('w:lvl')):
+                ilvl = int(lvl.get(qn('w:ilvl')))
+                num_fmt_el = lvl.find(qn('w:numFmt'))
+                lvl_text_el = lvl.find(qn('w:lvlText'))
+                start_el = lvl.find(qn('w:start'))
+                levels[ilvl] = {
+                    'fmt': num_fmt_el.get(qn('w:val')) if num_fmt_el is not None else 'decimal',
+                    'text': lvl_text_el.get(qn('w:val')) if lvl_text_el is not None else f'%{ilvl + 1}.',
+                    'start': int(start_el.get(qn('w:val'))) if start_el is not None else 1,
+                }
+            self.abstract_nums[abstract_id] = levels
+
+        # Map numId -> abstractNumId
+        for num in numbering_xml.findall(qn('w:num')):
+            num_id = num.get(qn('w:numId'))
+            abstract_ref = num.find(qn('w:abstractNumId'))
+            if abstract_ref is not None:
+                self.num_to_abstract[num_id] = abstract_ref.get(qn('w:val'))
+
+    def resolve(self, num_id, ilvl):
+        """
+        Resolve the rendered ordinal for a paragraph with the given numId and level.
+
+        Returns (ordinal_string, level) or (None, level) if numbering can't be resolved.
+        """
+        abstract_id = self.num_to_abstract.get(num_id)
+        if abstract_id is None:
+            return None, ilvl
+
+        levels_def = self.abstract_nums.get(abstract_id)
+        if levels_def is None:
+            return None, ilvl
+
+        level_def = levels_def.get(ilvl)
+        if level_def is None:
+            return None, ilvl
+
+        # Bullet lists don't get ordinals
+        if level_def['fmt'] == 'bullet':
+            return None, ilvl
+
+        # Initialize counters for this numId if needed
+        if num_id not in self.counters:
+            self.counters[num_id] = {}
+
+        counters = self.counters[num_id]
+
+        # Reset lower-level counters when a higher level increments
+        levels_to_reset = [l for l in counters if l > ilvl]
+        for l in levels_to_reset:
+            del counters[l]
+
+        # Increment counter for this level
+        if ilvl not in counters:
+            counters[ilvl] = level_def['start']
+        else:
+            counters[ilvl] += 1
+
+        # Build the ordinal by substituting %N placeholders in lvlText
+        text_pattern = level_def['text']
+        result = text_pattern
+        for lvl_num in range(10):  # %1 through %10
+            placeholder = f'%{lvl_num + 1}'
+            if placeholder in result:
+                count = counters.get(lvl_num, levels_def.get(lvl_num, {}).get('start', 1))
+                fmt = levels_def.get(lvl_num, {}).get('fmt', 'decimal')
+                result = result.replace(placeholder, self._format_number(count, fmt))
+
+        return result, ilvl
+
+    @staticmethod
+    def _format_number(num, fmt):
+        """Format a number according to Word's numFmt."""
+        if fmt == 'decimal':
+            return str(num)
+        elif fmt == 'lowerLetter':
+            return chr(ord('a') + num - 1) if 1 <= num <= 26 else str(num)
+        elif fmt == 'upperLetter':
+            return chr(ord('A') + num - 1) if 1 <= num <= 26 else str(num)
+        elif fmt == 'lowerRoman':
+            return NumberingResolver._to_roman(num).lower()
+        elif fmt == 'upperRoman':
+            return NumberingResolver._to_roman(num)
+        elif fmt == 'ordinal':
+            return str(num)
+        else:
+            return str(num)
+
+    @staticmethod
+    def _to_roman(num):
+        val = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
+        syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I']
+        roman_num = ''
+        for i in range(len(val)):
+            while num >= val[i]:
+                num -= val[i]
+                roman_num += syms[i]
+        return roman_num
 
 
 def extract_defined_terms(text):
@@ -260,6 +396,12 @@ def parse_document(docx_path) -> Dict[str, Any]:
     doc = Document(str(docx_path))
     section_tracker = SectionTracker()
 
+    # Try to initialize numbering resolver for accurate ordinals
+    try:
+        numbering_resolver = NumberingResolver(doc)
+    except Exception:
+        numbering_resolver = None
+
     result = {
         "source_file": str(docx_path),
         "metadata": {"core_properties": {}},
@@ -296,18 +438,25 @@ def parse_document(docx_path) -> Dict[str, Any]:
             numbering_level = style_info["numbering"]["level"] if style_info["numbering"] else None
             numId = style_info["numbering"]["numId"] if style_info["numbering"] else None
 
+            # Resolve actual ordinal from Word numbering XML
+            resolved_ordinal = None
+            if numbering_level is not None and numId is not None and numbering_resolver:
+                resolved_ordinal, _ = numbering_resolver.resolve(numId, numbering_level)
+
             if numbering_level is not None or section_num or style_info["is_heading"]:
-                section_tracker.update(numbering_level, section_num, caption, numId)
+                section_tracker.update(numbering_level, section_num, caption, numId, resolved_ordinal)
 
             para_data = {
                 "type": "paragraph",
                 "id": f"p_{para_id}",
                 "text": para_text,
-                "section_number": section_num,
+                "section_number": resolved_ordinal or section_num,
                 "section_ref": section_tracker.get_section_ref(),
                 "caption": caption,
                 "style_info": style_info,
-                "section_hierarchy": section_tracker.get_current_hierarchy()
+                "indent_level": numbering_level if numbering_level is not None else 0,
+                "section_hierarchy": section_tracker.get_current_hierarchy(),
+                "is_numbered": bool(style_info["numbering"]) or bool(section_num) or style_info["is_heading"]
             }
 
             if style_info["is_heading"] or (section_num and num_type in ['article', 'section', 'top']):

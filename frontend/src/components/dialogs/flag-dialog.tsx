@@ -55,6 +55,8 @@ interface FlagDialogProps {
 
 // ---------------------------------------------------------------------------
 // FlagDialog - Type toggle (Attorney/Client) + category pills + note
+// Used by sidebar and flags-tab for non-selection-based flagging.
+// Text selection flagging uses FlagBubble instead.
 // ---------------------------------------------------------------------------
 
 const ALL_CATEGORIES: FlagCategory[] = [
@@ -143,7 +145,7 @@ export function FlagDialog({
           </button>
         </div>
 
-        {/* Category pills — only for client flags */}
+        {/* Category pills -- only for client flags */}
         {flagType === "client" && (
           <div className="flex gap-1">
             {ALL_CATEGORIES.map((cat) => {

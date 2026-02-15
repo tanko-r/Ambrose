@@ -15,7 +15,7 @@ export function useFlags() {
   const flags = useAppStore((s) => s.flags);
 
   const create = useCallback(
-    async (paraId: string, flagType: FlagType, category: FlagCategory | undefined, note: string) => {
+    async (paraId: string, flagType: FlagType, category: FlagCategory | undefined, note: string, textExcerpt?: string) => {
       if (!sessionId) {
         toast.error("No active session");
         return;
@@ -27,6 +27,7 @@ export function useFlags() {
           note,
           flag_type: flagType,
           category,
+          text_excerpt: textExcerpt,
         });
         useAppStore.getState().addFlag(response.flag);
         toast.success("Flagged for review");
