@@ -79,8 +79,6 @@ interface ReviewState {
 // --- UI State ---
 
 type View = 'dashboard' | 'review';
-type ReviewMode = 'linear' | 'by-risk' | 'by-category';
-
 type SidebarTab = 'risks' | 'related' | 'definitions' | 'flags';
 
 interface UIState {
@@ -89,7 +87,7 @@ interface UIState {
   sidebarOpen: boolean;
   bottomSheetOpen: boolean;
   precedentPanelOpen: boolean;
-  reviewMode: ReviewMode;
+
   compactMode: boolean;
   showRisks: boolean;
   showRevisions: boolean;
@@ -147,7 +145,7 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   toggleSidebar: () => void;
   toggleBottomSheet: () => void;
   togglePrecedentPanel: () => void;
-  setReviewMode: (mode: ReviewMode) => void;
+
   toggleCompactMode: () => void;
   toggleShowRisks: () => void;
   toggleShowRevisions: () => void;
@@ -218,7 +216,7 @@ const initialUIState: UIState = {
   sidebarOpen: true,
   bottomSheetOpen: false,
   precedentPanelOpen: false,
-  reviewMode: 'linear',
+
   compactMode: false,
   showRisks: true,
   showRevisions: true,
@@ -314,7 +312,7 @@ export const useAppStore = create<AppStore>((set) => ({
         ...(opening ? {} : { lockedParaId: null, lockedRelatedClauses: null }),
       };
     }),
-  setReviewMode: (mode) => set({ reviewMode: mode }),
+
   toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
   toggleShowRisks: () => set((state) => ({ showRisks: !state.showRisks })),
   toggleShowRevisions: () => set((state) => ({ showRevisions: !state.showRevisions })),
