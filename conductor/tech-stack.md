@@ -7,9 +7,9 @@
 - **UI Components:** shadcn/ui (Radix UI primitives)
 - **State Management:** Zustand
 - **Key Libraries:** 
+    - `vitest` & `@testing-library/react` (unit and component testing)
     - `lucide-react` (icons)
     - `diff-match-patch` (visualizing changes)
-    - `framer-motion` (implied for smooth transitions)
 
 ## Backend
 - **Framework:** Flask (Python 3.10+)

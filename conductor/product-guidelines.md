@@ -19,7 +19,8 @@
 
 ## Risk & Feedback Indicators
 - **Severity Signaling:** Use a consistent color palette for risk severity (Critical, High, Medium, Low) using badges or margin indicators.
-- **Non-Destructive Highlighting:** Use subtle text decorations (e.g., dotted underlines) for unfocused risks to preserve document readability, switching to solid highlights only when a specific risk is focused.
+- **Non-Destructive Highlighting:** Use subtle text decorations (e.g., dotted underlines) for unfocused flags and risks to preserve document readability. Risks only appear when their containing paragraph is selected. Active flags use solid highlights and visual connectors.
+- **Effortless Persistence:** Attorney notes and flags must auto-save during drafting to ensure data integrity without requiring explicit user action.
 - **Connector Logic:** Use visual connectors (like SVG dashed lines) to bridge the gap between document text and side-panel details, maintaining clear context during multi-pane reviews.
 
 ## Brand Messaging

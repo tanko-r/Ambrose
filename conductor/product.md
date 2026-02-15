@@ -16,7 +16,7 @@ Ambrose is an AI-powered collaborative contract review tool designed specificall
 ## Core Features
 - **High-Fidelity Document Viewer:** A viewer that faithfully preserves the original Word document formatting for a familiar and professional experience.
 - **Context-Aware AI Revisions:** Revision generation that incorporates precedent documents, specific deal context, and lawyer-defined review guidelines.
-- **Improved Note-Taking & Client Comms:** Integrated tools for attorneys to capture notes and generate transmittal summaries for clients.
+- **Improved Note-Taking & Client Comms:** Integrated tools for attorneys to capture notes with auto-save functionality and generate transmittal summaries for clients. Supports multiple flags per document clause.
 - **Dynamic Risk Navigation:** An interactive interface that allows users to navigate documents based on AI-identified risks, conceptual categories, and severity.
 
 ## Visual Identity & Design Principles
