@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useAppStore } from "@/lib/store";
-import { flagItem, unflagItem } from "@/lib/api";
+import { flagItem, unflagItem, updateFlag } from "@/lib/api";
 import type { FlagCategory, FlagType } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -18,7 +18,7 @@ export function useFlags() {
     async (paraId: string, flagType: FlagType, category: FlagCategory | undefined, note: string, textExcerpt?: string) => {
       if (!sessionId) {
         toast.error("No active session");
-        return;
+        return null;
       }
       try {
         const response = await flagItem({
@@ -31,9 +31,35 @@ export function useFlags() {
         });
         useAppStore.getState().addFlag(response.flag);
         toast.success("Flagged for review");
+        return response.flag;
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Failed to create flag"
+        );
+        return null;
+      }
+    },
+    [sessionId]
+  );
+
+  const update = useCallback(
+    async (flagId: string, updates: { note?: string; category?: FlagCategory; flagType?: FlagType }) => {
+      if (!sessionId) {
+        toast.error("No active session");
+        return;
+      }
+      try {
+        const response = await updateFlag({
+          session_id: sessionId,
+          flag_id: flagId,
+          note: updates.note,
+          category: updates.category,
+          flag_type: updates.flagType,
+        });
+        useAppStore.getState().updateFlag(response.flag);
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to update flag"
         );
       }
     },
@@ -41,14 +67,14 @@ export function useFlags() {
   );
 
   const remove = useCallback(
-    async (paraId: string) => {
+    async (flagId: string) => {
       if (!sessionId) {
         toast.error("No active session");
         return;
       }
       try {
-        await unflagItem({ session_id: sessionId, para_id: paraId });
-        useAppStore.getState().removeFlag(paraId);
+        await unflagItem({ session_id: sessionId, flag_id: flagId });
+        useAppStore.getState().removeFlag(flagId);
         toast.success("Flag removed");
       } catch (err) {
         toast.error(
@@ -59,12 +85,12 @@ export function useFlags() {
     [sessionId]
   );
 
-  const getFlagForPara = useCallback(
+  const getFlagsForPara = useCallback(
     (paraId: string) => {
-      return flags.find((f) => f.para_id === paraId) ?? null;
+      return flags.filter((f) => f.para_id === paraId);
     },
     [flags]
   );
 
-  return { create, remove, getFlagForPara };
+  return { create, update, remove, getFlagsForPara };
 }

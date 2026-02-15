@@ -1,0 +1,1056 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e144]:
+    - banner [ref=e145]:
+      - generic [ref=e146]:
+        - button "Main menu" [ref=e147]:
+          - img
+          - generic [ref=e148]: Open menu
+        - heading "Contract Review" [level=1] [ref=e149]
+      - generic [ref=e150]: Sample PSA - Seller Side.docx
+      - generic [ref=e151]:
+        - button "Toggle color theme" [ref=e152]:
+          - img
+          - generic [ref=e153]: Toggle theme
+        - button "Create new project" [ref=e154]:
+          - img
+          - text: New
+        - button "User menu" [ref=e155]:
+          - img
+          - generic [ref=e156]: User menu
+    - generic [ref=e157]:
+      - generic [ref=e158]:
+        - img [ref=e159]
+        - generic [ref=e162]: This project was finalized. Editing will clear the finalized status.
+      - button "Edit" [ref=e163]
+    - generic [ref=e164]:
+      - navigation "Document navigator" [ref=e165]:
+        - generic [ref=e166]:
+          - generic [ref=e167]: Navigator
+          - button "Hide" [ref=e168]:
+            - img
+            - text: Hide
+        - generic [ref=e169]:
+          - button "Linear" [ref=e170]:
+            - img [ref=e171]
+            - text: Linear
+          - button "By Risk" [ref=e172]:
+            - img [ref=e173]
+            - text: By Risk
+          - button "By Category" [ref=e175]:
+            - img [ref=e176]
+            - text: By Category
+        - generic [ref=e182]:
+          - img [ref=e183]
+          - textbox "Filter clauses..." [ref=e186]
+        - generic [ref=e188]:
+          - text: "Reviewed:"
+          - generic [ref=e189]: 1/99
+        - generic [ref=e191]:
+          - button "1 Purchase and Sale. Seller agrees to sell and conv" [ref=e192]:
+            - generic [ref=e193]: "1"
+            - generic [ref=e194]: Purchase and Sale. Seller agrees to sell and conv
+          - button "1B Appurtenances. All rights, easements and rights-o" [ref=e195]:
+            - generic [ref=e196]: 1B
+            - generic [ref=e197]: Appurtenances. All rights, easements and rights-o
+          - button "1C Improvements. All improvements and fixtures locat" [ref=e198]:
+            - generic [ref=e199]: 1C
+            - generic [ref=e200]: Improvements. All improvements and fixtures locat
+          - button "1D Personal Property. All of the right, title and in" [ref=e201]:
+            - generic [ref=e202]: 1D
+            - generic [ref=e203]: Personal Property. All of the right, title and in
+          - button "1E Intangible Property. All of the right, title and" [ref=e204]:
+            - generic [ref=e205]: 1E
+            - generic [ref=e206]: Intangible Property. All of the right, title and
+          - button "1F Leases. All right, title and interest of Seller i" [ref=e207]:
+            - generic [ref=e208]: 1F
+            - generic [ref=e209]: Leases. All right, title and interest of Seller i
+            - img [ref=e210]
+          - button "3A Initial Deposit. Within ______ (__) business day(" [ref=e212]:
+            - generic [ref=e213]: 3A
+            - generic [ref=e214]: Initial Deposit. Within ______ (__) business day(
+          - button "3B Additional Deposit. Within one (1) business day a" [ref=e215]:
+            - generic [ref=e216]: 3B
+            - generic [ref=e217]: Additional Deposit. Within one (1) business day a
+          - button "5A Due Diligence Period. Seller and Buyer agree that" [ref=e218]:
+            - generic [ref=e219]: 5A
+            - generic [ref=e220]: Due Diligence Period. Seller and Buyer agree that
+          - button "5A Buyer expressly agrees that Seller is furnishing c" [ref=e221]:
+            - generic [ref=e222]: 5A
+            - generic [ref=e223]: Buyer expressly agrees that Seller is furnishing c
+          - button "5B Entry; Inspection. During the Due Diligence Perio" [ref=e224]:
+            - generic [ref=e225]: 5B
+            - generic [ref=e226]: Entry; Inspection. During the Due Diligence Perio
+          - button "5B(ii) In connection with any entry by Buyer or its agent" [ref=e227]:
+            - generic [ref=e228]: 5B(ii)
+            - generic [ref=e229]: In connection with any entry by Buyer or its agent
+          - button "5B(iii) Buyer shall indemnify and hold Seller harmless fro" [ref=e230]:
+            - generic [ref=e231]: 5B(iii)
+            - generic [ref=e232]: Buyer shall indemnify and hold Seller harmless fro
+          - button "5B(iv) Before Buyer or any of its consultants or agents e" [ref=e233]:
+            - generic [ref=e234]: 5B(iv)
+            - generic [ref=e235]: Before Buyer or any of its consultants or agents e
+          - button "5B(v) The terms of this Section 5.2 shall survive termin" [ref=e236]:
+            - generic [ref=e237]: 5B(v)
+            - generic [ref=e238]: The terms of this Section 5.2 shall survive termin
+          - button "5C Due Diligence Review; Approval. Buyer shall promp" [ref=e239]:
+            - generic [ref=e240]: 5C
+            - generic [ref=e241]: Due Diligence Review; Approval. Buyer shall promp
+          - button "5D(i) Seller shall have delivered those items described" [ref=e242]:
+            - generic [ref=e243]: 5D(i)
+            - generic [ref=e244]: Seller shall have delivered those items described
+          - button "5D(ii) Title Company shall be irrevocably committed to is" [ref=e245]:
+            - generic [ref=e246]: 5D(ii)
+            - generic [ref=e247]: Title Company shall be irrevocably committed to is
+          - button "5D(iii) Each representation and warranty made by Seller in" [ref=e248]:
+            - generic [ref=e249]: 5D(iii)
+            - generic [ref=e250]: Each representation and warranty made by Seller in
+          - button "5D(iv) [Seller shall have delivered the Minimum Tenant Es" [ref=e251]:
+            - generic [ref=e252]: 5D(iv)
+            - generic [ref=e253]: "[Seller shall have delivered the Minimum Tenant Es"
+          - button "6 Termination of Agreement. If this Agreement is te" [ref=e254]:
+            - generic [ref=e255]: "6"
+            - generic [ref=e256]: Termination of Agreement. If this Agreement is te
+          - button "7A(i) Seller is a ___________ duly organized and validly" [ref=e257]:
+            - generic [ref=e258]: 7A(i)
+            - generic [ref=e259]: Seller is a ___________ duly organized and validly
+          - button "7A(ii) To Seller's Actual Knowledge, the rent roll identi" [ref=e260]:
+            - generic [ref=e261]: 7A(ii)
+            - generic [ref=e262]: To Seller's Actual Knowledge, the rent roll identi
+          - button "7A(vi) Notwithstanding anything contained in this Agreeme" [ref=e263]:
+            - generic [ref=e264]: 7A(vi)
+            - generic [ref=e265]: Notwithstanding anything contained in this Agreeme
+          - button "7A(vi) Notwithstanding anything contained herein to the c" [ref=e266]:
+            - generic [ref=e267]: 7A(vi)
+            - generic [ref=e268]: Notwithstanding anything contained herein to the c
+          - button "7B(i) Buyer is a _________________, duly organized, vali" [ref=e269]:
+            - generic [ref=e270]: 7B(i)
+            - generic [ref=e271]: Buyer is a _________________, duly organized, vali
+          - button "7B(ii) This Agreement and all documents executed by Buyer" [ref=e272]:
+            - generic [ref=e273]: 7B(ii)
+            - generic [ref=e274]: This Agreement and all documents executed by Buyer
+          - button "7C Survival. Any cause of action of a party for a br" [ref=e275]:
+            - generic [ref=e276]: 7C
+            - generic [ref=e277]: Survival. Any cause of action of a party for a br
+          - button "7C If prior to the Closing, Seller becomes aware that" [ref=e278]:
+            - generic [ref=e279]: 7C
+            - generic [ref=e280]: If prior to the Closing, Seller becomes aware that
+          - button "8A During the Due Diligence Period, Seller shall cont" [ref=e281]:
+            - generic [ref=e282]: 8A
+            - generic [ref=e283]: During the Due Diligence Period, Seller shall cont
+          - button "8B Seller shall not enter into, materially modify or" [ref=e284]:
+            - generic [ref=e285]: 8B
+            - generic [ref=e286]: Seller shall not enter into, materially modify or
+          - button "1C(i) The Deed conveying to Buyer the Real Property, App" [ref=e287]:
+            - generic [ref=e288]: 1C(i)
+            - generic [ref=e289]: The Deed conveying to Buyer the Real Property, App
+          - button "1C(ii) The Bill of Sale duly executed by Seller, in the f" [ref=e290]:
+            - generic [ref=e291]: 1C(ii)
+            - generic [ref=e292]: The Bill of Sale duly executed by Seller, in the f
+          - button "1C(iii) Two (2) counterparts of the Assignment and Assumpt" [ref=e293]:
+            - generic [ref=e294]: 1C(iii)
+            - generic [ref=e295]: Two (2) counterparts of the Assignment and Assumpt
+          - button "1C(iv) Originals of all Leases (and all amendments theret" [ref=e296]:
+            - generic [ref=e297]: 1C(iv)
+            - generic [ref=e298]: Originals of all Leases (and all amendments theret
+          - button "1C(v) Two (2) counterparts of the Assignment and Assumpt" [ref=e299]:
+            - generic [ref=e300]: 1C(v)
+            - generic [ref=e301]: Two (2) counterparts of the Assignment and Assumpt
+          - button "1C(vi) Originals or copies of all Service Contracts in th" [ref=e302]:
+            - generic [ref=e303]: 1C(vi)
+            - generic [ref=e304]: Originals or copies of all Service Contracts in th
+          - button "1C(vii) An affidavit sworn by an officer of Seller to the" [ref=e305]:
+            - generic [ref=e306]: 1C(vii)
+            - generic [ref=e307]: An affidavit sworn by an officer of Seller to the
+          - button "1C(viii) Such entity formation documents, authorizations, c" [ref=e308]:
+            - generic [ref=e309]: 1C(viii)
+            - generic [ref=e310]: Such entity formation documents, authorizations, c
+          - button "1C(ix) A closing statement prepared in writing by Escrow" [ref=e311]:
+            - generic [ref=e312]: 1C(ix)
+            - generic [ref=e313]: A closing statement prepared in writing by Escrow
+          - button "1C(x) A notice signed by Seller notifying the tenants u" [ref=e314]:
+            - generic [ref=e315]: 1C(x)
+            - generic [ref=e316]: A notice signed by Seller notifying the tenants u
+          - button "1C(xi) Any other documents, instruments, records, corresp" [ref=e317]:
+            - generic [ref=e318]: 1C(xi)
+            - generic [ref=e319]: Any other documents, instruments, records, corresp
+          - button "1D Buyer Deliveries. On or before the Closing Date (o" [ref=e320]:
+            - generic [ref=e321]: 1D
+            - generic [ref=e322]: Buyer Deliveries. On or before the Closing Date (o
+          - button "1D(i) The Closing Payment;" [ref=e323]:
+            - generic [ref=e324]: 1D(i)
+            - generic [ref=e325]: The Closing Payment;
+          - button "1D(ii) A Real Estate Excise Tax Affidavit;" [ref=e326]:
+            - generic [ref=e327]: 1D(ii)
+            - generic [ref=e328]: A Real Estate Excise Tax Affidavit;
+          - button "1D(iii) Two (2) counterparts of the Assignment and Assumpt" [ref=e329]:
+            - generic [ref=e330]: 1D(iii)
+            - generic [ref=e331]: Two (2) counterparts of the Assignment and Assumpt
+          - button "1D(iv) Two (2) counterparts of the Assignment of Contract" [ref=e332]:
+            - generic [ref=e333]: 1D(iv)
+            - generic [ref=e334]: Two (2) counterparts of the Assignment of Contract
+          - button "1D(v) A consumer use tax return;" [ref=e335]:
+            - generic [ref=e336]: 1D(v)
+            - generic [ref=e337]: A consumer use tax return;
+          - button "1D(vii) Any other documents, instruments, records, corresp" [ref=e338]:
+            - generic [ref=e339]: 1D(vii)
+            - generic [ref=e340]: Any other documents, instruments, records, corresp
+          - button "1E Title Charges; Closing Fees and Costs. Seller shal" [ref=e341]:
+            - generic [ref=e342]: 1E
+            - generic [ref=e343]: Title Charges; Closing Fees and Costs. Seller shal
+          - button "2A Conditions to Close. Escrow Holder shall close th" [ref=e344]:
+            - generic [ref=e345]: 2A
+            - generic [ref=e346]: Conditions to Close. Escrow Holder shall close th
+          - button "2A(i) All funds and documents have been delivered to Esc" [ref=e347]:
+            - generic [ref=e348]: 2A(i)
+            - generic [ref=e349]: All funds and documents have been delivered to Esc
+          - button "2A(ii) Title Company is prepared to deliver the Title Pol" [ref=e350]:
+            - generic [ref=e351]: 2A(ii)
+            - generic [ref=e352]: Title Company is prepared to deliver the Title Pol
+          - button "2B Distribution of Funds and Documents. Unless this" [ref=e353]:
+            - generic [ref=e354]: 2B
+            - generic [ref=e355]: Distribution of Funds and Documents. Unless this
+          - button "2B(i) Escrow Holder shall disburse the Closing Payment a" [ref=e356]:
+            - generic [ref=e357]: 2B(i)
+            - generic [ref=e358]: Escrow Holder shall disburse the Closing Payment a
+          - button "2B(ii) Escrow Holder shall cause the recorded Deed to be" [ref=e359]:
+            - generic [ref=e360]: 2B(ii)
+            - generic [ref=e361]: Escrow Holder shall cause the recorded Deed to be
+          - button "2B(iii) Escrow Holder shall deliver all other items deposi" [ref=e362]:
+            - generic [ref=e363]: 2B(iii)
+            - generic [ref=e364]: Escrow Holder shall deliver all other items deposi
+          - button "3A Default by Buyer; Limitation on Liability; Liquida" [ref=e365]:
+            - generic [ref=e366]: 3A
+            - generic [ref=e367]: Default by Buyer; Limitation on Liability; Liquida
+          - button "3A BY PLACING ITS INITIALS BELOW, EACH PARTY SPECIFIC" [ref=e368]:
+            - generic [ref=e369]: 3A
+            - generic [ref=e370]: BY PLACING ITS INITIALS BELOW, EACH PARTY SPECIFIC
+          - button "3B Default by Seller; Other Failure to Consummate Agr" [ref=e371]:
+            - generic [ref=e372]: 3B
+            - generic [ref=e373]: Default by Seller; Other Failure to Consummate Agr
+          - button "4 Destruction/Condemnation of Property. In the even" [ref=e374]:
+            - generic [ref=e375]: "4"
+            - generic [ref=e376]: Destruction/Condemnation of Property. In the even
+          - button "5 Attorneys' Fees. Any signatory to this Agreement" [ref=e377]:
+            - generic [ref=e378]: "5"
+            - generic [ref=e379]: Attorneys' Fees. Any signatory to this Agreement
+          - button "6 Notices. Any notice required or permitted to be g" [ref=e380]:
+            - generic [ref=e381]: "6"
+            - generic [ref=e382]: Notices. Any notice required or permitted to be g
+          - button "9 Assignment. Except as provided in Section 20 belo" [ref=e383]:
+            - generic [ref=e384]: "9"
+            - generic [ref=e385]: Assignment. Except as provided in Section 20 belo
+          - button "10 1031 Exchange. Seller and/or Buyer may wish to ef" [ref=e386]:
+            - generic [ref=e387]: "10"
+            - generic [ref=e388]: 1031 Exchange. Seller and/or Buyer may wish to ef
+          - button "11 Governing Law/Venue. This Agreement shall be cons" [ref=e389]:
+            - generic [ref=e390]: "11"
+            - generic [ref=e391]: Governing Law/Venue. This Agreement shall be cons
+          - button "13 Exhibits. All exhibits attached hereto are incorp" [ref=e392]:
+            - generic [ref=e393]: "13"
+            - generic [ref=e394]: Exhibits. All exhibits attached hereto are incorp
+          - button "14 Time. Time is of the essence." [ref=e395]:
+            - generic [ref=e396]: "14"
+            - generic [ref=e397]: Time. Time is of the essence.
+          - button "16 Legally Binding. This is intended to be a legally" [ref=e398]:
+            - generic [ref=e399]: "16"
+            - generic [ref=e400]: Legally Binding. This is intended to be a legally
+          - button "18 Confidentiality. Seller and Buyer agree to keep t" [ref=e401]:
+            - generic [ref=e402]: "18"
+            - generic [ref=e403]: Confidentiality. Seller and Buyer agree to keep t
+          - button "22 s its right to receive the balance of the complete" [ref=e404]:
+            - generic [ref=e405]: "22"
+            - generic [ref=e406]: s its right to receive the balance of the complete
+          - button "22 Buyer further agrees that any information discover" [ref=e407]:
+            - generic [ref=e408]: "22"
+            - generic [ref=e409]: Buyer further agrees that any information discover
+          - button "22 BUYER HEREBY WAIVES, TO THE FULLEST EXTENT PERMISS" [ref=e410]:
+            - generic [ref=e411]: "22"
+            - generic [ref=e412]: BUYER HEREBY WAIVES, TO THE FULLEST EXTENT PERMISS
+          - button "22 EXECUTED by Buyer on ________________, 20___." [ref=e413]:
+            - generic [ref=e414]: "22"
+            - generic [ref=e415]: EXECUTED by Buyer on ________________, 20___.
+          - 'button "22 By: __________________________" [ref=e416]':
+            - generic [ref=e417]: "22"
+            - generic [ref=e418]: "By: __________________________"
+          - button "22 The Grantor, for itself and its successors in inte" [ref=e419]:
+            - generic [ref=e420]: "22"
+            - generic [ref=e421]: The Grantor, for itself and its successors in inte
+          - button "22 Signature must be acknowledged" [ref=e422]:
+            - generic [ref=e423]: "22"
+            - generic [ref=e424]: Signature must be acknowledged
+          - button "22 Attach Legal Description" [ref=e425]:
+            - generic [ref=e426]: "22"
+            - generic [ref=e427]: Attach Legal Description
+          - button "22 Attach Permitted Exceptions EXHIBIT C" [ref=e428]:
+            - generic [ref=e429]: "22"
+            - generic [ref=e430]: Attach Permitted Exceptions EXHIBIT C
+          - button "22 For good and valuable consideration the receipt of" [ref=e431]:
+            - generic [ref=e432]: "22"
+            - generic [ref=e433]: For good and valuable consideration the receipt of
+          - button "22 Seller hereby represents and warrants to Buyer tha" [ref=e434]:
+            - generic [ref=e435]: "22"
+            - generic [ref=e436]: Seller hereby represents and warrants to Buyer tha
+          - button "22 [Personal Property of Personal Property Included i" [ref=e437]:
+            - generic [ref=e438]: "22"
+            - generic [ref=e439]: "[Personal Property of Personal Property Included i"
+          - button "22 THIS ASSIGNMENT AND ASSUMPTION OF LEASES (this “As" [ref=e440]:
+            - generic [ref=e441]: "22"
+            - generic [ref=e442]: THIS ASSIGNMENT AND ASSUMPTION OF LEASES (this “As
+          - button "22 Assignor is the lessor under certain leases execut" [ref=e443]:
+            - generic [ref=e444]: "22"
+            - generic [ref=e445]: Assignor is the lessor under certain leases execut
+          - button "22 Assignor and Assignee have entered into that certa" [ref=e446]:
+            - generic [ref=e447]: "22"
+            - generic [ref=e448]: Assignor and Assignee have entered into that certa
+          - button "22 As of the date on which the Property is conveyed t" [ref=e449]:
+            - generic [ref=e450]: "22"
+            - generic [ref=e451]: As of the date on which the Property is conveyed t
+          - button "22 Assignor hereby agrees to indemnify Assignee again" [ref=e452]:
+            - generic [ref=e453]: "22"
+            - generic [ref=e454]: Assignor hereby agrees to indemnify Assignee again
+          - button "22 As of the Conveyance Date, Assignee hereby assumes" [ref=e455]:
+            - generic [ref=e456]: "22"
+            - generic [ref=e457]: As of the Conveyance Date, Assignee hereby assumes
+          - button "22 In the event of any dispute between Assignor and A" [ref=e458]:
+            - generic [ref=e459]: "22"
+            - generic [ref=e460]: In the event of any dispute between Assignor and A
+          - button "22 THIS ASSIGNMENT AND ASSUMPTION OF CONTRACTS AND IN" [ref=e461]:
+            - generic [ref=e462]: "22"
+            - generic [ref=e463]: THIS ASSIGNMENT AND ASSUMPTION OF CONTRACTS AND IN
+          - button "22 Assignor has entered into certain service contract" [ref=e464]:
+            - generic [ref=e465]: "22"
+            - generic [ref=e466]: Assignor has entered into certain service contract
+          - button "22 Assignor and Assignee have entered into that certa" [ref=e467]:
+            - generic [ref=e468]: "22"
+            - generic [ref=e469]: Assignor and Assignee have entered into that certa
+          - button "22 Pursuant to the Agreement, Assignor desires to ass" [ref=e470]:
+            - generic [ref=e471]: "22"
+            - generic [ref=e472]: Pursuant to the Agreement, Assignor desires to ass
+          - button "22 As of the date on which the Property is conveyed t" [ref=e473]:
+            - generic [ref=e474]: "22"
+            - generic [ref=e475]: As of the date on which the Property is conveyed t
+          - button "22 Assignor hereby agrees to indemnify Assignee again" [ref=e476]:
+            - generic [ref=e477]: "22"
+            - generic [ref=e478]: Assignor hereby agrees to indemnify Assignee again
+          - button "22 As of the Conveyance Date, Assignee hereby assumes" [ref=e479]:
+            - generic [ref=e480]: "22"
+            - generic [ref=e481]: As of the Conveyance Date, Assignee hereby assumes
+          - button "22 This Assignment may be executed in any number of c" [ref=e482]:
+            - generic [ref=e483]: "22"
+            - generic [ref=e484]: This Assignment may be executed in any number of c
+          - button "22 Assignment and Assumption of Contracts and Intangi" [ref=e485]:
+            - generic [ref=e486]: "22"
+            - generic [ref=e487]: Assignment and Assumption of Contracts and Intangi
+          - button "22 Certificate of Rent Roll" [ref=e488]:
+            - generic [ref=e489]: "22"
+            - generic [ref=e490]: Certificate of Rent Roll
+          - button "22 You are hereby advised that the undersigned is the" [ref=e491]:
+            - generic [ref=e492]: "22"
+            - generic [ref=e493]: You are hereby advised that the undersigned is the
+          - button "22 Form of Estoppel Certificate" [ref=e494]:
+            - generic [ref=e495]: "22"
+            - generic [ref=e496]: Form of Estoppel Certificate
+          - button "22 Due Diligence Checklist" [ref=e497]:
+            - generic [ref=e498]: "22"
+            - generic [ref=e499]: Due Diligence Checklist
+      - main "Document viewer" [ref=e500]:
+        - generic [ref=e503]:
+          - paragraph [ref=e504] [cursor=pointer]
+          - paragraph [ref=e505] [cursor=pointer]: PURCHASE AND SALE AGREEMENT
+          - paragraph [ref=e506] [cursor=pointer]
+          - paragraph [ref=e507] [cursor=pointer]:
+            - generic [ref=e508]: THIS PURCHASE AND SALE AGREEMENT (this
+            - text: “Agreement”) dated for reference purposes only as of ________________, 20___, is made by and between ________________________________ (“Seller”), and ____________________________ (“Buyer”). The date this Agreement is executed and delivered by the last of Buyer and Seller shall be the “Effective Date” hereof.
+          - paragraph [ref=e509] [cursor=pointer]
+          - paragraph [ref=e510] [cursor=pointer]:
+            - generic [ref=e511]: IN CONSIDERATION of the mutual covenants and obligations of the parties set forth in this Agreement, Seller and
+            - text: "Buyer agree as follows:"
+          - paragraph [ref=e512] [cursor=pointer]
+          - paragraph [ref=e513] [cursor=pointer]:
+            - text: "1"
+            - text: "Purchase and Sale. Seller agrees to sell and convey to Buyer, and Buyer agrees to purchase from Seller, for the Purchase Price (as defined below), and on the terms and conditions set forth herein, the following:"
+          - paragraph [ref=e514] [cursor=pointer]: 1.1 Real Property. All that certain real property located at ______________________________________, Washington, as more particularly described in Exhibit A attached hereto (the “Real Property”);
+          - paragraph [ref=e515] [cursor=pointer]: 1.2 Appurtenances. All rights, easements and rights-of-way appurtenant to the beneficial use and enjoyment of the Real Property (the “Appurtenances”);
+          - paragraph [ref=e516] [cursor=pointer]: 1.3 Improvements. All improvements and fixtures located on the Real Property, excluding any fixtures owned by tenants or leased by Seller from third parties, but including all buildings and structures presently located on the Real Property, and all apparatus, equipment and appliances owned by Seller and used in connection with the operation or occupancy of the Real Property (the “Improvements”);
+          - paragraph [ref=e517] [cursor=pointer]: "1.4 Personal Property. All of the right, title and interest of Seller in and to all personal property owned by Seller and located on, in, or used in connection with, the Real Property and/or Improvements [but excluding the following items: __________________________________________ (the included items are referred to herein as the “Personal Property”)];"
+          - paragraph [ref=e518] [cursor=pointer]: "1.5 Intangible Property. All of the right, title and interest of Seller, to the extent transferable by Seller, in and to: all intangible personal property owned by Seller and used in the ownership, use and operation of the Real Property, Improvements and/or Personal Property; all transferable licenses, permits, approvals, applications and warranties now in effect with respect to the Real Property, Improvements or Personal Property; all equipment leases, utility contracts, maintenance contracts, and all other similar agreements (collectively, the “Service Contracts”); and all other rights relating to the ownership, use and operation of the Property, but excluding any present or future claims of Seller against any third parties that relate to any period of time prior to the Closing (as defined below) (collectively, the “Intangible Property”); and"
+          - paragraph [ref=e519] [cursor=pointer]:
+            - text: Leases. All right, title and interest of Seller in and to all leases
+            - insertion [ref=e520]: ", subleases, licenses, concessions"
+            - text: and other agreements to occupy the Real Property and/or the Improvements, or any portion thereof
+            - insertion [ref=e521]: ", together with all amendments, modifications, supplements, renewals and extensions thereof, and all guaranties, security deposits, letters of credit, prepaid rents and other credit support held in connection therewith"
+            - text: (collectively, the “Leases”).
+          - paragraph [ref=e522] [cursor=pointer]: All of the items described in this Section 1 shall hereinafter be collectively referred to as the “Property.” Notwithstanding the foregoing, Seller reserves and retains the right, on a non-exclusive basis with Buyer, to assert all claims, defenses, counter claims, and cross claims of Seller against any third parties under any warranties, guaranties, and agreements related to design, construction or performance of the Property, or any portions thereof, to the extent necessary or convenient to enable Seller to enforce or defend its rights under all such agreements.
+          - paragraph [ref=e523] [cursor=pointer]: 2 Purchase Price. Buyer agrees to pay Seller as the purchase price for the Property _______________________________ Dollars ($____________) (the “Purchase Price”).
+          - paragraph [ref=e524] [cursor=pointer]: "3 Payment of Purchase Price. The Purchase Price shall be paid to Seller by Buyer as follows:"
+          - paragraph [ref=e525] [cursor=pointer]: 3.1 Initial Deposit. Within ______ (__) business day(s) after the Effective Date, Buyer shall deliver, by wire transfer or bank or cashier's check, at Buyer's election, an amount equal to ______________ Dollars ($________) (the “Initial Deposit”) to ___________________________ Title Insurance Company (“Escrow Holder”) located at _________________________________________. [The proceeds of the Initial Deposit shall be deposited and held by Escrow Holder as a deposit against the Purchase Price in accordance with the terms and provisions of this Agreement, and shall be credited against the Purchase Price if the transaction closes. Such Initial Deposit shall be at all times invested in an interest bearing account. All interest accruing on the Initial Deposit shall be held for the account of Buyer.] [Upon receipt, Escrow Holder shall promptly pay the Initial Deposit to Seller.] The Initial Deposit will become non-refundable upon Escrow Holder's receipt except in case of Seller's default hereunder.
+          - paragraph [ref=e526] [cursor=pointer]: 3.2 Additional Deposit. Within one (1) business day after the earlier of Seller's receipt of the Approval Notice, or the expiration of the Due Diligence Period without Buyer’s delivery of a Termination Notice, in either case pursuant to and in accordance with Section 5(c) hereof, Buyer shall deliver, by wire transfer, bank or cashier's check, at Buyer's election, an amount equal to $______________ (the “Additional Deposit”) to Escrow Holder. [The proceeds of the Additional Deposit shall be deposited into the same account in which the Initial Deposit has been deposited.] [Upon receipt, Escrow Holder shall promptly pay the Additional Deposit to Seller.] The Initial Deposit and the Additional Deposit, together with all interest thereon, are referred to collectively herein as the “Deposit.” The Additional Deposit is nonrefundable, except in case of Seller's default hereunder, and as otherwise expressly provided in this Agreement.
+          - paragraph [ref=e527] [cursor=pointer]: 3.3 Closing Payment. The balance of the Purchase Price, as adjusted by the application of the Deposit [plus accrued interest thereon] and by the prorations and credits specified herein, shall be paid in cash on the Closing Date (as hereinafter defined) (the amount to be paid under this subparagraph (c) being herein called the “Closing Payment”).
+          - paragraph [ref=e528] [cursor=pointer]: 3.4 Allocation. The sum of $____________ of the Purchase Price shall be allocated to the Personal Property, and the balance shall be allocated to the Real Property, the Appurtenances and the Improvements.
+          - paragraph [ref=e529] [cursor=pointer]:
+            - text: "4"
+            - text: Title and Survey Matters.
+          - paragraph [ref=e530] [cursor=pointer]: "4.1 Delivery of Survey and Title Documents. Seller shall deliver the following items to Buyer within seven (7) days after mutual execution of this Agreement:"
+          - paragraph [ref=e531] [cursor=pointer]: 4.1.1 Survey. The most recent survey of the Property, if any (“Existing Survey”) in the possession of Seller. Buyer may order and obtain either an update to the Existing Survey or a new ALTA Survey (either of the foregoing being defined as the “Updated Survey”) containing such information as Buyer may reasonably request, at Buyer's expense.
+          - paragraph [ref=e532] [cursor=pointer]:
+            - text: (ii)
+            - text: Title. A current preliminary title report (“Commitment”) covering the Property issued by _______________ Title Insurance Company (which company, also acting in its capacity as the Escrow Holder hereunder, is called the “Title Company”), together with copies of any and all instruments referred to in the Commitment as constituting exceptions or restrictions upon the title of Seller (the “Exceptions,” together with the Commitment, collectively, the “Title Documents”).
+          - paragraph [ref=e534] [cursor=pointer]: 4.2 Title Review; Approval Period. Buyer shall have ten (10) days from the Effective Date (the “Title Review Period”) to review the Title Documents and to deliver in writing to Seller its approval of the Title Documents or portions thereof and/or such objections (the “Title Objections”) as Buyer may have to anything contained in the Title Documents. Buyer's failure to timely notify Seller of its approval of all or certain of the Title Documents and the Title Objections, if any, within the Title Review Period shall constitute approval of all exceptions and of the condition of title to the Property. If Title Objections are delivered to Seller by Buyer, Seller shall have ten (10) days after receipt of Buyer's Title Objections to give Buyer, with respect to each Title Objection, (i) notice that the Title Objection will be removed or cured on or before the Closing (in which event such cure or removal shall be a condition precedent for Buyer's obligation to proceed with the Closing); or (ii) notice that Seller elects not to remove or cure such Title Objection. If Seller elects not to remove or cure all Title Objections within such ten day period, or if Seller fails to respond to Buyer within such ten day period, then at any time prior to the end of the Due Diligence Period Buyer may either (i) waive such Title Objection and proceed with the Closing, or (ii) terminate this Agreement by written notice to Seller.
+          - paragraph [ref=e535] [cursor=pointer]: Seller shall cause the Title Company to provide to Buyer supplemental reports to the Commitment (together with copies of any instruments constituting exceptions which are identified therein) covering any additions or deletions from the date of the Commitment through the Closing Date. Buyer shall have five (5) days following the receipt of a supplemental report to notify Seller in writing of its disapproval of any exception contained in that supplemental report; if Buyer's disapproval of any supplemental report exception is not so communicated to Seller, the exception shall be considered a Permitted Exception (as defined below). Following any written disapproval notice by Buyer, Buyer and Seller shall have the same rights and duties with respect to disapproved items as is provided in the preceding paragraph; except that (i) Seller shall have five (5) days to respond to Buyer's notice, and (ii) in no event shall title review extend the Closing Date.
+          - paragraph [ref=e536] [cursor=pointer]: 4.3 Conditions of Title. At the Closing, Seller shall convey to Buyer fee simple title to the Real Property and Improvements by special warranty deed in the form of attached Exhibit B (the “Deed”), subject to those title exceptions permitted herein, or as may be approved by Buyer in writing (the “Permitted Exceptions”).
+          - paragraph [ref=e537] [cursor=pointer]: 4.4 Title Policy. Closing shall be conditioned upon the willingness of the Title Company to issue, upon payment of its normal premium, an extended coverage owner's policy of title insurance (2006 ALTA form), together with such endorsements thereto as may be requested by Buyer and agreed to by Title Company during the Due Diligence Period, insuring Buyer in the amount of the Purchase Price that fee simple title to the Real Property and Improvements is vested in Buyer, subject only to the Permitted Exceptions (collectively, the “Title Policy”).
+          - paragraph [ref=e538] [cursor=pointer]:
+            - text: "5"
+            - text: Due Diligence; Other Conditions Precedent to Agreement.
+          - paragraph [ref=e539] [cursor=pointer]:
+            - text: "5.1"
+            - text: Due Diligence Period. Seller and Buyer agree that Buyer's obligation to proceed with the Closing is subject to written satisfaction, approval or waiver by Buyer, in its sole and absolute discretion, of all matters pertaining to the physical, structural, environmental, zoning, economic and other conditions and aspects of the Property, in accordance with this Section 5, on or before 5 p.m. Pacific time on ____________________ (the period from the Effective Date through such date and time is referred to herein as the “Due Diligence Period”). Within three (3) business days of the Effective Date, Seller shall deliver to Buyer the documents identified on attached Schedule 1 (the “Due Diligence Documents”).
+          - paragraph [ref=e540] [cursor=pointer]: Buyer expressly agrees that Seller is furnishing copies of the Due Diligence Documents for informational purposes only and without representation or warranty as to the accuracy or completeness of such materials, except as expressly provided in Section 7 hereof.
+          - paragraph [ref=e541] [cursor=pointer]:
+            - text: "5.2"
+            - text: "Entry; Inspection. During the Due Diligence Period, Seller shall provide Buyer with reasonable access to the Property, in accordance with the terms and conditions of this Section 5.2, in order for Buyer to conduct such nonintrusive inspections, tests and studies as Buyer may elect of the physical condition of the Property. Seller or Seller's designee may accompany Buyer and/or its agents or contractors when exercising Buyer's right of entry under this Section 5.2. Buyer shall schedule each entry onto the Property with Seller at least ____________ (___) business days in advance of such entry. All access, inspections, tests and studies shall be permitted and conducted on the following terms and conditions:"
+          - paragraph [ref=e542] [cursor=pointer]: 5.2.1 Buyer shall pay for all inspections, tests and studies ordered by Buyer.
+          - paragraph [ref=e543] [cursor=pointer]: 5.2.2 In connection with any entry by Buyer or its agents, employees or contractors onto the Property, Buyer shall give Seller reasonable advance notice of such entry and shall conduct such entry and any inspections in connection therewith so as to minimize interference with Seller's business on, and Seller's tenants' occupancy of, the Property, and in compliance with all applicable laws and agreements.
+          - paragraph [ref=e544] [cursor=pointer]: 5.2.3 Buyer shall indemnify and hold Seller harmless from and against all costs, expenses, damages, liabilities, liens or claims, including, without limitation, attorneys' fees and court costs, directly related to any entry on the Property by Buyer, its agents, employees or contractors in the course of performing inspections, tests and/or inquiries provided for under this Agreement, or resulting from any conditions on the Property created by Buyer's entry and testing (but not including any claims resulting from the discovery or disclosure of pre-existing physical or environmental conditions or the non-negligent aggravation of pre-existing physical or environmental conditions on, in, under or about the Property). The foregoing indemnity shall survive the Closing Date or earlier termination of this Agreement. Buyer shall also promptly repair any damage done to any portion of the Property in connection with the exercise of its rights under this Section 5.2, and restore the Property to its prior condition.
+          - paragraph [ref=e545] [cursor=pointer]: 5.2.4 Before Buyer or any of its consultants or agents enter onto the Property to exercise rights under this Section 5, Buyer shall provide Seller with a certificate of insurance naming Seller and Seller's property manager as additional insured, with insurance limits and coverage reasonably satisfactory to Seller (and with commercial general liability insurance with limits of at least $2,000,000).
+          - paragraph [ref=e546] [cursor=pointer]: 5.2.5 The terms of this Section 5.2 shall survive termination of this Agreement.
+          - paragraph [ref=e547] [cursor=pointer]: 5.3 Due Diligence Review; Approval. Buyer shall promptly commence, and shall diligently and in good faith pursue, its due diligence reviews hereunder within the Due Diligence Period. If, prior to the expiration of the Due Diligence Period, Buyer determines in its sole and absolute discretion that it is not satisfied with the results of its inspections and review, or that it no longer intends to acquire the Property, then Buyer shall promptly notify Seller of such determination in writing, whereupon this Agreement, and the obligations of the parties to purchase and sell the Property hereunder, shall terminate (the “Termination Notice”). If, however, on or before the expiration of the Due Diligence Period, Buyer determines that the foregoing matters are acceptable to Buyer and that it intends to proceed with the acquisition of the Property, then Buyer shall promptly notify Seller of such determination in writing (“Approval Notice”). Upon Buyer's delivery of the Approval Notice, the Deposit shall become nonrefundable to Buyer, except in case of Seller's default or as otherwise expressly provided herein. On termination of this Agreement for any reason other than Seller's default, upon Seller's written request, Buyer shall deliver to Seller copies of all third party reports, studies and test results regarding the Property procured or obtained by Buyer. If Buyer fails to deliver the Termination Notice to Seller on or before the expiration of the Due Diligence Period, Buyer shall be deemed to have timely provided an Approval Notice.
+          - paragraph [ref=e548] [cursor=pointer]:
+            - text: "5.4"
+            - text: "Other Buyer Conditions Precedent. In addition to Buyer's approval of its due diligence review as provided in Section 5.3 above, Seller and Buyer agree that Buyer's obligation to proceed with the Closing is subject to the satisfaction or waiver by Buyer of the following conditions at or prior to the Closing:"
+          - paragraph [ref=e549] [cursor=pointer]: 5.4.1 Seller shall have delivered those items described in Section 11.3 hereof as provided in this Agreement;
+          - paragraph [ref=e550] [cursor=pointer]: 5.4.2 Title Company shall be irrevocably committed to issue the Title Policy pursuant to Section 4 hereof; and
+          - paragraph [ref=e551] [cursor=pointer]: 5.4.3 Each representation and warranty made by Seller in this Agreement shall be true, accurate and complete in all material respects as of the Closing Date.
+          - paragraph [ref=e552] [cursor=pointer]: 5.4.4 [Seller shall have delivered the Minimum Tenant Estoppels, each substantially in the form of Exhibit H attached hereto.]
+          - paragraph [ref=e553] [cursor=pointer]:
+            - text: "5.5"
+            - text: "Seller's Conditions Precedent. In addition to all other conditions to Seller's obligations in this Agreement, Seller and Buyer agree that Seller's obligation to proceed with the Closing is subject to the satisfaction or waiver by Seller of the following conditions at or prior to the Closing:"
+          - paragraph [ref=e554] [cursor=pointer]: 5.5.1 Buyer shall have deposited the Closing Payment into escrow;
+          - paragraph [ref=e555] [cursor=pointer]: 5.5.2 Buyer shall have delivered those items described in Section 11.4 hereof as provided in this Agreement; and
+          - paragraph [ref=e556] [cursor=pointer]: 5.5.3 Each representation and warranty made by Buyer in this Agreement shall be true, accurate and complete in all material respects of as of the Closing Date.
+          - paragraph [ref=e557] [cursor=pointer]: 5.6 Waiver of Conditions Precedent. The conditions set forth in Sections 5.1 through 5.4are for the exclusive benefit of Buyer and the conditions set forth in Section 5.5 are for the exclusive benefit of Seller. If any of the conditions set forth in this Section 5 have not been satisfied or waived within the period provided, this Agreement may be terminated by the party benefiting from such condition by written notice to the other party.
+          - paragraph [ref=e558] [cursor=pointer]: "6 Termination of Agreement. If this Agreement is terminated for any reason other than as described in Section 13: (a) all documents deposited with the Escrow Holder by Buyer shall be returned to Buyer, all documents deposited with Escrow Holder by Seller shall be returned to Seller, and all documents delivered to Buyer by Seller shall be returned to Seller; (b) no Broker's Fee shall be payable to Broker; and (c) the parties shall equally share any cancellation fee of the Escrow Holder."
+          - paragraph [ref=e559] [cursor=pointer]:
+            - text: "7"
+            - text: Representations and Warranties.
+          - paragraph [ref=e560] [cursor=pointer]:
+            - text: "7.1"
+            - text: "Seller's Representations and Warranties. Seller represents and warrants to Buyer as follows:"
+          - paragraph [ref=e561] [cursor=pointer]: 7.1.1 Seller is a ___________ duly organized and validly existing under the laws of the State of ___________. This Agreement and all documents executed by Seller that are to be delivered to Buyer at the Closing are, or at the time of Closing will be, duly authorized, executed and delivered by Seller, and are, or at the time of Closing will, be legal, valid and binding obligations of Seller, and do not, and at the time of Closing, will not, violate any provisions of any contract or judicial order to which Seller is a party or to which Seller is subject.
+          - paragraph [ref=e562] [cursor=pointer]: 7.1.2 To Seller's Actual Knowledge, the rent roll identified in the Due Diligence Documents (the “Rent Roll”) is true and correct in all material respects.
+          - paragraph [ref=e563] [cursor=pointer]: 7.1.3 To Seller's Actual Knowledge, as of the Effective Date, Seller has received no notice from any governmental authority with jurisdiction over the Property of any current violation by the Property of any laws, ordinances or regulations applicable to the Property, and Seller is in compliance with any such past notices of past violations. Seller shall immediately provide Buyer with a copy of any such notices received after the Effective Date.
+          - paragraph [ref=e564] [cursor=pointer]: 7.1.4 To Seller's Actual Knowledge, there is no litigation pending or threatened against Seller.
+          - paragraph [ref=e565] [cursor=pointer]: 7.1.5 To Seller's Actual Knowledge, no condemnation or eminent domain proceedings are pending or threatened against the Property.
+          - paragraph [ref=e566] [cursor=pointer]: 7.1.6 [To the best of Seller’s knowledge, except as set forth on Exhibit H hereto, no tenant under any lease in existence as of the Effective Date is entitled to any concession or allowance (including free or reduced rent) except as previously paid or credited to Buyer, no rent has been paid more than thirty (30) days in advance and Seller is not obligated to make or pay for improvements to any tenant space. To the best of Seller’s knowledge, no leasing commissions or similar fees are due to any person in connection with the current term of any lease in existence as of the Effective Date except as previously paid by Seller or credited to Buyer at Closing. Seller has not received any written notice of default on the part of the landlord under any lease nor, to Seller’s knowledge, does there exist any material default or breach on the part of the landlord or the tenant under any lease. To the best of Seller’s knowledge, the copies of the leases delivered to or made available to Buyer were true, correct and complete in all material respects.]
+          - paragraph [ref=e567] [cursor=pointer]:
+            - generic [ref=e568]: For the purposes of this Agreement, whenever the phrase
+            - text: “to Seller's Actual Knowledge” is used, then it shall be deemed to refer to the actual knowledge of _____________________, without such person undertaking any investigation. To the extent the Due Diligence Materials furnished or made available to or otherwise obtained by Buyer prior to the expiration of the Due Diligence Period contains express provisions or information that are inconsistent with the foregoing representations and warranties, such representations and warranties shall be deemed modified to the extent necessary to eliminate such inconsistency and to conform such representations and warranties to such Due Diligence Materials. Buyer acknowledges that _______________________ is named solely for the purpose of defining the scope of Seller’s knowledge and not for the purpose of imposing any liability on or creating any duties running from such individuals to Buyer. Buyer covenants that it will bring no action of any kind against any such individuals related to or arising out of the representations and warranties set forth in Section 7.1 of this Agreement.
+          - paragraph [ref=e569] [cursor=pointer]:
+            - generic [ref=e570]: Notwithstanding anything contained in this Agreement to the contrary, in the event the Closing occurs,
+            - text: Buyer hereby expressly waives, relinquishes and releases any right or remedy available to it at law, in equity or under this Agreement to make a claim against Seller for damages that Buyer may incur, or to rescind this Agreement and the transactions contemplated hereby, as the result of any of Seller’s representations or warranties being untrue, inaccurate or incorrect if (1) Buyer knew that such representation or warranty was untrue, inaccurate or incorrect at the time of the Closing and Buyer nevertheless closes title hereunder, or (2) Buyer’s damages as a result of such representations or warranties being untrue, inaccurate or incorrect are, in the aggregate, less than $50,000. Buyer shall be “deemed to have known” that a representation or warranty was untrue, inaccurate or incorrect at the time of the Closing if any Property Information furnished or made available to or otherwise obtained by Buyer contains express information which is inconsistent with such representation or warranty.
+          - paragraph [ref=e571] [cursor=pointer]: Notwithstanding anything contained herein to the contrary, if the Closing shall have occurred and Buyer or Seller shall not have waived, relinquished and released all rights or remedies available to it at law, in equity or otherwise as provided hereunder, the aggregate liability of either party arising pursuant to or in connection with the representations, warranties, covenants and other obligations (whether express or implied) of such party in this Agreement and/or any documents executed by such party in connection with this Agreement shall not exceed $___________, in the aggregate. The provisions of this paragraph and the immediately preceding paragraph shall survive the Closing.
+          - paragraph [ref=e572] [cursor=pointer]:
+            - text: "7.2"
+            - text: "Buyer's Representations and Warranties. Buyer hereby represents and warrants that:"
+          - paragraph [ref=e573] [cursor=pointer]: 7.2.1 Buyer is a _________________, duly organized, validly existing and in good standing under the laws of the State of __________, with full right, power and authority to take title to the Property and to enter into and otherwise perform and comply with the terms of this Agreement.
+          - paragraph [ref=e574] [cursor=pointer]: 7.2.2 This Agreement and all documents executed by Buyer that are to be delivered to Seller at Closing are, or at the time of Closing will be, duly authorized, executed and delivered by Buyer, and are, or at Closing will be, legal, valid and binding obligations of Buyer and do not, and at the time of Closing will not, violate any provisions of any contract or judicial order to which Buyer is a party or to which Buyer is subject.
+          - paragraph [ref=e575] [cursor=pointer]: 7.3 Survival. Any cause of action of a party for a breach of the representations and warranties described in Sections 7.1 and 7.2 above shall survive for a period of six (6) months from the Closing Date (the “Survival Period”), at which time such representations and warranties (and any cause of action resulting from a breach thereof not then in litigation) shall terminate. The Survival Period shall only apply to those representations and warranties described in Sections 7(a) and (b) and where elsewhere expressly stated to apply in this Agreement.
+          - paragraph [ref=e576] [cursor=pointer]:
+            - generic [ref=e577]: If prior to the Closing, Seller becomes aware that any representation or warranty set forth in this Agreement that was true and correct on the Effective Date has become incorrect due to changes in conditions or the discovery by Seller of information of which Seller was unaware on the Effective Date, then Seller shall promptly notify
+            - text: Buyer thereof and the representations and warranties set forth herein which are to be remade and reaffirmed by Seller at the Closing shall be supplemented by such new information. If such notification occurs after expiration of the Due Diligence Period, and if in Buyer’s reasonable judgment such change in condition or new information has a material adverse impact on the Property or on the Buyer, Buyer may elect within ten (10) days after receipt of such notice (or, if such notice is received less than ten days prior to the Closing Date, Buyer may elect on or before the Closing Date) to provide written notice to Seller of Buyer’s intent to terminate this Agreement; provided, however, that Seller may within five (5) days after receipt of such termination notice (or, if such termination notice is received less than five days prior to the Closing Date, on or before the Closing Date) notify Buyer of Seller’s intent to cure the condition causing such misrepresentation prior to Closing, in which event Seller’s cure of such condition shall be a condition precedent to Buyer’s obligations hereunder. Buyer’s termination of this Agreement shall be Buyer’s sole remedy against Seller in the circumstances described in this paragraph.
+          - paragraph [ref=e578] [cursor=pointer]: "8 Seller's Covenants. Between the Effective Date and the Closing or earlier termination of this Agreement, Seller covenants and agrees as follows:"
+          - paragraph [ref=e579] [cursor=pointer]: 8.1 During the Due Diligence Period, Seller shall continue to maintain, operate, and lease the Property in the same manner in which Seller is currently operating, maintaining and leasing the Property. After the Due Diligence Period expires, Seller shall not modify or terminate any lease, or enter into any new lease, without the prior written consent of Buyer, which shall not be unreasonably withheld, conditioned or delayed. Buyer's consent shall conclusively be deemed granted if Buyer does not object to a proposed new lease, lease modification or lease termination within five (5) days after Seller has provided Buyer with a written request for approval, together with a copy of the documents for which approval is sought. If any new lease or Lease modification is entered into with Buyer's approval as set forth above, then from and after Closing Buyer shall be responsible for all leasing commissions, tenant improvements and other costs payable by the Landlord thereunder. Seller will terminate the current property management agreement regarding the Property as of Closing.
+          - paragraph [ref=e580] [cursor=pointer]: 8.2 Seller shall not enter into, materially modify or terminate any Service Contracts or other similar arrangements without the prior consent of Buyer, which shall not be unreasonably withheld or delayed, except those deemed reasonably necessary by Seller which are cancelable on thirty (30) days' notice without penalty. Before the expiration of the Due Diligence Period Buyer shall notify Seller of any Service Contracts which Buyer does not choose to assume. Seller will terminate such Service Contracts as are not assumed by Buyer effective as of the Closing Date, provided that Seller shall not be obligated to terminate any Service Contract if such termination will create any additional cost or liability for Seller.
+          - paragraph [ref=e581] [cursor=pointer]: 8.3 Seller shall maintain all casualty and liability insurance currently in force with respect to the Property.
+          - paragraph [ref=e582] [cursor=pointer]: 8.4 [Seller shall use commercially reasonable efforts to obtain an estoppel statement from each tenant, substantially in the form of Exhibit G (“Tenant Estoppels”). If, by _____________, 20__, Seller has not received Tenant Estoppels from Tenants whose Leases represent not less that _______ percent (__%) of the net rentable square footage of the Property, including Tenant Estoppels from all tenants who lease more than _____ rentable square feet (together the “Minimum Tenant Estoppels”), then Buyer may terminate this Agreement and obtain a refund of the Deposit. In the event Seller has obtained the Minimum Tenant Estoppels but is unable to obtain a Tenant Estoppel from any remaining Tenant(s), Buyer shall accept a certificate of Seller (“Seller’s Lease Certificate”) certifying, to Seller’s knowledge, those matters included in the attached form of Tenant Estoppel regarding the lease(s) with such tenant(s). In the event Buyer so requests, Seller agrees to cooperate with Buyer to obtain subordination agreements from tenants on the Property and deliver same to Buyer; provided said tenants’ leases permit the landlord to request a subordination agreement from the Tenant and provided, further, Seller shall have no obligation to obtain and deliver any such subordination agreements to Buyer.]
+          - paragraph [ref=e583] [cursor=pointer]: 9 AS-IS. BUYER ACKNOWLEDGES AND AGREES THAT, EXCEPT FOR SELLER’S EXPRESS REPRESENTATIONS AND WARRANTIES CONTAINED IN SECTION 7 HEREIN, SELLER HAS NOT MADE, DOES NOT MAKE AND SPECIFICALLY NEGATES AND DISCLAIMS ANY REPRESENTATIONS, WARRANTIES, PROMISES, COVENANTS, AGREEMENTS OR GUARANTIES OF ANY KIND OR CHARACTER WHATSOEVER, WHETHER EXPRESS OR IMPLIED, ORAL OR WRITTEN, PAST, PRESENT OR FUTURE, OF, AS TO, CONCERNING OR WITH RESPECT TO (I) VALUE; (II) THE INCOME TO BE DERIVED FROM THE PROPERTY; (III) THE SUITABILITY OF THE PROPERTY FOR ANY AND ALL ACTIVITIES AND USES WHICH BUYER MAY CONDUCT THEREON, INCLUDING THE POSSIBILITIES FOR FUTURE DEVELOPMENT OF THE PROPERTY; (IV) THE HABITABILITY, MERCHANTABILITY, MARKETABILITY, PROFITABILITY OR FITNESS FOR A PARTICULAR PURPOSE OF THE PROPERTY; (V) THE MANNER, QUALITY, STATE OF REPAIR OR LACK OF REPAIR OF THE PROPERTY; (VI) THE NATURE, QUALITY OR CONDITION OF THE PROPERTY, INCLUDING, WITHOUT LIMITATION, THE WATER, SOIL AND GEOLOGY; (VII) THE COMPLIANCE OF OR BY THE PROPERTY OR ITS OPERATION WITH ANY LAWS, RULES, ORDINANCES OR REGULATIONS OF ANY APPLICABLE GOVERNMENTAL AUTHORITY OR BODY; (VIII) THE MANNER OR QUALITY OF THE CONSTRUCTION OR MATERIALS, IF ANY, INCORPORATED INTO THE PROPERTY; (IX) COMPLIANCE WITH ANY ENVIRONMENTAL PROTECTION, POLLUTION OR LAND USE LAWS, RULES, REGULATIONS, ORDERS OR REQUIREMENTS; (X) THE PRESENCE OR ABSENCE OF HAZARDOUS MATERIALS AT, ON, UNDER, OR ADJACENT TO THE PROPERTY; (XI) THE CONTENT, COMPLETENESS OR ACCURACY OF THE DUE DILIGENCE MATERIALS OR PRELIMINARY REPORT REGARDING TITLE; (XII) THE CONFORMITY OF THE IMPROVEMENTS TO ANY PLANS OR SPECIFICATIONS FOR THE PROPERTY, INCLUDING ANY PLANS AND SPECIFICATIONS THAT MAY HAVE BEEN OR MAY BE PROVIDED TO BUYER; (XIII) THE CONFORMITY OF THE PROPERTY TO PAST, CURRENT OR FUTURE APPLICABLE ZONING OR BUILDING REQUIREMENTS; (XIV) DEFICIENCY OF ANY UNDERSHORING; (XV) DEFICIENCY OF ANY WATERPROOFING OR DRAINAGE; (XVI) THE FACT THAT ALL OR A PORTION OF THE PROPERTY MAY BE LOCATED ON OR NEAR AN EARTHQUAKE FAULT LINE; (XVII) THE EXISTENCE OF VESTED LAND USE, ZONING OR BUILDING ENTITLEMENTS AFFECTING THE PROPERTY; OR (XVIII) WITH RESPECT TO ANY OTHER MATTER. BUYER FURTHER ACKNOWLEDGES AND AGREES THAT HAVING BEEN GIVEN THE OPPORTUNITY TO INSPECT THE PROPERTY AND REVIEW INFORMATION AND DOCUMENTATION AFFECTING THE PROPERTY, BUYER IS, EXCEPT FOR SELLER’S REPRESENTATIONS AND WARRANTIES CONTAINED IN SECTION 7 HEREIN, RELYING SOLELY ON ITS OWN INVESTIGATION OF THE PROPERTY AND REVIEW OF SUCH INFORMATION AND DOCUMENTATION, AND NOT ON ANY INFORMATION PROVIDED OR TO BE PROVIDED BY SELLER. BUYER FURTHER ACKNOWLEDGES AND AGREES THAT ANY INFORMATION MADE AVAILABLE TO BUYER OR PROVIDED OR TO BE PROVIDED BY OR ON BEHALF OF SELLER WITH RESPECT TO THE PROPERTY BY A THIRD PARTY WAS OBTAINED FROM A VARIETY OF SOURCES AND THAT SELLER HAS NOT MADE ANY INDEPENDENT INVESTIGATION OR VERIFICATION OF SUCH INFORMATION AND EXCEPT AS SET FORTH IN SECTION 7 SELLER MAKES NO REPRESENTATIONS AS TO THE ACCURACY OR COMPLETENESS OF SUCH INFORMATION. BUYER AGREES TO FULLY AND IRREVOCABLY RELEASE ALL SUCH SOURCES OF INFORMATION AND PREPARERS OF INFORMATION AND DOCUMENTATION AFFECTING THE PROPERTY WHICH WERE RETAINED BY SELLER FROM ANY AND ALL CLAIMS THAT THEY MAY NOW HAVE OR HEREAFTER ACQUIRE AGAINST SUCH SOURCES AND PREPARERS OF INFORMATION FOR ANY COSTS, LOSS, LIABILITY, DAMAGE, EXPENSE, DEMAND, ACTION OR CAUSE OF ACTION ARISING FROM SUCH INFORMATION OR DOCUMENTATION (EXCEPT FOR CLAIMS BASED ON A DIRECT RELATIONSHIP WITH ANY SUCH SOURCES OR PREPARERS). EXCEPT FOR SELLER’S REPRESENTATIONS AND WARRANTIES AS SET FORTH IN SECTION 7 HEREIN, SELLER IS NOT LIABLE OR BOUND IN ANY MANNER BY ANY ORAL OR WRITTEN STATEMENTS, REPRESENTATIONS OR INFORMATION PERTAINING TO THE PROPERTY, OR THE OPERATION THEREOF, FURNISHED BY ANY REAL ESTATE BROKER, PROPERTY MANAGER, AGENT, EMPLOYEE, SERVANT OR OTHER PERSON. BUYER FURTHER ACKNOWLEDGES AND AGREES THAT TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SALE OF THE PROPERTY AS PROVIDED FOR HEREIN IS MADE ON AN “AS IS” CONDITION AND BASIS WITH ALL FAULTS, AND THAT SELLER HAS NO OBLIGATIONS TO MAKE REPAIRS, REPLACEMENTS OR IMPROVEMENTS EXCEPT AS MAY OTHERWISE BE EXPRESSLY STATED HEREIN.
+          - paragraph [ref=e584] [cursor=pointer]:
+            - generic [ref=e586]: ___________________
+            - generic [ref=e589]: ______________________
+            - generic [ref=e591]: SELLER’S INITIALS
+            - text: BUYER’S INITIALS
+          - paragraph [ref=e595] [cursor=pointer]: 10 Release. By accepting the Deed to the Property, Buyer, on behalf of itself, its officers, directors and its and their respective successors, shall forever release Seller, its members and principals, and its officers, directors, agents and employees, and its and their respective successors, of and from any and all losses, liabilities, damages, claims, demands, causes of action, costs and expenses, whether known or unknown, arising out of or in any way connected with the Property, including, without limitation, the condition of title to the Property (except for the warranties of Seller contained in the Deed delivered by Seller at Closing) and the structural condition of the Property. Further, by acceptance of the Deed to the Property, Buyer will thereby forever release Seller of and from any environmental claims and causes of action existing now or hereafter created or enacted, whether at common law or by federal, state, county, or municipal law or ordinance, except for any reimbursement or contribution claims which Buyer may have against Seller under any state or federal laws regarding the release of any hazardous substances on the Property caused by Seller. Buyer agrees never to commence, aid in any way, or prosecute against Seller, its officers, directors, agents and employees and its and their respective successors, any action or other proceeding based upon any losses, liabilities, damages, claims, demands, causes of action, costs and expenses, covered in this paragraph.
+          - paragraph [ref=e596] [cursor=pointer]
+          - paragraph [ref=e597] [cursor=pointer]:
+            - generic [ref=e598]: The foregoing release shall not, however, affect Seller’s liability for or under (a) any representations and warranties made specifically by Seller in
+            - text: Section 7.1 above to the extent same survive Closing as provided therein; or (b) any other obligations of Seller identified herein which are to be performed after Closing
+            - text: .
+          - paragraph [ref=e599] [cursor=pointer]:
+            - generic [ref=e601]: ___________________
+            - generic [ref=e603]: ______________________
+            - generic [ref=e606]: SELLER’S INITIALS
+            - text: BUYER’S INITIALS
+          - paragraph [ref=e609] [cursor=pointer]: 11 Closing.
+          - paragraph [ref=e610] [cursor=pointer]: 11.1 Closing. The closing of the purchase and sale of the Property pursuant to this Agreement (the “Closing”) shall take place through Escrow (as defined below) at the office of the Escrow Holder on or before ______________________, or such earlier date as Buyer and Seller may mutually agree in writing (the “Closing Date”) [, provided that Buyer may extend the Closing Date for one or both of two _____________ day extension periods, by giving written notice to Seller of its intention to extend the Closing Date, which notice shall be given at least __________ business days prior to the then-current closing date (as it may have been previously extended), in which notice shall be accompanied by payment to Seller in the amount of $_______________ (each an “Extension Fee”). The Extension Fee shall not be considered part of the Deposit, and shall be paid in consideration of an extension of the Closing Date. The Extension Fee shall be nonrefundable, except in case of Seller's default. The Extension Fee, if any, paid by Buyer with respect to the first ________ day extension shall be applicable to the Purchase Price; one-half (1/2) of the Extension Fee paid by Buyer, if any, for the second extension shall be applicable to the Purchase Price.]
+          - paragraph [ref=e611] [cursor=pointer]: 11.2 Payment of the Purchase Price. The Purchase Price shall be paid, and all documents necessary for the consummation of the purchase and sale transaction contemplated hereby shall be executed and delivered on or before the Closing Date, and Seller shall deliver possession of the Property to Buyer on the Closing Date, subject to the rights of tenants in possession under Leases.
+          - paragraph [ref=e612] [cursor=pointer]:
+            - text: "11.3"
+            - text: "Seller's Deliveries. On or before the Closing Date (or within such timeframe as may be more specifically provided below), Seller shall cause to be delivered into Escrow (except as specifically noted) the following documents:"
+          - paragraph [ref=e613] [cursor=pointer]: 11.3.1 The Deed conveying to Buyer the Real Property, Appurtenances and Improvements, together with a Real Estate Excise Tax Affidavit;
+          - paragraph [ref=e614] [cursor=pointer]: 11.3.2 The Bill of Sale duly executed by Seller, in the form of Exhibit C attached hereto;
+          - paragraph [ref=e615] [cursor=pointer]: 11.3.3 Two (2) counterparts of the Assignment and Assumption of Leases duly executed by Seller, assigning and conveying to Buyer the Seller's interest in, to and under the Leases, in the form of Exhibit D attached hereto;
+          - paragraph [ref=e616] [cursor=pointer]: 11.3.4 Originals of all Leases (and all amendments thereto, if any) and Lease Documents in Seller's possession or control covering the Property or any portion thereof (to be delivered outside of Escrow), together with a Certificate of Rent Roll, in the form of Exhibit F attached hereto;
+          - paragraph [ref=e617] [cursor=pointer]: 11.3.5 Two (2) counterparts of the Assignment and Assumption of Contracts and Intangibles duly executed by Seller, assigning and conveying to Buyer Seller's interest in, to and under the Service Contracts to be continued by Buyer after the Closing and the Intangible Property, in the form attached hereto as Exhibit E;
+          - paragraph [ref=e618] [cursor=pointer]: 11.3.6 Originals or copies of all Service Contracts in the possession or control of Seller (to be delivered outside of Escrow) to be continued by Buyer after the Closing;
+          - paragraph [ref=e619] [cursor=pointer]: 11.3.7 An affidavit sworn by an officer of Seller to the effect that Seller is not a “foreign person” as that term is defined in Section 1445(f)(3) which affidavit shall be in the form reasonably required by the Escrow Holder;
+          - paragraph [ref=e620] [cursor=pointer]: 11.3.8 Such entity formation documents, authorizations, certificates of trust, and other documentation with respect to Seller as Escrow Holder may require in order to cause the Closing to occur or as the Title Company may require in order issue the Title Policy;
+          - paragraph [ref=e621] [cursor=pointer]: 11.3.9 A closing statement prepared in writing by Escrow Holder and approved in writing by Seller;
+          - paragraph [ref=e622] [cursor=pointer]: 11.3.10 A notice signed by Seller notifying the tenants under the Leases of the sale of the property; and
+          - paragraph [ref=e623] [cursor=pointer]: 11.3.11 Any other documents, instruments, records, correspondence or agreements called for hereunder which have not previously been delivered, or which are reasonably required by Escrow Holder or otherwise to close the Escrow and consummate the purchase of the Property in accordance with the terms hereof.
+          - paragraph [ref=e624] [cursor=pointer]:
+            - text: "11.4"
+            - text: "Buyer Deliveries. On or before the Closing Date (or within such timeframe as may be more specifically provided below), Buyer shall cause to be delivered into Escrow (except as specifically noted) the following documents:"
+          - paragraph [ref=e625] [cursor=pointer]: 11.4.1 The Closing Payment;
+          - paragraph [ref=e626] [cursor=pointer]: 11.4.2 A Real Estate Excise Tax Affidavit;
+          - paragraph [ref=e627] [cursor=pointer]: 11.4.3 Two (2) counterparts of the Assignment and Assumption of Leases duly executed by Buyer, in the form of Exhibit D attached hereto;
+          - paragraph [ref=e628] [cursor=pointer]: 11.4.4 Two (2) counterparts of the Assignment of Contracts and Intangibles duly executed by Buyer, in the form attached hereto as Exhibit E;
+          - paragraph [ref=e629] [cursor=pointer]: 11.4.5 A consumer use tax return;
+          - paragraph [ref=e630] [cursor=pointer]: 11.4.6 A closing statement prepared by Escrow Holder and approved in writing by Buyer; and
+          - paragraph [ref=e631] [cursor=pointer]: 11.4.7 Any other documents, instruments, records, correspondence or agreements called for hereunder which have not previously been delivered, or which are reasonably required by Escrow Holder or otherwise to close the Escrow and consummate the purchase of the Property in accordance with the terms hereof.
+          - paragraph [ref=e632] [cursor=pointer]: 11.5 Title Charges; Closing Fees and Costs. Seller shall pay the premium for the portion of the Title Policy attributable to “standard” coverage. Buyer shall pay the incremental premium to obtain “extended” coverage and the cost of any endorsements to the Title Policy requested by Buyer or its lender, and the sales or use tax due on the sale of the Personal Property. Seller shall pay the real estate excise tax applicable to the sale. Seller and Buyer shall each pay one-half (1/2) of the escrow fee charged by Escrow Holder. Recording fees and all other costs and charges of the escrow for the sale shall be paid in the manner customary for the county in which the Property is located or, if there is no custom, shall be split equally between Buyer and Seller.
+          - paragraph [ref=e633] [cursor=pointer]: 11.6 Prorations. Rents actually collected, property taxes and assessments for the then current year shall be prorated at the Closing effective as of the Closing Date. If Seller elects not to deliver security deposits directly to Buyer, Buyer shall be entitled to a credit against the Purchase Price for the total sum of all refundable security deposits paid to Seller by tenants under any Leases affecting the Property, except for deposits which have been credited or refunded to tenants as disclosed on the Rent Roll, or are expressly nonrefundable to tenants pursuant to their Leases. If the Closing occurs before the tax rate is fixed for the then current year, the apportionment of the taxes shall be upon the basis of the tax rate for the preceding year applied to the latest assessed valuation but any difference in ad valorem taxes for the year of sale actually paid by Buyer shall be adjusted between the parties upon receipt of written evidence of the payment thereof.
+          - paragraph [ref=e634] [cursor=pointer]: "11.7 Delinquent Rents. Any monies collected from tenants in possession as of the Closing Date by Buyer or Seller from a tenant who is delinquent in payment of rent as of the Closing Date shall be applied in the following order of priority, with respect to the applicable lease: (i) first, to any rent then due to Buyer for the month in which the Closing occurs or any subsequent month(s) for which rent is then delinquent; (ii) second, to pay reasonable outside collection costs incurred by the party collecting such rent; and (iii) third, to Seller to the extent of any rents delinquent as of the Closing Date. Seller reserves the right after Closing to collect delinquent rents from tenants for periods prior to the Closing Date, provided that Seller shall have no right to terminate the lease of any such tenant or to evict any such tenant from the Property after the Closing Date."
+          - paragraph [ref=e635] [cursor=pointer]: 11.8 Operating Expense Pass-Throughs. Seller, as landlord under the Leases, is currently collecting from tenants under the Leases additional rent to cover taxes, insurance, utilities, maintenance and other operating costs and expenses (collectively, “Operating Expense Pass-throughs”) incurred by Seller in connection with the ownership, operation, maintenance and management of the Property. If Seller collected estimated prepayments of Operating Expense Pass-throughs in excess of any tenant’s share of such expenses, then if the excess can be determined by the Closing, Buyer shall receive a credit for the excess or, if the excess cannot be determined at Closing, Buyer shall receive a credit based upon an estimate, and the parties shall make an adjusting payment between them when the correct amount can be determined. In either event, Buyer shall be responsible for crediting or repaying those amounts to the appropriate tenants. If Seller collected estimated prepayments of Operating Expense Pass-throughs attributable to any period after Closing, Seller shall pay or credit any such amounts to Buyer at Closing.
+          - paragraph [ref=e636] [cursor=pointer]: 11.9 Tenant Reconciliations and Post-Closing Adjustments. Within 60 days after closing, Seller shall prepare and present to Buyer a final calculation of Operating Expense Pass-throughs for Seller’s period of ownership. Such final calculation shall include a general ledger pertaining to the portion of the year under Seller’s ownership along with supporting documentation of tenant’s calculations and base year determinations (if applicable). Buyer shall have 60 days from receipt, to review said calculations of Operating Expense Pass-throughs. If Seller collected payments of Operating Expense Pass-throughs in excess of any tenant’s share of such expenses, Buyer shall receive a credit for the excess. If Seller under-collected payments of Operating Expense Pass-throughs for any tenant’s share of such expenses, an adjustment will be made between the parties after year-end billing to and receipt from said tenants. No other expense related to the ownership or operation of the Property shall be charged to or paid or assumed by Buyer, whether allocable to any period before or after the Closing, other than those obligations expressly assumed by Buyer.
+          - paragraph [ref=e637] [cursor=pointer]: 11.10 [In Process TI Work. If, by Closing, Seller has begun but not yet completed and paid in full the performance of any tenant improvement obligations under the leases (collectively, “In Process TI Work”), then such costs as reasonably agreed by Buyer and Seller during the Due Diligence Period shall be withheld from the Purchase Price at Closing, placed in an escrow with the Escrow Holder, and Buyer shall consult with Seller’s contractors and project managers regarding the completion of such work. To the extent of the funds escrowed for such purpose, Buyer shall defend, indemnify and hold Seller harmless from all claims, losses, liabilities and expenses (including attorneys' fees and costs) incurred by or asserted against Seller and related to the In Process TI Work. Any funds held in the escrow shall be released to Buyer without any requirement for the consent of Seller and shall be used by Buyer to pay the landlord’s share of such tenant improvements and allowances. If there are any funds remaining in the escrow after payment of such In Process TI Work, such excess shall be paid to Seller; but if the amount in escrow is insufficient for such purpose, Seller shall reimburse Buyer for such deficiency upon demand.]
+          - paragraph [ref=e638] [cursor=pointer]: 12 Escrow.
+          - paragraph [ref=e639] [cursor=pointer]: "12.1 Conditions to Close. Escrow Holder shall close the Escrow on the Closing Date by (i) causing the Deed to be recorded in the Recorder's Office of the county in which the Property is located, and (ii) delivering the Closing Payment and the Deposit to Seller and the other funds and documents as provided in this Agreement, when and only when each of the following conditions have been satisfied:"
+          - paragraph [ref=e640] [cursor=pointer]: 12.1.1 All funds and documents have been delivered to Escrow Holder; and
+          - paragraph [ref=e641] [cursor=pointer]: 12.1.2 Title Company is prepared to deliver the Title Policy.
+          - paragraph [ref=e642] [cursor=pointer]: "12.2 Distribution of Funds and Documents. Unless this Agreement terminates as provided herein, all funds received by Escrow Holder shall be, until Closing, kept on deposit and invested in one or more interest bearing accounts. Interest accruing to such account prior to the Closing shall be for the account of Buyer. Interest accruing on all sums due Seller after the Closing shall be for the account of Seller. All disbursements by Escrow Holder to Seller shall be made by federal wire transfer in accordance with wiring instructions to be given by Seller prior to the Closing Date. Upon Closing:"
+          - paragraph [ref=e643] [cursor=pointer]: 12.2.1 Escrow Holder shall disburse the Closing Payment and the Deposit to Seller, or as Seller may otherwise direct.
+          - paragraph [ref=e644] [cursor=pointer]: 12.2.2 Escrow Holder shall cause the recorded Deed to be delivered to Buyer.
+          - paragraph [ref=e645] [cursor=pointer]: 12.2.3 Escrow Holder shall deliver all other items deposited into Escrow to the party entitled thereto or benefited thereby.
+          - paragraph [ref=e646] [cursor=pointer]:
+            - text: "13"
+            - text: Default.
+          - paragraph [ref=e647] [cursor=pointer]: 13.1 Default by Buyer; Limitation on Liability; Liquidated Damages. SELLER AND BUYER EXPRESSLY ACKNOWLEDGE AND AGREE THAT IF CLOSING FAILS TO OCCUR AS THE RESULT OF A DEFAULT UNDER THIS AGREEMENT BY BUYER, (I) SELLER WILL BE MATERIALLY DAMAGED, (II) IT WOULD BE EXTREMELY DIFFICULT AND IMPRACTICABLE AT THIS TIME TO ESTIMATE THE AMOUNT OF SUCH DAMAGE, AND (III) AFTER NEGOTIATION, THE PARTIES HAVE AGREED THAT, CONSIDERING ALL OF THE CIRCUMSTANCES EXISTING ON THE DATE OF THIS AGREEMENT, THE AMOUNT OF THE DEPOSIT IS A REASONABLE ESTIMATE OF THE DAMAGES THAT SELLER WOULD INCUR IN SUCH EVENT. ACCORDINGLY, SELLER AND BUYER AGREE THAT IN THE EVENT OF SUCH A DEFAULT BY BUYER, THE DEPOSIT SHALL CONSTITUTE LIQUIDATED DAMAGES FOR SUCH DEFAULT. THE ESCROW HOLDER IS HEREBY INSTRUCTED BY SELLER AND BUYER TO DELIVER THE DEPOSIT TO SELLER IN SUCH EVENT, AND SELLER SHALL RETAIN THE DEPOSIT AS LIQUIDATED DAMAGES. SUCH LIQUIDATED DAMAGES SHALL CONSTITUTE SELLER'S SOLE AND EXCLUSIVE REMEDY FOR BUYER'S DEFAULT, AND SHALL BE IN LIEU OF ANY OTHER MONETARY RELIEF OR ANY OTHER RELIEF TO WHICH SELLER MAY OTHERWISE BE ENTITLED UNDER THIS AGREEMENT OR UNDER THE LAW FOR BUYER'S FAILURE TO CLOSE, AND SELLER HEREBY WAIVES ANY RIGHT TO SPECIFIC PERFORMANCE OR DAMAGES HEREUNDER FOR BUYER'S FAILURE TO CLOSE. THE FOREGOING LIMITATION OF REMEDY SHALL NOT APPLY TO BUYER'S INDEMNIFICATION OR REPAIR AND RESTORATION OBLIGATIONS UNDER THIS AGREEMENT, OR BUYER'S COVENANT UNDER SECTION 15 BELOW REGARDING PAYMENT OF ATTORNEYS' FEES.
+          - paragraph [ref=e648] [cursor=pointer]: BY PLACING ITS INITIALS BELOW, EACH PARTY SPECIFICALLY CONFIRMS THE ACCURACY OF THE STATEMENTS MADE ABOVE AND THE FACT THAT EACH PARTY WAS REPRESENTED BY COUNSEL WHO EXPLAINED, AT THE TIME THIS AGREEMENT WAS MADE, THE CONSEQUENCES OF THIS LIQUIDATED DAMAGES PROVISION.
+          - paragraph [ref=e649] [cursor=pointer]:
+            - text: "INITIALS:"
+            - generic [ref=e650]: "Seller: _________"
+            - text: "Buyer: __________"
+          - paragraph [ref=e653] [cursor=pointer]: 13.2 Default by Seller; Other Failure to Consummate Agreement. If Closing fails to occur as a result of a default by Seller in the performance of its obligations under this Agreement, and if all other conditions to Seller's obligations to consummate the sale of the Property to be satisfied as of the date of such default or failure of condition have been satisfied at the time of such default or failure, then, upon notice by Buyer to Seller and Escrow Holder to that effect, Buyer’s sole remedy shall be to terminate this Agreement and receive the Deposit [(plus accrued interest)], together with an additional sum from Seller equal to Buyer's actual out-of-pocket third party costs and expenses in connection with this transaction in no event to exceed Fifty Hundred Thousand Dollars ($50,000), in which event (x) Seller shall pay the cancellation charges of Escrow Holder, (y) no Broker's Fee shall be earned, and (z) this Agreement shall automatically terminate and be of no further force or effect and neither party shall have any further rights or obligations hereunder, other than pursuant to any provision hereof which expressly survives the termination of this Agreement. Buyer expressly waives its right to specific performance, and any other damage claims.
+          - paragraph [ref=e654] [cursor=pointer]:
+            - text: 14 Destruction/Condemnation of Property. In the event that all or any material portion of the Property is damaged or destroyed by any casualty or is the subject of a taking or condemnation under the provisions of eminent domain prior to the date of Closing, Buyer may terminate this Agreement
+            - text: and the parties will have no further obligations to each other except for those obligations that expressly survive termination of this Agreement
+            - text: "and the Earnest Money shall be returned to Buyer. If Buyer does not elect to terminate this Agreement within 10 days of receipt of written notice from Seller of the damage or taking or if the damage is not material, then Seller shall have no obligation to repair or replace any damage or destruction (other than to safeguard the Property against damage from the elements) caused by the foregoing nor shall the Purchase Price be reduced, but the following shall apply at the Closing: (i) in the event of a casualty, Buyer shall receive an assignment of the proceeds of any casualty insurance otherwise payable to Seller; and (ii) in the event of a taking, Seller shall assign to Buyer its rights to any condemnation proceeds resulting from such taking and shall not make any settlements without Buyer’s prior written approval. For purposes hereof, damage is material if the reasonable estimated cost of repair exceeds $_________."
+          - paragraph [ref=e655] [cursor=pointer]:
+            - text: "15"
+            - text: Attorneys' Fees. Any signatory to this Agreement who is the prevailing party in any legal proceeding against any other signatory brought in connection with this Agreement or transaction shall be additionally entitled to recover court costs and reasonable attorney fees, and all other reasonable litigation expenses, including deposition costs, travel and expert witness fees, from the non-prevailing party.
+          - paragraph [ref=e656] [cursor=pointer]:
+            - text: "16"
+            - text: "Notices. Any notice required or permitted to be given under this Agreement shall be in writing and (i) personally delivered, (ii) sent by Federal Express or similar nationally recognized overnight courier service, or (iii) electronically transmitted (including email or facsimile with facsimile confirmation of evidence by a printout from the sender's telecopy machine). Such notice shall be deemed to have been given upon the date of actual receipt or delivery (or refusal to accept delivery), as evidenced by the notifying party's receipt of written or electronic confirmation of such delivery or refusal, if received by the party to be notified between the hours of 8 a.m. and 5 p.m. Pacific time on any business day, with delivery made after such hours to be deemed received on the following business day. For the purposes of notice, the addresses of the parties shall be as follows:"
+          - paragraph [ref=e657] [cursor=pointer]: "Seller:"
+          - paragraph [ref=e664] [cursor=pointer]
+          - paragraph [ref=e671] [cursor=pointer]
+          - paragraph [ref=e678] [cursor=pointer]:
+            - generic [ref=e680]: "Attn:"
+          - paragraph [ref=e685] [cursor=pointer]: Facsimile
+          - paragraph [ref=e689] [cursor=pointer]: "Email:"
+          - paragraph [ref=e694] [cursor=pointer]
+          - paragraph [ref=e695] [cursor=pointer]:
+            - generic [ref=e697]: "Copies to:"
+            - text: Sample Law Firm LLP
+          - paragraph [ref=e699] [cursor=pointer]: 100 Main Street, Suite 200
+          - paragraph [ref=e700] [cursor=pointer]: Anytown, WA 98101
+          - paragraph [ref=e701] [cursor=pointer]:
+            - generic [ref=e705]: "Attn:"
+            - text: Jane Attorney
+          - paragraph [ref=e706] [cursor=pointer]:
+            - generic [ref=e710]: "Email:"
+            - text: jane@samplelawfirm.com
+          - paragraph [ref=e711] [cursor=pointer]
+          - paragraph [ref=e716] [cursor=pointer]: "Buyer:"
+          - paragraph [ref=e724] [cursor=pointer]
+          - paragraph [ref=e733] [cursor=pointer]
+          - paragraph [ref=e742] [cursor=pointer]:
+            - generic [ref=e746]: "Attn:"
+          - paragraph [ref=e751] [cursor=pointer]:
+            - generic [ref=e755]: Facsimile
+          - paragraph [ref=e759] [cursor=pointer]: "Email:"
+          - paragraph [ref=e764] [cursor=pointer]
+          - paragraph [ref=e765] [cursor=pointer]:
+            - generic [ref=e767]: "Copies to:"
+          - paragraph [ref=e773] [cursor=pointer]
+          - paragraph [ref=e782] [cursor=pointer]
+          - paragraph [ref=e791] [cursor=pointer]:
+            - generic [ref=e795]: "Attn:"
+          - paragraph [ref=e800] [cursor=pointer]:
+            - generic [ref=e804]: Facsimile
+          - paragraph [ref=e808] [cursor=pointer]: "Email:"
+          - paragraph [ref=e813] [cursor=pointer]
+          - paragraph [ref=e814] [cursor=pointer]: or such other address as either party may from time to time specify in writing delivered to the other in accordance with this Section 16.
+          - paragraph [ref=e815] [cursor=pointer]
+          - paragraph [ref=e816] [cursor=pointer]: 17 Integration. This Agreement contains the complete agreement between the parties and cannot be varied except by the written agreement of the parties. The parties agree that there are no oral agreements, understandings, representations or warranties that are not expressly set forth herein.
+          - paragraph [ref=e817] [cursor=pointer]: 18 Binding Effect. This Agreement shall be binding upon and inure to the benefit of the parties hereto and their respective heirs, executors, representatives, successors and assigns where permitted by this Agreement.
+          - paragraph [ref=e818] [cursor=pointer]: 19 Assignment. Except as provided in Section 20 below, Buyer may not assign its interest under this Agreement without Seller's prior written consent; provided, however, Buyer may assign this Agreement to any entity which controls, is controlled by, or is under common control with Buyer, upon prior written notice to Seller. As used herein, “control” and similar terms mean ownership of a majority of the beneficial interest in, and managerial control over the assignee entity (such as that exercised by the managing member of a limited liability company or the general partner of a limited partnership).
+          - paragraph [ref=e819] [cursor=pointer]:
+            - text: "20"
+            - text: 1031 Exchange. Seller and/or Buyer may wish to effect an IRC Section 1031 tax-deferred exchange and both parties will cooperate to facilitate such an exchange; provided, however, neither party shall incur additional cost or expense on the other party's behalf, and shall not be required to advance or deposit monies in excess of amounts required by this Agreement for purchase of the subject Property, and such exchange shall not cause any delays in the time periods or Closing Date specified in this Agreement. The exchange must occur at such time and place as will conform to IRC Section 1031, as may be amended from time to time.
+          - paragraph [ref=e820] [cursor=pointer]: 21 Governing Law/Venue. This Agreement shall be construed under and in accordance with the laws of the state in which the Property is located. Venue for any dispute under this Agreement shall be in _________ County, Washington.
+          - paragraph [ref=e821] [cursor=pointer]: 22 Severability. In case any one or more of the provisions contained in this Agreement shall for any reason be held to be invalid, illegal, or unenforceable in any respect, such invalidity, illegality, or unenforceability shall not affect any other provision hereof and this Agreement shall be construed as if such invalid, illegal, or unenforceable provision had never been contained herein.
+          - paragraph [ref=e822] [cursor=pointer]: 23 Exhibits. All exhibits attached hereto are incorporated herein by this reference.
+          - paragraph [ref=e823] [cursor=pointer]: 24 Time. Time is of the essence.
+          - paragraph [ref=e824] [cursor=pointer]: 25 Date of Performance. If the date for performance of any act under this Agreement falls on a Saturday, Sunday or federal holiday, the date for such performance shall automatically be extended to the first succeeding business day that is not a Saturday, Sunday or federal holiday.
+          - paragraph [ref=e825] [cursor=pointer]: 26 Legally Binding. This is intended to be a legally binding agreement. This Agreement constitutes the entire agreement between the parties and their real estate agents, there being no oral contracts, representations, conditions, or warranties, express or implied, in addition to this Agreement. Notwithstanding the foregoing, the preparation and/or delivery of unsigned drafts of this Agreement shall not create any legally binding rights in the Property and/or obligations of the parties, and Buyer and Seller acknowledge that this Agreement shall be of no effect until it is duly executed by both Buyer and Seller. Buyer understands and agrees that Seller shall have the right to continue to market the Property and/or to negotiate with other potential Buyers of the Property until the expiration of the Due Diligence Period and the satisfaction or waiver in writing of all conditions to the obligations of Buyer under this Agreement.
+          - paragraph [ref=e826] [cursor=pointer]: 27 Waiver. No waiver by Buyer or Seller of a breach of any of the terms, covenants and conditions of this Agreement by the other party shall be construed or held to be a waiver of any succeeding or preceding breach of the same or any other term, covenant or condition herein contained. No waiver of any default by Buyer or Seller hereunder shall be implied from any omission by the other party to take any action on account of such default if such default persists or is repeated, and no express waiver shall affect a default other than as specified in such waiver.
+          - paragraph [ref=e827] [cursor=pointer]: 28 Confidentiality. Seller and Buyer agree to keep the terms of this Agreement confidential and not make any public announcements or disclosures with respect to the subject matter hereof without the prior written consent of the other party; provided that each party may disclose the terms of this Agreement to its lenders, partners, consultants and professional advisors as necessary or convenient for the completion of this transaction.
+          - paragraph [ref=e828] [cursor=pointer]: 29 Further Instruments. Each party will, whenever and as often as it shall be requested so to do by the other, cause to be executed, acknowledged or delivered any and all such further instruments and documents as may be necessary or proper, in the reasonable opinion of the requesting party, in order to carry out the intent and purpose of this Agreement.
+          - paragraph [ref=e829] [cursor=pointer]: 30 Counterparts. This Agreement may be executed in any number of counterparts, provided each of the parties hereto executed at least one counterpart; each such counterpart hereof shall be deemed to be an original instrument, but all such counterparts together shall constitute but one agreement. This Agreement may be signed by facsimile or electronic mail, and each facsimile or electronic mail copy so signed shall be deemed an original hereof.
+          - paragraph [ref=e830] [cursor=pointer]:
+            - text: "31"
+            - text: Brokers. Seller has agreed to pay ______________ of ___________, a commission (the “Broker's Fee”) by separate agreement. Other than as stated above, Seller and Buyer each represent and warrant to the other that no real estate brokerage commission is payable to any person or entity in connection with the transaction contemplated hereby, and each agrees to and does hereby indemnify and hold the other harmless against the payment of any commission to any person or entity claiming by, through or under Seller or Buyer, as applicable. This indemnification shall extend to any and all claims, liabilities, costs and expenses (including reasonable attorneys' fees and litigation costs) arising as a result of such claims and shall survive the Closing. Broker shall not be entitled to any monies or other recovery realized by Seller arising out of Buyer's default. Broker shall not be entitled to any commission if Buyer or Seller elect to terminate this Agreement. This Section 31 shall expressly survive any Closing or any termination of this Agreement.
+          - paragraph [ref=e831] [cursor=pointer]:
+            - text: "32"
+            - text: Waiver of Right to Receive Seller Disclosure Statement and Waiver of Right to Rescind. PURSUANT TO RCW CH. 64.06, AS AMENDED BY CHAPTER 64, LAWS OF 2010, BUYER HEREBY WAIVES ITS RIGHT TO RECEIVE THE SELLER DISCLOSURE STATEMENT REFERRED TO THEREIN. THIS WAIVER DOES NOT EXTEND TO THE SECTION OF THE DISCLOSURE STATEMENT ENTITLED “ENVIRONMENTAL”.
+          - paragraph [ref=e832] [cursor=pointer]: Seller shall provide to Buyer with the “Environmental” section of the Seller Disclosure Statement during the Review Period, and by executing this Agreement, Buyer waive
+          - paragraph [ref=e833] [cursor=pointer]: s its right to receive the balance of the completed Seller Disclosure Statement.
+          - paragraph [ref=e834] [cursor=pointer]: Buyer further agrees that any information discovered by Buyer concerning the Property shall not obligate Seller to prepare and deliver to Buyer a revised or updated Seller Disclosure Statement. Buyer hereby waives any right to receive an updated or revised Seller Disclosure Statement, regardless of the source of any new information. Buyer further warrants that it is a sophisticated Buyer who is familiar with the ownership and development of real estate projects similar to the Property and Buyer has or will have adequate opportunity to complete such independent inspections of the Property it deems necessary, and will acquire the Property solely on the basis of and in reliance upon such examinations and not on any information provided in any Seller Disclosure Statement or, except as set forth in this Agreement or the Closing documents, any information otherwise provided or to be provided by Seller or by anyone acting or claiming to act by, through or under or on Seller’s behalf.
+          - paragraph [ref=e835] [cursor=pointer]: BUYER HEREBY WAIVES, TO THE FULLEST EXTENT PERMISSIBLE BY LAW, THE RIGHT TO RESCIND THIS AGREEMENT PURSUANT TO ANY PROVISION OF RCW 64.06, AS AMENDED BY CHAPTER 64, LAWS OF 2010. IT IS THE INTENT OF BUYER THAT ANY SELLER DISCLOSURE STATEMENT PROVIDED BY SELLER WILL NOT BE RELIED UPON BY BUYER, AND SHALL GIVE BUYER NO RIGHTS WITH RESPECT TO SELLER OR UNDER THIS AGREEMENT. THIS WAIVER OF THE RIGHT TO RESCIND APPLIES TO THE SELLER DISCLOSURE STATEMENT PROVIDED TO BUYER DURING THE REVIEW PERIOD AND APPLIES PROSPECTIVELY TO ANY UPDATED OR REVISED SELLER DISCLOSURE STATEMENTS THAT MAY BE PROVIDED BY SELLER TO BUYER. THE PROVISIONS OF THIS SECTION 32 SHALL SURVIVE THE CLOSING.
+          - paragraph [ref=e836] [cursor=pointer]:
+            - generic [ref=e837]: IN WITNESS WHEREOF, the parties have executed this Agreement as of the Effective Date.
+          - paragraph [ref=e838] [cursor=pointer]
+          - paragraph [ref=e839] [cursor=pointer]: EXECUTED by Buyer on ________________, 20___.
+          - paragraph [ref=e844] [cursor=pointer]
+          - paragraph [ref=e845] [cursor=pointer]: "BUYER:"
+          - paragraph [ref=e850] [cursor=pointer]
+          - paragraph [ref=e851] [cursor=pointer]:
+            - generic [ref=e855]: _____________________________
+          - paragraph [ref=e856] [cursor=pointer]
+          - paragraph [ref=e861] [cursor=pointer]
+          - paragraph [ref=e862] [cursor=pointer]:
+            - generic [ref=e866]: "By: __________________________"
+          - paragraph [ref=e867] [cursor=pointer]:
+            - generic [ref=e871]: "Name: ________________________"
+          - paragraph [ref=e872] [cursor=pointer]:
+            - generic [ref=e876]: "Title: _________________________"
+          - paragraph [ref=e877] [cursor=pointer]
+          - paragraph [ref=e878] [cursor=pointer]
+          - paragraph [ref=e879] [cursor=pointer]: EXECUTED by Seller on _________________, 20___.
+          - paragraph [ref=e884] [cursor=pointer]
+          - paragraph [ref=e885] [cursor=pointer]:
+            - generic [ref=e889]: SELLER
+            - text: ":"
+          - paragraph [ref=e890] [cursor=pointer]
+          - paragraph [ref=e898] [cursor=pointer]
+          - paragraph [ref=e908] [cursor=pointer]
+          - paragraph [ref=e909] [cursor=pointer]
+          - paragraph [ref=e910] [cursor=pointer]:
+            - generic [ref=e914]: "By:"
+          - paragraph [ref=e920] [cursor=pointer]:
+            - generic [ref=e924]: "Name: ________________________"
+          - paragraph [ref=e925] [cursor=pointer]:
+            - generic [ref=e929]: "Title: _________________________"
+          - paragraph [ref=e930] [cursor=pointer]
+          - paragraph
+          - paragraph [ref=e931] [cursor=pointer]: EXHIBIT A
+          - paragraph [ref=e932] [cursor=pointer]: (Real Property Legal Description)
+          - paragraph [ref=e933] [cursor=pointer]
+          - paragraph [ref=e934] [cursor=pointer]:
+            - generic [ref=e935]: "All that certain real property situated in ____________________ County, Washington, as more particularly described as follows:"
+          - paragraph [ref=e936] [cursor=pointer]
+          - paragraph [ref=e937] [cursor=pointer]
+          - paragraph [ref=e938] [cursor=pointer]
+          - paragraph [ref=e939] [cursor=pointer]
+          - paragraph [ref=e940] [cursor=pointer]
+          - text: EXHIBIT B
+          - paragraph
+          - paragraph [ref=e941] [cursor=pointer]: "RECORDED RETURN TO:"
+          - table [ref=e942]:
+            - rowgroup [ref=e945]:
+              - row [ref=e946]:
+                - cell [ref=e947]:
+                  - paragraph [ref=e948] [cursor=pointer]
+                  - paragraph [ref=e953] [cursor=pointer]
+                  - paragraph [ref=e958] [cursor=pointer]
+                  - paragraph [ref=e963] [cursor=pointer]
+          - paragraph [ref=e968] [cursor=pointer]
+          - paragraph [ref=e969] [cursor=pointer]
+          - paragraph [ref=e970] [cursor=pointer]
+          - paragraph [ref=e971] [cursor=pointer]
+          - paragraph [ref=e972] [cursor=pointer]
+          - paragraph [ref=e973] [cursor=pointer]
+          - paragraph [ref=e974] [cursor=pointer]
+          - paragraph [ref=e975] [cursor=pointer]
+          - table [ref=e976]:
+            - rowgroup [ref=e980]:
+              - 'row "Document Title: SPECIAL WARRANTY DEED" [ref=e981]':
+                - cell "Document Title:" [ref=e982]:
+                  - paragraph [ref=e983] [cursor=pointer]: "Document Title:"
+                - cell "SPECIAL WARRANTY DEED" [ref=e984]:
+                  - paragraph [ref=e985] [cursor=pointer]: SPECIAL WARRANTY DEED
+              - row "Grantor:" [ref=e986]:
+                - cell "Grantor:" [ref=e987]:
+                  - paragraph [ref=e988] [cursor=pointer]: "Grantor:"
+                - cell [ref=e989]:
+                  - paragraph [ref=e990] [cursor=pointer]
+              - row "Grantee:" [ref=e992]:
+                - cell "Grantee:" [ref=e993]:
+                  - paragraph [ref=e994] [cursor=pointer]: "Grantee:"
+                - cell [ref=e995]:
+                  - paragraph [ref=e996] [cursor=pointer]
+              - 'row "Legal Description: Abbreviated Legal Description: Full Legal Description: See Exhibit A attached." [ref=e998]':
+                - 'cell "Legal Description: Abbreviated Legal Description: Full Legal Description: See Exhibit A attached." [ref=e999]':
+                  - paragraph [ref=e1000] [cursor=pointer]: "Legal Description:"
+                  - paragraph [ref=e1001] [cursor=pointer]
+                  - paragraph [ref=e1002] [cursor=pointer]: "Abbreviated Legal Description:"
+                  - paragraph [ref=e1003] [cursor=pointer]
+                  - paragraph [ref=e1004] [cursor=pointer]: "Full Legal Description: See Exhibit A attached."
+                  - paragraph [ref=e1005] [cursor=pointer]
+              - row "Assessor's Tax Parcel Nos.:" [ref=e1006]:
+                - cell "Assessor's Tax Parcel Nos.:" [ref=e1007]:
+                  - paragraph [ref=e1008] [cursor=pointer]: "Assessor's Tax Parcel Nos.:"
+              - row "Reference Nos. of Documents Released or Assigned:" [ref=e1009]:
+                - cell "Reference Nos. of Documents Released or Assigned:" [ref=e1010]:
+                  - paragraph [ref=e1011] [cursor=pointer]: "Reference Nos. of Documents Released or Assigned:"
+          - paragraph [ref=e1012] [cursor=pointer]
+          - paragraph [ref=e1013] [cursor=pointer]: SPECIAL WARRANTY DEED
+          - paragraph [ref=e1014] [cursor=pointer]:
+            - generic [ref=e1015]: THAT __________________ (
+            - text: “Grantor”), for and in consideration of the sum of Ten and No/100 Dollars ($10.00) and other good and valuable consideration to it in hand paid by ___________________, a _______________________ (“Grantee”), grants, bargains, and conveys, unto the said Grantee all of its right, title and interest in that certain real property, together with buildings and improvements now or hereafter situated thereon and the lessor's or landlord's interest in all space leases or occupancy agreements covering all or any portion of such real property, buildings, or improvements situated in the City of __________, County of _____, State of Washington, more particularly described on Exhibit A attached hereto and made a part hereof for all purposes (the “Property”).
+          - paragraph [ref=e1016] [cursor=pointer]:
+            - generic [ref=e1017]: This Special Warranty Deed is made and accepted expressly subject to the matters set forth in
+            - text: Exhibit B attached hereto and made a part hereof for all purposes.
+          - paragraph [ref=e1018] [cursor=pointer]:
+            - generic [ref=e1020]: The Grantor, for itself and its successors in interest, does by these presents expressly limit the covenants of the deed to those herein expressed, and excludes all covenants arising or to arise by statutory or other implication, and does hereby covenant that against all persons whomsoever lawfully claiming or to claim by, through or under said Grantor and not otherwise, Grantor will forever warrant and defend the said described real estate.
+          - paragraph [ref=e1021] [cursor=pointer]
+          - paragraph [ref=e1023] [cursor=pointer]:
+            - generic [ref=e1025]: IN WITNESS WHEREOF, Grantor has executed this Special Warranty Deed as of this ___
+            - text: th day of _______________, 20____.
+          - paragraph [ref=e1026] [cursor=pointer]
+          - paragraph [ref=e1028] [cursor=pointer]:
+            - generic [ref=e1035]: "GRANTOR:"
+          - paragraph [ref=e1036] [cursor=pointer]
+          - paragraph [ref=e1037] [cursor=pointer]:
+            - generic [ref=e1039]: ______________________________
+          - paragraph [ref=e1040] [cursor=pointer]
+          - paragraph [ref=e1041] [cursor=pointer]
+          - paragraph [ref=e1042] [cursor=pointer]:
+            - generic [ref=e1045]: "By:"
+          - paragraph [ref=e1051] [cursor=pointer]:
+            - generic [ref=e1054]: "Its:"
+          - paragraph [ref=e1060] [cursor=pointer]
+          - paragraph [ref=e1061] [cursor=pointer]
+          - paragraph [ref=e1062] [cursor=pointer]
+          - paragraph [ref=e1063] [cursor=pointer]: Signature must be acknowledged
+          - paragraph [ref=e1064] [cursor=pointer]: Attach Legal Description
+          - paragraph [ref=e1065] [cursor=pointer]: Attach Permitted Exceptions
+          - text: EXHIBIT C
+          - paragraph
+          - paragraph [ref=e1066] [cursor=pointer]
+          - paragraph [ref=e1067] [cursor=pointer]: Bill of Sale
+          - paragraph [ref=e1068] [cursor=pointer]
+          - paragraph [ref=e1069] [cursor=pointer]:
+            - generic [ref=e1071]: For good and valuable consideration the receipt of which is hereby acknowledged, _________________ (
+            - text: “Seller”) does hereby sell, transfer and convey to ______________________, a ________________________ (“Buyer”), all personal property owned by Seller and located on or in or used in connection with the Property (as such term is defined in that certain Purchase and Sale Agreement (the “Purchase Agreement”) with an Effective Date (as defined in the Purchase Agreement) of _________________, 20___, by and between Seller and ______________, a _____________ including, without limitation, those items described in Schedule I attached hereto and incorporated herein by this reference. The terms of the Purchase Agreement with respect to this Bill of Sale and the property conveyed in this Bill of Sale are incorporated herein by reference.
+          - paragraph [ref=e1072] [cursor=pointer]
+          - paragraph [ref=e1073] [cursor=pointer]:
+            - generic [ref=e1075]: Seller hereby represents and warrants to
+            - text: Buyer that Seller is the lawful owner of such personal property, and that such personal property is free and clear of all liens, encumbrances, conditional sales contracts, security interests and claims.
+          - paragraph [ref=e1076] [cursor=pointer]
+          - paragraph [ref=e1077] [cursor=pointer]:
+            - generic [ref=e1078]: Dated as of ________________, 20____.
+          - paragraph [ref=e1079] [cursor=pointer]
+          - paragraph [ref=e1080] [cursor=pointer]: "SELLER:"
+          - paragraph [ref=e1087] [cursor=pointer]
+          - paragraph [ref=e1088] [cursor=pointer]:
+            - generic [ref=e1094]: ________________________________
+          - paragraph [ref=e1095] [cursor=pointer]
+          - paragraph [ref=e1096] [cursor=pointer]
+          - paragraph [ref=e1097] [cursor=pointer]:
+            - generic [ref=e1103]: "By:"
+          - paragraph [ref=e1109] [cursor=pointer]:
+            - generic [ref=e1115]: "Its:"
+          - paragraph [ref=e1121] [cursor=pointer]
+          - paragraph [ref=e1122] [cursor=pointer]
+          - text: SCHEDULE I
+          - paragraph
+          - paragraph [ref=e1123] [cursor=pointer]: to
+          - paragraph [ref=e1124] [cursor=pointer]: Bill of Sale
+          - paragraph [ref=e1125] [cursor=pointer]
+          - paragraph [ref=e1126] [cursor=pointer]
+          - paragraph [ref=e1127] [cursor=pointer]: "[Personal Property of Personal Property Included in the Sale]"
+          - paragraph [ref=e1128] [cursor=pointer]
+          - text: EXHIBIT D
+          - paragraph
+          - paragraph [ref=e1129] [cursor=pointer]
+          - paragraph [ref=e1130] [cursor=pointer]: Assignment and Assumption of Leases
+          - paragraph [ref=e1131] [cursor=pointer]
+          - paragraph [ref=e1132] [cursor=pointer]:
+            - generic [ref=e1134]: THIS ASSIGNMENT AND ASSUMPTION OF LEASES (this
+            - text: “Assignment”) dated as of _____________________, 20____, is between ____________________, a _______________ (“Assignor”), and ___________________________, a _______________________ (“Assignee”).
+          - paragraph [ref=e1135] [cursor=pointer]
+          - paragraph [ref=e1136] [cursor=pointer]:
+            - generic [ref=e1138]: Assignor is the lessor under certain leases executed with respect to the Property (as defined below), which leases are described in
+            - text: Schedule I attached hereto (the “Leases”).
+          - paragraph [ref=e1139] [cursor=pointer]
+          - paragraph [ref=e1140] [cursor=pointer]:
+            - generic [ref=e1142]: Assignor and Assignee have entered into that certain Purchase and Sale Agreement dated effective as of _________________, 20___ (the
+            - text: “Agreement”), pursuant to which Assignee agreed to purchase the real property and improvements described therein (the “Property”) from Assignor and Assignor agreed to sell the Property to Assignee, on the terms and conditions contained therein. The terms of the Agreement with respect to this Assignment are incorporated herein by reference.
+          - paragraph [ref=e1143] [cursor=pointer]
+          - paragraph [ref=e1145] [cursor=pointer]:
+            - generic [ref=e1147]: Pursuant to the Agreement, Assignor desires to assign its interest as landlord under the Leases to Assignee, and Assignee desires to accept the assignment thereof, on the terms and conditions set forth below.
+          - paragraph [ref=e1148] [cursor=pointer]
+          - paragraph [ref=e1149] [cursor=pointer]: "ACCORDINGLY, the parties hereto agree as follows:"
+          - paragraph [ref=e1150] [cursor=pointer]
+          - paragraph [ref=e1151] [cursor=pointer]:
+            - generic [ref=e1153]: As of the date on which the Property is conveyed to Assignee pursuant to the Agreement (the
+            - text: “Conveyance Date”), Assignor hereby assigns to Assignee all of its right, title and interest in and to the Leases;
+          - paragraph [ref=e1154] [cursor=pointer]
+          - paragraph [ref=e1155] [cursor=pointer]:
+            - generic [ref=e1157]: Assignor hereby agrees to indemnify Assignee against and hold Assignee harmless from any and all liabilities, losses, claims, damages, costs or expenses, including, without limitation, reasonable attorneys' fees and costs (collectively, the
+            - text: “Claims”), originating prior to the Conveyance Date and arising out of the Assignor's obligations under the Leases.
+          - paragraph [ref=e1158] [cursor=pointer]
+          - paragraph [ref=e1159] [cursor=pointer]:
+            - generic [ref=e1161]: As of the Conveyance Date, Assignee hereby assumes all of Assignor's obligations under the Leases and agrees to indemnify Assignor against and hold Assignor harmless from any and all Claims originating on or subsequent to the Conveyance Date and arising out of the Assignee's obligations under the Leases.
+          - paragraph [ref=e1162] [cursor=pointer]
+          - paragraph [ref=e1164] [cursor=pointer]:
+            - generic [ref=e1166]: In the event of any dispute between Assignor and Assignee arising out of the obligations of the parties under this Assignment or concerning the meaning or interpretation of any provision contained herein, the losing party shall pay the prevailing party's costs and expenses of such dispute, including, without limitation, reasonable attorneys' fees and costs.
+          - paragraph [ref=e1167] [cursor=pointer]
+          - paragraph [ref=e1168] [cursor=pointer]:
+            - generic [ref=e1170]: This Assignment shall be binding on and inure to the benefit of the parties hereto and their respective successors and assigns.
+          - paragraph [ref=e1171] [cursor=pointer]
+          - paragraph [ref=e1172] [cursor=pointer]:
+            - generic [ref=e1174]: This Assignment may be executed in any number of counterparts, each of which shall be deemed an original, but all of which taken together shall constitute one and the same instrument.
+          - paragraph [ref=e1175] [cursor=pointer]
+          - paragraph [ref=e1176] [cursor=pointer]:
+            - generic [ref=e1178]: Assignor and Assignee have executed this Agreement as of the day and year first written above.
+          - paragraph [ref=e1179] [cursor=pointer]
+          - paragraph [ref=e1180] [cursor=pointer]: "ASSIGNOR:"
+          - paragraph [ref=e1184] [cursor=pointer]
+          - paragraph [ref=e1191] [cursor=pointer]: _____________________________
+          - paragraph [ref=e1192] [cursor=pointer]
+          - paragraph [ref=e1193] [cursor=pointer]
+          - paragraph [ref=e1194] [cursor=pointer]:
+            - generic [ref=e1200]: "By:"
+          - paragraph [ref=e1206] [cursor=pointer]:
+            - generic [ref=e1212]: "Its:"
+          - paragraph [ref=e1217] [cursor=pointer]
+          - paragraph [ref=e1222] [cursor=pointer]
+          - paragraph [ref=e1223] [cursor=pointer]:
+            - generic [ref=e1229]: ASSIGNEE
+            - text: ":"
+          - paragraph [ref=e1230] [cursor=pointer]
+          - paragraph [ref=e1231] [cursor=pointer]
+          - paragraph [ref=e1243] [cursor=pointer]
+          - paragraph [ref=e1244] [cursor=pointer]
+          - paragraph [ref=e1245] [cursor=pointer]:
+            - generic [ref=e1251]: "By:"
+          - paragraph [ref=e1257] [cursor=pointer]:
+            - generic [ref=e1263]: "Its:"
+          - text: SCHEDULE I
+          - paragraph
+          - paragraph [ref=e1268] [cursor=pointer]: to
+          - paragraph [ref=e1269] [cursor=pointer]: Assignment and Assumption of Leases
+          - paragraph [ref=e1270] [cursor=pointer]
+          - paragraph [ref=e1271] [cursor=pointer]: (List of Leases – Rent Roll)
+          - paragraph [ref=e1272] [cursor=pointer]
+          - text: EXHIBIT E
+          - paragraph
+          - paragraph [ref=e1273] [cursor=pointer]
+          - paragraph [ref=e1274] [cursor=pointer]: Assignment and Assumption of Contracts and Intangibles
+          - paragraph [ref=e1275] [cursor=pointer]
+          - paragraph [ref=e1276] [cursor=pointer]:
+            - generic [ref=e1278]: THIS ASSIGNMENT AND ASSUMPTION OF CONTRACTS AND INTANGIBLES (this
+            - text: “Assignment”) dated as of _________________, 20____, is between ______________., a _______________ (“Assignor”), and _____________________, a ____________________ (“Assignee”).
+          - paragraph [ref=e1279] [cursor=pointer]
+          - paragraph [ref=e1280] [cursor=pointer]:
+            - generic [ref=e1282]: Assignor has entered into certain service contracts which affect the Property (as defined below), which service contracts are described in
+            - text: Schedule I attached hereto (the “Contracts”).
+          - paragraph [ref=e1283] [cursor=pointer]
+          - paragraph [ref=e1284] [cursor=pointer]:
+            - generic [ref=e1286]: Assignor and Assignee have entered into that certain Purchase and Sale Agreement dated effective as of ________________, 20____ (the
+            - text: “Agreement”), pursuant to which Assignee agreed to purchase the real property and improvements described therein (the “Property”) from Assignor and Assignor agreed to sell the Property to Assignee, on the terms and conditions contained therein. The terms of the Agreement with respect to this Assignment are incorporated herein by reference.
+          - paragraph [ref=e1287] [cursor=pointer]
+          - paragraph [ref=e1288] [cursor=pointer]:
+            - generic [ref=e1290]: Pursuant to the Agreement, Assignor desires to assign its interest in the Contracts and in certain intangible personal property with respect to the Property to Assignee, and Assignee desires to accept the assignment thereof, on the terms and conditions set forth below.
+          - paragraph [ref=e1292] [cursor=pointer]
+          - paragraph [ref=e1293] [cursor=pointer]: "ACCORDINGLY, the parties hereto agree as follows:"
+          - paragraph [ref=e1294] [cursor=pointer]
+          - paragraph [ref=e1295] [cursor=pointer]:
+            - generic [ref=e1297]: As of the date on which the Property is conveyed to Assignee pursuant to the Agreement (the
+            - text: “Conveyance Date”), Assignor hereby assigns to Assignee all of its right, title and interest in and to the Contracts and any intangible property now owned by Assignor in connection with the Property, excluding claims by Assignor, if any, arising out of matters occurring before the Conveyance Date;
+          - paragraph [ref=e1298] [cursor=pointer]
+          - paragraph [ref=e1299] [cursor=pointer]:
+            - generic [ref=e1301]: Assignor hereby agrees to indemnify Assignee against and hold Assignee harmless from any and all liabilities, losses, claims, damages, costs or expenses, including, without limitation, reasonable attorneys' fees and costs (collectively, the
+            - text: “Claims”), originating prior to the Conveyance Date and arising out of Assignor's obligations under the Contracts.
+          - paragraph [ref=e1302] [cursor=pointer]
+          - paragraph [ref=e1303] [cursor=pointer]:
+            - generic [ref=e1305]: As of the Conveyance Date, Assignee hereby assumes all of Assignor's obligations under the Contracts and agrees to indemnify Assignor against and hold Assignor harmless from any and all Claims originating on or subsequent to the Conveyance Date and arising out of the Assignee's obligations under the Contracts.
+          - paragraph [ref=e1306] [cursor=pointer]
+          - paragraph [ref=e1307] [cursor=pointer]:
+            - generic [ref=e1309]: In the event of any dispute between Assignor and Assignee arising out of the obligations of the parties under this Assignment or concerning the meaning or interpretation of any provision contained herein, the losing party shall pay the prevailing party's costs and expenses of such dispute, including, without limitation, reasonable attorneys' fees and costs.
+          - paragraph [ref=e1310] [cursor=pointer]
+          - paragraph [ref=e1311] [cursor=pointer]:
+            - generic [ref=e1313]: This Assignment shall be binding on an inure to the benefit of the parties hereto and their respective successors and assigns.
+          - paragraph [ref=e1314] [cursor=pointer]
+          - paragraph [ref=e1315] [cursor=pointer]:
+            - generic [ref=e1317]: This Assignment may be executed in any number of counterparts, each of which shall be deemed an original, but all of which taken together shall constitute one and the same instrument.
+          - paragraph [ref=e1318] [cursor=pointer]
+          - paragraph [ref=e1319] [cursor=pointer]:
+            - generic [ref=e1321]: Assignor and Assignee have executed this Agreement as of the day and year first written above.
+          - paragraph [ref=e1322] [cursor=pointer]
+          - paragraph [ref=e1323] [cursor=pointer]: "ASSIGNOR:"
+          - paragraph [ref=e1327] [cursor=pointer]:
+            - generic [ref=e1336]: ______________________________
+          - paragraph [ref=e1337] [cursor=pointer]
+          - paragraph [ref=e1338] [cursor=pointer]
+          - paragraph [ref=e1339] [cursor=pointer]:
+            - generic [ref=e1341]: "By:"
+          - paragraph [ref=e1347] [cursor=pointer]:
+            - generic [ref=e1349]: "Its:"
+          - paragraph [ref=e1355] [cursor=pointer]
+          - paragraph [ref=e1356] [cursor=pointer]
+          - paragraph [ref=e1357] [cursor=pointer]:
+            - generic [ref=e1363]: ASSIGNEE
+            - text: ":"
+          - paragraph [ref=e1364] [cursor=pointer]
+          - paragraph [ref=e1366] [cursor=pointer]
+          - paragraph [ref=e1378] [cursor=pointer]
+          - paragraph [ref=e1379] [cursor=pointer]
+          - paragraph [ref=e1380] [cursor=pointer]:
+            - generic [ref=e1386]: "By:"
+          - paragraph [ref=e1392] [cursor=pointer]:
+            - generic [ref=e1398]: "Its:"
+          - text: SCHEDULE I
+          - paragraph
+          - paragraph [ref=e1404] [cursor=pointer]: to
+          - paragraph [ref=e1405] [cursor=pointer]: Assignment and Assumption of Contracts and Intangible Property
+          - paragraph [ref=e1406] [cursor=pointer]
+          - paragraph [ref=e1407] [cursor=pointer]: (List of Contracts)
+          - paragraph [ref=e1408] [cursor=pointer]
+          - text: EXHIBIT G
+          - paragraph
+          - paragraph [ref=e1409] [cursor=pointer]
+          - paragraph [ref=e1410] [cursor=pointer]: Certificate of Rent Roll
+          - paragraph [ref=e1411] [cursor=pointer]
+          - paragraph [ref=e1412] [cursor=pointer]
+          - paragraph [ref=e1413] [cursor=pointer]:
+            - text: "To:"
+            - generic [ref=e1414]: __________________________
+          - paragraph [ref=e1415] [cursor=pointer]:
+            - generic [ref=e1417]: __________________________
+          - paragraph [ref=e1418] [cursor=pointer]:
+            - generic [ref=e1420]: __________________________
+          - paragraph [ref=e1421] [cursor=pointer]
+          - paragraph [ref=e1422] [cursor=pointer]: "Ladies and Gentlemen:"
+          - paragraph [ref=e1423] [cursor=pointer]
+          - paragraph [ref=e1424] [cursor=pointer]:
+            - generic [ref=e1426]: You are hereby advised that the undersigned is the owner of those certain premises comprising the real property and improvements located at _________________________ Washington (the
+            - text: “Property”). The undersigned hereby represents and warrants that to its actual knowledge, without investigating, the information in the attached Rent Roll is true and correct in all material respects as of __________________, 20___.
+          - paragraph [ref=e1427] [cursor=pointer]
+          - paragraph [ref=e1428] [cursor=pointer]:
+            - generic [ref=e1430]: The undersigned makes this representation and warranty for your benefit and protection with the understanding that you intend to rely upon this statement in connection with your intended purchase of the Property from the undersigned.
+          - paragraph [ref=e1431] [cursor=pointer]
+          - paragraph [ref=e1432] [cursor=pointer]:
+            - generic [ref=e1433]: "Dated: ________________, 20___"
+          - paragraph [ref=e1434] [cursor=pointer]
+          - paragraph [ref=e1435] [cursor=pointer]:
+            - generic [ref=e1441]: ______________________________
+          - paragraph [ref=e1442]
+          - paragraph [ref=e1443]
+          - paragraph [ref=e1444]:
+            - generic [ref=e1450]: "By:"
+          - paragraph [ref=e1456]:
+            - generic [ref=e1462]: "Its:"
+          - paragraph [ref=e1468]
+          - paragraph
+          - text: EXHIBIT H
+          - paragraph
+          - paragraph [ref=e1474]
+          - paragraph [ref=e1475]: Form of Estoppel Certificate
+          - paragraph [ref=e1476]
+          - paragraph [ref=e1477]
+          - paragraph [ref=e1478]
+          - paragraph
+          - text: SCHEDULE 1
+          - paragraph
+          - paragraph [ref=e1479]
+          - paragraph [ref=e1480]: Due Diligence Checklist
+          - paragraph [ref=e1481]
+          - paragraph [ref=e1482]
+          - paragraph [ref=e1483]
+          - paragraph [ref=e1484]
+      - complementary "Analysis sidebar" [ref=e1485]:
+        - generic [ref=e1486]:
+          - generic [ref=e1487]:
+            - generic [ref=e1488]: Clause Analysis
+            - generic [ref=e1489]: Select a clause
+          - button "Close sidebar" [ref=e1490]:
+            - img
+        - tablist "Clause analysis tabs" [ref=e1491]:
+          - tab "Risks" [selected] [ref=e1492]:
+            - img [ref=e1493]
+            - text: Risks
+          - tab "Related" [ref=e1495]:
+            - img [ref=e1496]
+            - text: Related
+          - tab "Definitions" [ref=e1499]:
+            - img [ref=e1500]
+            - text: Definitions
+          - tab "Flags" [ref=e1502]:
+            - img [ref=e1503]
+            - text: Flags
+        - tabpanel "risks panel" [ref=e1505]:
+          - generic [ref=e1506]:
+            - img [ref=e1507]
+            - paragraph [ref=e1509]: Select a paragraph in the document to see its risk analysis.
+    - generic [ref=e1511]:
+      - generic [ref=e1514]: Revision
+      - generic [ref=e1515]:
+        - button [ref=e1516]:
+          - img
+        - button [ref=e1517]:
+          - img
+    - toolbar "Review toolbar" [ref=e1518]:
+      - generic [ref=e1519]:
+        - generic [ref=e1520]: Reviewed 1/99
+        - generic [ref=e1521]:
+          - generic "49 high risks" [ref=e1522]:
+            - generic [ref=e1524]: "49"
+          - generic "86 medium risks" [ref=e1525]:
+            - generic [ref=e1527]: "86"
+          - generic "35 low risks" [ref=e1528]:
+            - generic [ref=e1530]: "35"
+        - generic [ref=e1531]:
+          - button "Hide risks" [pressed] [ref=e1532]:
+            - img [ref=e1533]
+            - text: Risks
+          - button "Hide revisions" [pressed] [ref=e1535]:
+            - img [ref=e1536]
+            - text: Revisions
+          - button "Hide flags" [pressed] [ref=e1539]:
+            - img [ref=e1540]
+            - text: Flags
+      - generic [ref=e1542]:
+        - button "Previous risk" [ref=e1543]:
+          - img
+        - generic [ref=e1544]: 0 of 99
+        - button "Next risk" [ref=e1545]:
+          - img
+      - generic [ref=e1546]:
+        - button "Generate transmittal email" [ref=e1547]:
+          - img
+          - text: Generate Transmittal
+        - button "Finalize redline document" [ref=e1548]:
+          - img
+          - text: Finalize Redline
+    - generic [ref=e1549]:
+      - heading "Command Palette" [level=2] [ref=e1550]
+      - paragraph [ref=e1551]: Search for a command to run...
+  - region "Notifications alt+T"
+  - generic [ref=e70] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e71]:
+      - img [ref=e72]
+    - generic [ref=e133]:
+      - button "Open issues overlay" [ref=e134]:
+        - generic [ref=e135]:
+          - generic [ref=e136]: "1"
+          - generic [ref=e137]: "2"
+        - generic [ref=e138]:
+          - text: Issue
+          - generic [ref=e139]: s
+      - button "Collapse issues badge" [ref=e140]:
+        - img [ref=e141]
+  - alert [ref=e143]

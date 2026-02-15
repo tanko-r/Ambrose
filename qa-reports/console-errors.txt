@@ -1,0 +1,13 @@
+Total messages: 42 (Errors: 5, Warnings: 0)
+Returning 5 messages for level "error"
+
+[ERROR] Fix any of the following:
+  ARIA role navigation is not allowed for given element @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Element has insufficient color contrast of 2.37 (foreground color: #a8a8a8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Element has insufficient color contrast of 4.41 (foreground color: #787878, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Some page content is not contained by landmarks @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Some page content is not contained by landmarks @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127

@@ -110,7 +110,7 @@ export function Sidebar() {
   const removePrecedentSnippet = useAppStore((s) => s.removePrecedentSnippet);
 
   const flags = useAppStore((s) => s.flags);
-  const setFocusedFlagParaId = useAppStore((s) => s.setFocusedFlagParaId);
+  const setFocusedFlagId = useAppStore((s) => s.setFocusedFlagId);
 
   const [activeTab, setActiveTab] = useState<SidebarTab>("risks");
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
@@ -259,7 +259,7 @@ export function Sidebar() {
               // If already flagged, just focus it
               const existingFlag = flags.find(f => f.para_id === selectedParaId);
               if (existingFlag) {
-                setFocusedFlagParaId(selectedParaId);
+                setFocusedFlagId(existingFlag.id);
                 return;
               }
               setFlagDialogParaId(selectedParaId);
@@ -458,7 +458,7 @@ export function Sidebar() {
       {!sidebarOpen && (
         <button
           onClick={toggleSidebar}
-          className="fixed right-0 top-24 z-40 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
+          className="fixed right-0 top-[64px] z-40 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
           aria-label="Open sidebar"
         >
           <PanelRightOpen className="h-4 w-4 text-muted-foreground" />

@@ -919,6 +919,7 @@ def flag_item():
         excerpt = paragraph.get('text', '')[:200] if paragraph else ''
 
     flag_entry = {
+        'id': str(uuid.uuid4()),
         'para_id': para_id,
         'section_ref': paragraph.get('section_ref', '') if paragraph else '',
         'text_excerpt': excerpt,
@@ -936,21 +937,56 @@ def flag_item():
     return jsonify({'status': 'flagged', 'flag': flag_entry})
 
 
-@api_bp.route('/unflag', methods=['POST'])
-def unflag_item():
-    """Remove a flag from an item."""
+@api_bp.route('/flag/update', methods=['POST'])
+def update_flag():
+    """Update an existing flag's note or category."""
     data = request.get_json()
     session_id = data.get('session_id')
-    para_id = data.get('para_id')
+    flag_id = data.get('flag_id')
+    note = data.get('note')
+    category = data.get('category')
+    flag_type = data.get('flag_type')
 
     session = get_session(session_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
-    session['flags'] = [f for f in session.get('flags', []) if f.get('para_id') != para_id]
+    found = False
+    for flag in session.get('flags', []):
+        if flag.get('id') == flag_id:
+            if note is not None:
+                flag['note'] = note
+            if category is not None:
+                flag['category'] = category
+            if flag_type is not None:
+                flag['flag_type'] = flag_type
+            flag['timestamp'] = datetime.now().isoformat()
+            found = True
+            updated_flag = flag
+            break
+
+    if found:
+        save_session(session_id, session)
+        return jsonify({'status': 'updated', 'flag': updated_flag})
+
+    return jsonify({'error': 'Flag not found'}), 404
+
+
+@api_bp.route('/unflag', methods=['POST'])
+def unflag_item():
+    """Remove a flag from an item."""
+    data = request.get_json()
+    session_id = data.get('session_id')
+    flag_id = data.get('flag_id')
+
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    session['flags'] = [f for f in session.get('flags', []) if f.get('id') != flag_id]
     save_session(session_id, session)
 
-    return jsonify({'status': 'unflagged', 'para_id': para_id})
+    return jsonify({'status': 'unflagged', 'flag_id': flag_id})
 
 
 @api_bp.route('/finalize', methods=['POST'])

@@ -138,8 +138,18 @@ export function NavigationPanel() {
   // Shared nav content (used in both open and ghost modes)
   const navContent = (
     <>
-      {/* Review mode selector */}
-      <div className="flex gap-1 border-b px-2 py-2">
+      {/* Header: close button + review mode selector */}
+      <div className="flex items-center gap-1 border-b px-2 py-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0 text-muted-foreground"
+          onClick={() => { setGhostVisible(false); toggleNavPanel(); }}
+          title={navPanelOpen ? "Hide navigator" : "Dock navigator"}
+        >
+          <PanelLeftClose className="h-3.5 w-3.5" />
+        </Button>
+        <div className="flex flex-1 gap-1">
         {REVIEW_MODES.map((mode) => (
           <button
             key={mode.value}
@@ -154,6 +164,7 @@ export function NavigationPanel() {
             {mode.label}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Search */}
@@ -219,14 +230,17 @@ export function NavigationPanel() {
 
   return (
     <>
-      {/* Reopen tab — slides right when ghost panel appears, arrow stays pointing right */}
+      {/* Reopen tab — when ghost visible, sits inside ghost panel aligned with header close button */}
       {!navPanelOpen && (
         <button
           onClick={toggleNavPanel}
           onMouseEnter={() => { clearGhostTimeout(); setGhostVisible(true); }}
           onMouseLeave={startGhostHide}
-          className="fixed top-24 z-40 rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md transition-all duration-200 ease-out hover:bg-accent"
-          style={{ left: ghostVisible ? 260 : 0 }}
+          className={`fixed z-40 transition-all duration-200 ease-out ${
+            ghostVisible
+              ? "left-2 top-[64px] rounded bg-accent/80 p-1.5 hover:bg-accent"
+              : "left-0 top-[64px] rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md hover:bg-accent"
+          }`}
           aria-label="Open navigator"
         >
           <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
@@ -243,11 +257,6 @@ export function NavigationPanel() {
           onMouseLeave={startGhostHide}
         >
           <nav aria-label="Document navigator" className="flex h-full flex-col">
-            <div className="border-b px-3 py-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Navigator
-              </span>
-            </div>
             {navContent}
           </nav>
         </div>
@@ -259,22 +268,6 @@ export function NavigationPanel() {
         style={{ width: navPanelOpen ? 260 : 0 }}
       >
         <nav aria-label="Document navigator" className="flex h-full w-[260px] flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b px-3 py-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Navigator
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 px-2 text-[10px] text-muted-foreground"
-              onClick={toggleNavPanel}
-              title="Hide navigator"
-            >
-              <PanelLeftClose className="h-3.5 w-3.5" />
-              Hide
-            </Button>
-          </div>
           {navContent}
         </nav>
       </div>

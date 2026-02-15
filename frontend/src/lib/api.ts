@@ -262,6 +262,14 @@ export async function flagItem(data: FlagRequest): Promise<FlagResponse> {
   });
 }
 
+export async function updateFlag(data: UpdateFlagRequest): Promise<UpdateFlagResponse> {
+  return request('/api/flag/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
 export async function unflagItem(data: UnflagRequest): Promise<UnflagResponse> {
   return request('/api/unflag', {
     method: 'POST',

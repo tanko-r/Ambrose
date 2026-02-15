@@ -96,7 +96,7 @@ interface UIState {
   showFlags: boolean;
   hoveredRiskId: string | null;
   focusedRiskId: string | null;
-  focusedFlagParaId: string | null;
+  focusedFlagId: string | null;
   generatingRevision: boolean;
   defaultSidebarTab: SidebarTab;
   navPanelVisibleDefault: boolean;
@@ -136,7 +136,8 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   removeRevision: (paraId: string) => void;
   setRevisions: (revisions: Record<string, Revision>) => void;
   addFlag: (flag: Flag) => void;
-  removeFlag: (paraId: string) => void;
+  updateFlag: (flag: Flag) => void;
+  removeFlag: (flagId: string) => void;
   setFlags: (flags: Flag[]) => void;
   setSavedSessions: (sessions: SavedSessionListItem[]) => void;
 
@@ -153,7 +154,7 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   toggleShowFlags: () => void;
   setHoveredRiskId: (riskId: string | null) => void;
   setFocusedRiskId: (riskId: string | null) => void;
-  setFocusedFlagParaId: (paraId: string | null) => void;
+  setFocusedFlagId: (flagId: string | null) => void;
   setGeneratingRevision: (v: boolean) => void;
   setRevisionSheetParaId: (paraId: string | null) => void;
 
@@ -224,7 +225,7 @@ const initialUIState: UIState = {
   showFlags: true,
   hoveredRiskId: null,
   focusedRiskId: null,
-  focusedFlagParaId: null,
+  focusedFlagId: null,
   generatingRevision: false,
   defaultSidebarTab: 'risks',
   navPanelVisibleDefault: true,
@@ -288,9 +289,13 @@ export const useAppStore = create<AppStore>((set) => ({
     }),
   setRevisions: (revisions) => set({ revisions }),
   addFlag: (flag) => set((state) => ({ flags: [...state.flags, flag] })),
-  removeFlag: (paraId) =>
+  updateFlag: (flag) =>
     set((state) => ({
-      flags: state.flags.filter((f) => f.para_id !== paraId),
+      flags: state.flags.map((f) => (f.id === flag.id ? flag : f)),
+    })),
+  removeFlag: (flagId) =>
+    set((state) => ({
+      flags: state.flags.filter((f) => f.id !== flagId),
     })),
   setFlags: (flags) => set({ flags }),
   setSavedSessions: (sessions) => set({ savedSessions: sessions }),
@@ -319,7 +324,7 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => ({
       focusedRiskId: state.focusedRiskId === riskId ? null : riskId,
     })),
-  setFocusedFlagParaId: (paraId) => set({ focusedFlagParaId: paraId }),
+  setFocusedFlagId: (flagId) => set({ focusedFlagId: flagId }),
   setGeneratingRevision: (v) => set({ generatingRevision: v }),
   setRevisionSheetParaId: (paraId) => set({ revisionSheetParaId: paraId }),
 

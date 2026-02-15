@@ -167,6 +167,7 @@ export interface RelatedRevision {
 // --- Flag ---
 
 export interface Flag {
+  id: string;
   para_id: string;
   section_ref: string;
   text_excerpt: string;
@@ -247,9 +248,17 @@ export interface FlagRequest {
   text_excerpt?: string;
 }
 
+export interface UpdateFlagRequest {
+  session_id: string;
+  flag_id: string;
+  note?: string;
+  category?: FlagCategory;
+  flag_type?: FlagType;
+}
+
 export interface UnflagRequest {
   session_id: string;
-  para_id: string;
+  flag_id: string;
 }
 
 export interface FinalizeRequest {
@@ -384,9 +393,14 @@ export interface FlagResponse {
   flag: Flag;
 }
 
+export interface UpdateFlagResponse {
+  status: 'updated';
+  flag: Flag;
+}
+
 export interface UnflagResponse {
   status: 'unflagged';
-  para_id: string;
+  flag_id: string;
 }
 
 export interface FinalizeResponse {
