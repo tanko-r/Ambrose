@@ -458,7 +458,7 @@ export function Sidebar() {
       {!sidebarOpen && (
         <button
           onClick={toggleSidebar}
-          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
+          className="fixed right-0 top-24 z-40 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
           aria-label="Open sidebar"
         >
           <PanelRightOpen className="h-4 w-4 text-muted-foreground" />

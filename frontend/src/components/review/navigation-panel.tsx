@@ -219,13 +219,14 @@ export function NavigationPanel() {
 
   return (
     <>
-      {/* Reopen tab — fixed left-center, matches sidebar tab style */}
+      {/* Reopen tab — slides right when ghost panel appears, arrow stays pointing right */}
       {!navPanelOpen && (
         <button
           onClick={toggleNavPanel}
           onMouseEnter={() => { clearGhostTimeout(); setGhostVisible(true); }}
           onMouseLeave={startGhostHide}
-          className="fixed left-0 top-1/2 z-40 -translate-y-1/2 rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
+          className="fixed top-24 z-40 rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md transition-all duration-200 ease-out hover:bg-accent"
+          style={{ left: ghostVisible ? 260 : 0 }}
           aria-label="Open navigator"
         >
           <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
@@ -242,20 +243,10 @@ export function NavigationPanel() {
           onMouseLeave={startGhostHide}
         >
           <nav aria-label="Document navigator" className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b px-3 py-3">
+            <div className="border-b px-3 py-3">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Navigator
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1 px-2 text-[10px] text-muted-foreground"
-                onClick={() => { setGhostVisible(false); toggleNavPanel(); }}
-                title="Dock navigator"
-              >
-                <PanelLeftOpen className="h-3.5 w-3.5" />
-                Dock
-              </Button>
             </div>
             {navContent}
           </nav>
