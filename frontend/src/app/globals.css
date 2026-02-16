@@ -549,7 +549,7 @@
 }
 
 /* ==========================================================================
-   Compact Mode - reduced card spacing, no font/icon changes
+   Compact Mode - reduced card spacing, font sizes, icon sizes, and spacing
    ========================================================================== */
 
 .compact [data-slot="accordion-item"] {
@@ -564,6 +564,24 @@
 
 .compact [data-slot="accordion-content"] {
   padding-bottom: 0.5rem;
+}
+
+/* Enhanced compact mode for more noticeable difference */
+.compact .document-container {
+  font-size: 0.875rem;
+}
+
+.compact [role="tablist"] {
+  font-size: 9px;
+}
+
+.compact .lucide {
+  width: 14px;
+  height: 14px;
+}
+
+.compact header[role="banner"] {
+  height: 2.75rem;
 }
 
 /* ==========================================================================
