@@ -226,6 +226,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     if (bubbleContext && !flags.some(f => f.para_id === bubbleContext.paraId)) {
         // Mock a flag for the one being created
         allFlagsToHighlight.push({
+            id: `temp-${bubbleContext.paraId}`,
             para_id: bubbleContext.paraId,
             text_excerpt: bubbleContext.textExcerpt,
             note: '',
@@ -485,7 +486,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       setFocusedFlagId(null);
     }
 
-    function handleKeyDown(e: KeyboardEvent) {
+    function handleDocumentKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         savedRangeRef.current = null;
         setSelectionContext(null);
@@ -493,16 +494,30 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       }
     }
 
+    function handleContainerKeyDown(e: KeyboardEvent) {
+      if (e.key === "Enter" || e.key === " ") {
+        const target = e.target as HTMLElement;
+        const paraEl = target.closest<HTMLElement>("[data-para-id]");
+        if (paraEl && container!.contains(paraEl)) {
+          e.preventDefault();
+          const paraId = paraEl.getAttribute("data-para-id");
+          if (paraId) selectParagraph(paraId);
+        }
+      }
+    }
+
     container.addEventListener("click", handleContainerClick);
     container.addEventListener("mouseup", handleMouseUp);
+    container.addEventListener("keydown", handleContainerKeyDown);
     document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleDocumentKeyDown);
 
     return () => {
       container.removeEventListener("click", handleContainerClick);
       container.removeEventListener("mouseup", handleMouseUp);
+      container.removeEventListener("keydown", handleContainerKeyDown);
       document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleDocumentKeyDown);
     };
   }, [documentHtml, selectParagraph, setFocusedFlagId, flags]);
 

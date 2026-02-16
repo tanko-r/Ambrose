@@ -205,13 +205,43 @@ export function Sidebar() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b bg-secondary/50 px-1" role="tablist" aria-label="Clause analysis tabs">
-        {TABS.map((tab) => (
+      <div
+        className="flex border-b bg-secondary/50 px-1"
+        role="tablist"
+        aria-label="Clause analysis tabs"
+        onKeyDown={(e) => {
+          const currentIdx = TABS.findIndex((t) => t.value === activeTab);
+          let newIdx = currentIdx;
+
+          if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            newIdx = currentIdx <= 0 ? TABS.length - 1 : currentIdx - 1;
+          } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            newIdx = currentIdx >= TABS.length - 1 ? 0 : currentIdx + 1;
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            newIdx = 0;
+          } else if (e.key === "End") {
+            e.preventDefault();
+            newIdx = TABS.length - 1;
+          }
+
+          if (newIdx !== currentIdx) {
+            setActiveTab(TABS[newIdx].value);
+            // Focus the new tab button
+            const tabButtons = e.currentTarget.querySelectorAll('button[role="tab"]');
+            (tabButtons[newIdx] as HTMLButtonElement)?.focus();
+          }
+        }}
+      >
+        {TABS.map((tab, idx) => (
           <button
             key={tab.value}
             role="tab"
             aria-selected={activeTab === tab.value}
             aria-controls={`tabpanel-${tab.value}`}
+            tabIndex={activeTab === tab.value ? 0 : -1}
             onClick={() => setActiveTab(tab.value)}
             className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 px-2 py-2.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
               activeTab === tab.value
