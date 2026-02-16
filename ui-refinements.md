@@ -8,6 +8,23 @@ Legend: `🔧 Partial` `🆕 New`
 
 ---
 
+## Tier 2: Small (30 min – 1 hr each)
+
+### 1. Connector elbow routing verification `🔧 Needs verification`
+- Elbow routing implemented (straight lines with rounded corners)
+- Visual verification needed — does it route cleanly without crossing text?
+- Test with flags at different Y positions relative to bubble
+- Files: `connector.ts`, `document-viewer.tsx`
+
+### 2. Clause caption generation tweaks `🔧 Needs refinement`
+- Current: LLM generates 2-6 word captions, hard-capped at 6 words server-side
+- Issue: Some captions may be complete sentences or too verbose
+- Needed: Update initial analysis prompt to request 1-7 word **labels** (noun phrases, not sentences)
+- Examples: "Delinquent Rents", "Operating Expense Pass-throughs", "Default Notice Period"
+- Files: `initial_analyzer.py` (prompt), `routes.py` (word cap logic)
+
+---
+
 ## Tier 3: Medium (1–3 hrs each)
 
 ### 1. "+New" button broken on review page (#47 H1, H2, M2) `🆕`
@@ -119,13 +136,11 @@ These were on the original list but are confirmed working in the codebase:
 - ~~Revision summary word-boundary truncation (#47 M8)~~ — backend + frontend word-aware truncation
 - ~~Compact mode visually noticeable (#52 M5)~~ — font sizes, icon sizes, spacing all reduced
 - ~~Finalized banner persisted (#47 H7)~~ — `status` hydrated from backend on page load
-- ~~Connector line routing (#54)~~ — straight lines with rounded elbow turns, no curves through text
 
 ### UI polish (Quick Task 7 — 2026-02-16)
 - ~~Workspace shading~~ — all chrome panels at `bg-muted/70` for paper-on-workspace effect
 - ~~Resizable nav/sidebar panes~~ — drag handles with `← →` arrows on hover, clamped ranges
 - ~~Stop generation button~~ — square inside spinning circle, static "Generating..." text, no rotating verbs
-- ~~Clause captions in sidebar header~~ — LLM-generated paragraph captions (2-6 words), enriched from initial analysis
 
 ### Earlier implementations
 - ~~Grammar: "1 revisions approved" (#47 L4)~~ — singular/plural ternary added
