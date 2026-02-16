@@ -26,6 +26,8 @@ import type {
   ReanalyzeResponse,
   FlagRequest,
   FlagResponse,
+  UpdateFlagRequest,
+  UpdateFlagResponse,
   UnflagRequest,
   UnflagResponse,
   FinalizeRequest,

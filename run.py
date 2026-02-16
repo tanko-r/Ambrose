@@ -19,32 +19,20 @@ sys.path.insert(0, str(project_root))
 
 def check_dependencies():
     """Check and report missing dependencies."""
+    import importlib.util
     missing = []
 
-    try:
-        import flask
-    except ImportError:
-        missing.append('flask')
-
-    try:
-        import docx
-    except ImportError:
-        missing.append('python-docx')
-
-    try:
-        from dotenv import load_dotenv
-    except ImportError:
-        missing.append('python-dotenv')
-
-    try:
-        from google import genai
-    except ImportError:
-        missing.append('google-genai')
-
-    try:
-        import diff_match_patch
-    except ImportError:
-        missing.append('diff-match-patch')
+    # Use find_spec to avoid slow imports (google-genai can hang on Windows)
+    checks = [
+        ('flask', 'flask'),
+        ('docx', 'python-docx'),
+        ('dotenv', 'python-dotenv'),
+        ('google.genai', 'google-genai'),
+        ('diff_match_patch', 'diff-match-patch'),
+    ]
+    for module_name, pip_name in checks:
+        if importlib.util.find_spec(module_name) is None:
+            missing.append(pip_name)
 
     if missing:
         print("Missing dependencies detected:")

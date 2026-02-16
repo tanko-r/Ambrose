@@ -68,6 +68,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Toggle Navigator Panel",
         icon: PanelLeft,
         shortcut: `${modSymbol}+[`,
+        keywords: ["outline", "sections", "table of contents", "toc"],
         action: () => useAppStore.getState().toggleNavPanel(),
       },
       {
@@ -75,6 +76,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Toggle Sidebar",
         icon: PanelRight,
         shortcut: `${modSymbol}+]`,
+        keywords: ["analysis", "risks", "details", "panel"],
         action: () => useAppStore.getState().toggleSidebar(),
       },
       {
@@ -98,9 +100,10 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       },
       {
         id: "toggle-revision-sheet",
-        label: "Toggle Revision Sheet",
+        label: "Toggle Revision Sheet (Bottom Panel)",
         icon: PanelBottom,
         shortcut: `${modSymbol}+\\`,
+        keywords: ["redline", "edit", "changes", "diff", "bottom"],
         action: () => useAppStore.getState().toggleBottomSheet(),
       },
     ],
@@ -114,6 +117,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Flag Current Clause",
         icon: Flag,
         shortcut: "F",
+        keywords: ["bookmark", "mark", "tag", "highlight"],
         action: () => {
           const paraId = useAppStore.getState().selectedParaId;
           if (paraId) {
@@ -129,6 +133,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Generate Revision",
         icon: Pencil,
         shortcut: "G",
+        keywords: ["redline", "edit", "revise", "change"],
         action: () => {
           const s = useAppStore.getState();
           if (s.selectedParaId) {
@@ -143,6 +148,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Finalize Redline",
         icon: FileDown,
         shortcut: undefined,
+        keywords: ["export", "download", "word", "docx", "finish"],
         action: () => {
           window.dispatchEvent(new CustomEvent("command:finalize"));
         },
@@ -152,6 +158,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Generate Transmittal",
         icon: Mail,
         shortcut: undefined,
+        keywords: ["email", "send", "letter", "client"],
         action: () => {
           window.dispatchEvent(new CustomEvent("command:transmittal"));
         },
@@ -167,6 +174,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Toggle Compact Mode",
         icon: LayoutList,
         shortcut: undefined,
+        keywords: ["density", "spacing", "dense"],
         action: () => useAppStore.getState().toggleCompactMode(),
       },
       {
@@ -174,6 +182,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Toggle Precedent Panel",
         icon: Columns2,
         shortcut: undefined,
+        keywords: ["split", "compare", "reference"],
         action: () => useAppStore.getState().togglePrecedentPanel(),
       },
       {
@@ -181,6 +190,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         label: "Open Settings",
         icon: Settings,
         shortcut: `${modSymbol}+,`,
+        keywords: ["preferences", "options", "config", "theme", "dark", "light", "mode"],
         action: () => {
           window.dispatchEvent(new CustomEvent("command:open-settings"));
         },
@@ -221,6 +231,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           {navigationItems.map((item) => (
             <CommandItem
               key={item.id}
+              keywords={item.keywords}
               onSelect={() => runAction(item.action)}
             >
               <item.icon className="h-4 w-4" />
@@ -237,6 +248,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <CommandItem
               key={item.id}
               disabled={item.disabled}
+              keywords={item.keywords}
               onSelect={() => runAction(item.action)}
             >
               <item.icon className="h-4 w-4" />
@@ -252,6 +264,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           {viewItems.map((item) => (
             <CommandItem
               key={item.id}
+              keywords={item.keywords}
               onSelect={() => runAction(item.action)}
             >
               <item.icon className="h-4 w-4" />
