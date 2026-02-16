@@ -158,7 +158,7 @@ export function FinalizeDialog({ open, onOpenChange }: FinalizeDialogProps) {
               {acceptedCount}
             </div>
             <div className="text-[11px] text-muted-foreground">
-              revisions approved
+              {acceptedCount === 1 ? "revision" : "revisions"} approved
             </div>
           </div>
 
@@ -203,8 +203,9 @@ export function FinalizeDialog({ open, onOpenChange }: FinalizeDialogProps) {
                         {rev.section_ref}
                       </Badge>
                       <span className="line-clamp-1 text-left">
-                        {rev.rationale.slice(0, 80)}
-                        {rev.rationale.length > 80 ? "..." : ""}
+                        {rev.rationale.length > 80
+                          ? rev.rationale.slice(0, rev.rationale.lastIndexOf(' ', 80) > 50 ? rev.rationale.lastIndexOf(' ', 80) : 80) + '...'
+                          : rev.rationale}
                       </span>
                     </span>
                   </AccordionTrigger>

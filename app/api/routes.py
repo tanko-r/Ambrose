@@ -15,7 +15,6 @@ Endpoints:
 
 import json
 import uuid
-import platform
 from datetime import datetime
 from pathlib import Path
 from flask import Blueprint, request, jsonify, current_app, send_file, Response
@@ -23,8 +22,9 @@ from app.services.html_renderer import render_document_html, render_precedent_ht
 
 api_bp = Blueprint('api', __name__)
 
-# Running in WSL but paths may have been saved from Windows
-_IS_WSL = 'microsoft' in platform.uname().release.lower()
+# Detect WSL without platform.uname() which can hang on Windows
+import os as _os
+_IS_WSL = _os.path.exists('/proc/version') and 'microsoft' in open('/proc/version').read().lower() if _os.path.exists('/proc/version') else False
 
 
 def _normalize_path(p: str | None) -> str | None:
@@ -276,6 +276,7 @@ def get_document(session_id):
         'session_id': session_id,
         'filename': filename,
         'has_precedent': session.get('precedent_path') is not None,
+        'status': session.get('status'),
         'content': parsed_doc.get('content', []),
         'sections': parsed_doc.get('sections', []),
         'exhibits': parsed_doc.get('exhibits', []),
@@ -1242,9 +1243,20 @@ def get_transmittal(session_id):
     email_lines.append(f"I have completed my review of {contract_name}. Please see the attached redlined document containing my proposed revisions.")
     email_lines.append("")
 
+    # Helper function to truncate at word boundaries
+    def truncate_at_word(text, max_len=100):
+        if len(text) <= max_len:
+            return text
+        truncated = text[:max_len]
+        last_space = truncated.rfind(' ')
+        if last_space > max_len * 0.6:  # Don't cut too short
+            truncated = truncated[:last_space]
+        return truncated + '...'
+
     # Key Revisions section (only when include_revisions is true)
     if include_revisions and accepted_revisions:
-        email_lines.append("## Key Revisions Made")
+        email_lines.append("KEY REVISIONS MADE")
+        email_lines.append("---")
         parsed_doc = session.get('parsed_doc', {})
         content = parsed_doc.get('content', [])
         # Build para_id -> paragraph lookup
@@ -1260,7 +1272,7 @@ def get_transmittal(session_id):
             if top_section not in section_revisions:
                 section_revisions[top_section] = []
             rationale = rev.get('rationale', 'Revision made')
-            section_revisions[top_section].append(f"[{section_ref}]: {rationale[:100]}")
+            section_revisions[top_section].append(f"[{section_ref}]: {truncate_at_word(rationale)}")
 
         for section, items in section_revisions.items():
             for item in items:
@@ -1269,10 +1281,12 @@ def get_transmittal(session_id):
 
     # Items for Your Review section (only if there are flags)
     if client_flags:
-        email_lines.append("## Items for Your Review")
+        email_lines.append("ITEMS FOR YOUR REVIEW")
+        email_lines.append("---")
         for i, flag in enumerate(client_flags, 1):
             section = flag.get('section_ref', 'N/A')
-            note = flag.get('note', 'Flagged for review')
+            # Empty flag notes fallback: use text_excerpt or "Flagged for review"
+            note = flag.get('note', '') or flag.get('text_excerpt', '') or 'Flagged for review'
             # Use category label if present, fall back to flag_type label
             category = flag.get('category', '')
             if category and category in category_labels:

@@ -293,6 +293,7 @@ export interface DocumentResponse {
   session_id: string;
   filename: string;
   has_precedent: boolean;
+  status?: string | null;
   content: Paragraph[];
   sections: Section[];
   exhibits: Exhibit[];
