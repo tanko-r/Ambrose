@@ -16,7 +16,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Paragraph, Severity } from "@/lib/types";
 
-export function NavigationPanel() {
+interface NavigationPanelProps {
+  width?: number;
+}
+
+export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
   const {
     paragraphs,
     risks,
@@ -223,9 +227,10 @@ export function NavigationPanel() {
       {/* Ghost slide-in panel (hover preview when closed) */}
       {!navPanelOpen && (
         <div
-          className={`fixed left-0 top-14 bottom-0 z-30 w-[260px] border-r bg-card/95 backdrop-blur-md shadow-xl transition-transform duration-200 ease-out ${
+          className={`fixed left-0 top-14 bottom-0 z-30 border-r bg-muted/80 backdrop-blur-md shadow-xl transition-transform duration-200 ease-out ${
             ghostVisible ? "translate-x-0" : "-translate-x-full"
           }`}
+          style={{ width }}
           onMouseEnter={clearGhostTimeout}
           onMouseLeave={startGhostHide}
         >
@@ -237,10 +242,10 @@ export function NavigationPanel() {
 
       {/* Docked nav panel with animated width */}
       <div
-        className="shrink-0 overflow-hidden border-r bg-card transition-[width] duration-200 ease-out"
-        style={{ width: navPanelOpen ? 260 : 0 }}
+        className="shrink-0 overflow-hidden border-r bg-muted/70"
+        style={{ width: navPanelOpen ? width : 0 }}
       >
-        <nav aria-label="Document navigator" className="flex h-full w-[260px] flex-col">
+        <nav aria-label="Document navigator" className="flex h-full flex-col" style={{ width }}>
           {navContent}
         </nav>
       </div>

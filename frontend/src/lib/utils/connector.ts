@@ -1,27 +1,38 @@
+/**
+ * Rounded-elbow connector: horizontal out from highlight,
+ * rounded 90° turn, vertical to bubble Y, rounded 90° turn,
+ * horizontal into bubble.
+ */
 export function calculateConnectorPath(
   startX: number,
   startY: number,
   endX: number,
   endY: number
 ): string {
-  const deltaX = endX - startX;
-  const deltaY = Math.abs(endY - startY);
+  const r = 6; // corner radius
+  const midX = startX + (endX - startX) * 0.4; // elbow X position
 
-  // Minimum escape distance from text before curving
-  const escapeX = Math.min(30, deltaX * 0.3);
-
-  if (deltaY < 40) {
-    // Nearly horizontal — add a subtle arc to avoid flat line through text
-    const midX = startX + deltaX / 2;
-    const arcY = startY - 25; // arc above
-    return `M ${startX} ${startY} Q ${midX} ${arcY}, ${endX} ${endY}`;
+  // Straight across if nearly same Y
+  if (Math.abs(endY - startY) < r * 2) {
+    return `M ${startX} ${startY} L ${endX} ${endY}`;
   }
 
-  // Standard S-curve for vertical displacement
-  const horizontalOffset = Math.max(deltaX * 0.5, 40);
-  const cp1x = startX + horizontalOffset;
-  const cp1y = startY;
-  const cp2x = endX - horizontalOffset;
-  const cp2y = endY;
-  return `M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}`;
+  const goingDown = endY > startY;
+  const sweepFirst = goingDown ? 1 : 0; // clockwise when going down
+  const sweepSecond = goingDown ? 0 : 1;
+
+  // Path: horizontal → rounded corner → vertical → rounded corner → horizontal
+  return [
+    `M ${startX} ${startY}`,
+    // horizontal leg to just before first corner
+    `L ${midX - r} ${startY}`,
+    // first rounded corner (turn down/up)
+    `A ${r} ${r} 0 0 ${sweepFirst} ${midX} ${startY + (goingDown ? r : -r)}`,
+    // vertical leg to just before second corner
+    `L ${midX} ${endY + (goingDown ? -r : r)}`,
+    // second rounded corner (turn toward bubble)
+    `A ${r} ${r} 0 0 ${sweepSecond} ${midX + r} ${endY}`,
+    // horizontal leg to bubble
+    `L ${endX} ${endY}`,
+  ].join(' ');
 }

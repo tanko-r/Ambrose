@@ -13,6 +13,7 @@ import { RevisionSheet } from "@/components/review/revision-sheet";
 import { Header } from "@/components/layout/header";
 import { AnalysisOverlay } from "@/components/review/analysis-overlay";
 import { SplitLayout } from "@/components/review/split-layout";
+import { ResizeHandle } from "@/components/review/resize-handle";
 import { PrecedentPanel } from "@/components/review/precedent-panel";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardHelp } from "@/components/keyboard-help";
@@ -96,6 +97,12 @@ export default function ReviewPage({
   }, []);
 
   const compactMode = useAppStore((s) => s.compactMode);
+  const navPanelOpen = useAppStore((s) => s.navPanelOpen);
+  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
+  const setNavPanelWidth = useAppStore((s) => s.setNavPanelWidth);
+  const setSidebarWidth = useAppStore((s) => s.setSidebarWidth);
+  const navPanelWidth = useAppStore((s) => s.navPanelWidth);
+  const sidebarWidth = useAppStore((s) => s.sidebarWidth);
 
   // Show error page when session/document fails to load
   if (documentError && !loading) {
@@ -147,7 +154,15 @@ export default function ReviewPage({
       {/* Main content area: nav + document + sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Navigation panel */}
-        <NavigationPanel />
+        <NavigationPanel width={navPanelWidth} />
+
+        {/* Left resize handle */}
+        {navPanelOpen && (
+          <ResizeHandle
+            side="left"
+            onResize={(d) => setNavPanelWidth(navPanelWidth + d)}
+          />
+        )}
 
         {/* Center: Document viewer + precedent split */}
         <SplitLayout
@@ -160,8 +175,16 @@ export default function ReviewPage({
           <DocumentViewer loading={loading} />
         </SplitLayout>
 
+        {/* Right resize handle */}
+        {sidebarOpen && (
+          <ResizeHandle
+            side="right"
+            onResize={(d) => setSidebarWidth(sidebarWidth + d)}
+          />
+        )}
+
         {/* Right: Analysis sidebar (outside split layout) */}
-        <Sidebar />
+        <Sidebar width={sidebarWidth} />
       </div>
 
       {/* Revision bottom sheet (non-modal, renders over document area) */}

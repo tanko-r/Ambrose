@@ -880,6 +880,7 @@ def analyze_document_with_llm(
         'risk_inventory': all_risks,
         'risk_by_paragraph': risk_by_para,
         'concept_map': aggregated_concept_map,  # Document-wide provisions by category
+        'paragraph_map': initial_context.get('paragraph_map', {}) if initial_context else {},
         'opportunities': [],  # Will be populated by separate analysis if needed
         'prompts': all_prompts,  # All prompts used for debugging/review
         'summary': {

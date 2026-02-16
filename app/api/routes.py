@@ -272,12 +272,29 @@ def get_document(session_id):
     # Get filename from session or metadata
     filename = session.get('target_filename') or parsed_doc.get('metadata', {}).get('filename') or 'Contract Document'
 
+    # Enrich paragraph captions from LLM paragraph_map (for already-analyzed sessions)
+    content = parsed_doc.get('content', [])
+    progress = session.get('progress', {})
+    initial_ctx = progress.get('initial_context', {})
+    paragraph_map = initial_ctx.get('paragraph_map', {})
+    if not paragraph_map:
+        analysis = session.get('analysis', {})
+        paragraph_map = analysis.get('paragraph_map', {})
+    if paragraph_map:
+        for para in content:
+            llm_info = paragraph_map.get(para.get('id', ''), {})
+            llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
+            if llm_caption:
+                # Cap at 6 words
+                words = llm_caption.split()
+                para['caption'] = ' '.join(words[:6])
+
     return jsonify({
         'session_id': session_id,
         'filename': filename,
         'has_precedent': session.get('precedent_path') is not None,
         'status': session.get('status'),
-        'content': parsed_doc.get('content', []),
+        'content': content,
         'sections': parsed_doc.get('sections', []),
         'exhibits': parsed_doc.get('exhibits', []),
         'defined_terms': parsed_doc.get('defined_terms', []),
@@ -438,6 +455,23 @@ def get_analysis(session_id):
 
         # Recalculate effective severities based on relationships
         risk_map.recalculate_all_severities()
+
+        # Enrich paragraph captions from LLM-generated paragraph_map
+        paragraph_map = analysis.get('paragraph_map') or {}
+        if not paragraph_map:
+            # Try loading from stored initial_context (progress data)
+            progress = session.get('progress', {})
+            initial_ctx = progress.get('initial_context', {})
+            paragraph_map = initial_ctx.get('paragraph_map', {})
+
+        if paragraph_map and session.get('parsed_doc'):
+            for para in session['parsed_doc'].get('content', []):
+                para_id = para.get('id', '')
+                llm_info = paragraph_map.get(para_id, {})
+                llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
+                if llm_caption:
+                    words = llm_caption.split()
+                    para['caption'] = ' '.join(words[:6])
 
         # Store analysis and maps in session
         session['analysis'] = analysis

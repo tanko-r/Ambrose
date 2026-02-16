@@ -206,7 +206,7 @@ The granular analysis happens in batch processing. Your job is to:
 Return a DETAILED analysis in JSON format:
 
 1. PARAGRAPH_MAP: For EVERY substantive paragraph, provide:
-   - caption: Brief identifying description (5-15 words)
+   - caption: Short identifying label (2-6 words, e.g. "Delinquent Rents" or "Operating Expense Pass-throughs")
    - section: What section this belongs to
    - obligations: List of obligations created (if any), with format: "Party must do X"
    - rights: List of rights granted (if any), with format: "Party may do X"

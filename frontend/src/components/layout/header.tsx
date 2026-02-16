@@ -62,7 +62,7 @@ export function Header({ onNewProject }: HeaderProps) {
 
   return (
     <>
-      <header className="no-print flex h-14 shrink-0 items-center justify-between border-b bg-background px-4 z-40">
+      <header role="banner" className="no-print flex h-14 shrink-0 items-center justify-between border-b bg-muted/70 px-4 z-40">
         {/* Left: menu + title */}
         <div className="flex items-center gap-3">
           <DropdownMenu>
@@ -150,7 +150,7 @@ export function Header({ onNewProject }: HeaderProps) {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Preferences
+                Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => toast.info("Coming soon")}>

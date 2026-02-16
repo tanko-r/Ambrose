@@ -98,6 +98,8 @@ interface UIState {
   generatingRevision: boolean;
   defaultSidebarTab: SidebarTab;
   navPanelVisibleDefault: boolean;
+  navPanelWidth: number;
+  sidebarWidth: number;
 }
 
 // --- Precedent State ---
@@ -146,6 +148,8 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   toggleBottomSheet: () => void;
   togglePrecedentPanel: () => void;
 
+  setNavPanelWidth: (w: number) => void;
+  setSidebarWidth: (w: number) => void;
   toggleCompactMode: () => void;
   toggleShowRisks: () => void;
   toggleShowRevisions: () => void;
@@ -227,6 +231,8 @@ const initialUIState: UIState = {
   generatingRevision: false,
   defaultSidebarTab: 'risks',
   navPanelVisibleDefault: true,
+  navPanelWidth: 260,
+  sidebarWidth: 380,
 };
 
 const initialPrecedentState: PrecedentState = {
@@ -302,6 +308,8 @@ export const useAppStore = create<AppStore>((set) => ({
   setView: (view) => set({ view }),
   toggleNavPanel: () => set((state) => ({ navPanelOpen: !state.navPanelOpen })),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  setNavPanelWidth: (w) => set({ navPanelWidth: Math.max(180, Math.min(400, w)) }),
+  setSidebarWidth: (w) => set({ sidebarWidth: Math.max(280, Math.min(560, w)) }),
   toggleBottomSheet: () => set((state) => ({ bottomSheetOpen: !state.bottomSheetOpen })),
   togglePrecedentPanel: () =>
     set((state) => {
