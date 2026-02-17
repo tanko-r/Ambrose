@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next -c blue,green \"python run.py\" \"npm run dev --prefix frontend\"",
+    "dev": "concurrently --kill-others-on-fail -n flask,next -c blue,green \"python run.py\" \"npm run dev --prefix frontend\"",
     "dev:flask": "python run.py",
     "dev:next": "npm run dev --prefix frontend",
     "kill": "lsof -ti:3000,5000 | xargs -r kill -9; rm -f frontend/.next/dev/lock",
