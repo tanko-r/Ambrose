@@ -102,6 +102,26 @@ export function KeyboardHelp({ open, onOpenChange }: KeyboardHelpProps) {
               keys={<Kbd>K</Kbd>}
             />
             <ShortcutRow
+              label="Go Back (History)"
+              keys={
+                <>
+                  <Kbd>Alt</Kbd>
+                  <span className="text-xs text-muted-foreground">+</span>
+                  <Kbd>&larr;</Kbd>
+                </>
+              }
+            />
+            <ShortcutRow
+              label="Go Forward (History)"
+              keys={
+                <>
+                  <Kbd>Alt</Kbd>
+                  <span className="text-xs text-muted-foreground">+</span>
+                  <Kbd>&rarr;</Kbd>
+                </>
+              }
+            />
+            <ShortcutRow
               label="Close Active Panel or Dismiss"
               keys={<Kbd>Esc</Kbd>}
             />

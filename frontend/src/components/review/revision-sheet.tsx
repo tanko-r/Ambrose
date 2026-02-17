@@ -85,6 +85,28 @@ export function RevisionSheet() {
     setSnapIdx((prev) => ((prev + 1) % SNAP_HEIGHTS.length) as SnapIndex);
   }, []);
 
+  // ---- Extract font styles from the source paragraph in the document viewer ----
+  const [paraFontVars, setParaFontVars] = useState<React.CSSProperties>({});
+
+  useEffect(() => {
+    if (!revisionSheetParaId) {
+      setParaFontVars({});
+      return;
+    }
+    // Read-only DOM access — query the rendered paragraph by data-para-id
+    const paraEl = document.querySelector(`[data-para-id="${revisionSheetParaId}"]`);
+    if (!paraEl) {
+      setParaFontVars({});
+      return;
+    }
+    const computed = window.getComputedStyle(paraEl);
+    setParaFontVars({
+      '--revision-font-family': computed.fontFamily,
+      '--revision-font-size': computed.fontSize,
+      '--revision-line-height': computed.lineHeight,
+    } as React.CSSProperties);
+  }, [revisionSheetParaId]);
+
   // ---- Get paragraph info for header ----
   const para = revisionSheetParaId
     ? paragraphs.find((p) => p.id === revisionSheetParaId)
@@ -168,7 +190,7 @@ export function RevisionSheet() {
               revision.
             </p>
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <div className="flex min-h-0 flex-1 flex-col gap-3" style={paraFontVars}>
               {/* Track changes editor */}
               <TrackChangesEditor
                 diffHtml={revision.editedHtml || revision.diff_html}

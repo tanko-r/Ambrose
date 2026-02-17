@@ -115,9 +115,16 @@ interface PrecedentState {
   precedentScrollTarget: string | null;
 }
 
+// --- Focus History State ---
+
+interface HistoryState {
+  focusHistory: string[];       // Circular buffer of para IDs, max 20
+  focusHistoryIndex: number;    // Current position (-1 = at head)
+}
+
 // --- Combined Store ---
 
-interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewState, UIState, PrecedentState {
+interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewState, UIState, PrecedentState, HistoryState {
   // Session actions
   setSession: (session: Partial<SessionState>) => void;
   resetSession: () => void;
@@ -159,6 +166,10 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   setFocusedFlagId: (flagId: string | null) => void;
   setGeneratingRevision: (v: boolean) => void;
   setRevisionSheetParaId: (paraId: string | null) => void;
+
+  // History actions
+  goBackInHistory: () => void;
+  goForwardInHistory: () => void;
 
   // Precedent actions
   setLockedParaId: (paraId: string | null) => void;
@@ -235,6 +246,11 @@ const initialUIState: UIState = {
   sidebarWidth: 380,
 };
 
+const initialHistoryState: HistoryState = {
+  focusHistory: [],
+  focusHistoryIndex: -1,
+};
+
 const initialPrecedentState: PrecedentState = {
   lockedParaId: null,
   lockedRelatedClauses: null,
@@ -254,18 +270,22 @@ export const useAppStore = create<AppStore>((set) => ({
   ...initialReviewState,
   ...initialUIState,
   ...initialPrecedentState,
+  ...initialHistoryState,
 
   // Session actions
   setSession: (session) => set((state) => ({ ...state, ...session })),
   resetSession: () =>
-    set({
+    set((state) => ({
       ...initialSessionState,
       ...initialDocumentState,
       ...initialAnalysisState,
       ...initialReviewState,
       ...initialPrecedentState,
+      ...initialHistoryState,
       view: 'dashboard',
-    }),
+      // Preserve savedSessions across reset — they are project-level, not session-level
+      savedSessions: state.savedSessions,
+    })),
 
   // Document actions
   setDocument: (doc) => set((state) => ({ ...state, ...doc })),
@@ -281,7 +301,21 @@ export const useAppStore = create<AppStore>((set) => ({
     }),
 
   // Review actions
-  selectParagraph: (paraId) => set({ selectedParaId: paraId }),
+  selectParagraph: (paraId) =>
+    set((state) => {
+      if (!paraId || paraId === state.selectedParaId) return { selectedParaId: paraId };
+      // Truncate future entries when navigating from a mid-history position
+      const history = state.focusHistoryIndex >= 0
+        ? state.focusHistory.slice(0, state.focusHistoryIndex + 1)
+        : [...state.focusHistory];
+      history.push(paraId);
+      if (history.length > 20) history.shift();
+      return {
+        selectedParaId: paraId,
+        focusHistory: history,
+        focusHistoryIndex: -1,
+      };
+    }),
   setRevision: (paraId, revision) =>
     set((state) => ({
       revisions: { ...state.revisions, [paraId]: revision },
@@ -333,6 +367,27 @@ export const useAppStore = create<AppStore>((set) => ({
   setFocusedFlagId: (flagId) => set({ focusedFlagId: flagId }),
   setGeneratingRevision: (v) => set({ generatingRevision: v }),
   setRevisionSheetParaId: (paraId) => set({ revisionSheetParaId: paraId }),
+
+  // History actions
+  goBackInHistory: () =>
+    set((state) => {
+      const { focusHistory, focusHistoryIndex } = state;
+      if (focusHistory.length === 0) return {};
+      const currentPos = focusHistoryIndex === -1 ? focusHistory.length - 1 : focusHistoryIndex;
+      if (currentPos <= 0) return {};
+      const newPos = currentPos - 1;
+      return { selectedParaId: focusHistory[newPos], focusHistoryIndex: newPos };
+    }),
+  goForwardInHistory: () =>
+    set((state) => {
+      const { focusHistory, focusHistoryIndex } = state;
+      if (focusHistoryIndex === -1 || focusHistoryIndex >= focusHistory.length - 1) return {};
+      const newPos = focusHistoryIndex + 1;
+      return {
+        selectedParaId: focusHistory[newPos],
+        focusHistoryIndex: newPos === focusHistory.length - 1 ? -1 : newPos,
+      };
+    }),
 
   // Precedent actions
   setLockedParaId: (paraId) =>

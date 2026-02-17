@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { Input } from "@/components/ui/input";
@@ -9,12 +10,33 @@ import {
   AlertTriangle,
   Flag,
   Search,
+  SearchX,
   PanelLeftClose,
   PanelLeftOpen,
   Check,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Paragraph, Severity } from "@/lib/types";
+
+// --- Helpers ---
+
+type SearchTab = "all" | "caption" | "content";
+
+/** Wraps the first match of `query` inside `text` with a <mark> highlight */
+function highlightMatch(text: string, query: string): ReactNode {
+  if (!query.trim()) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded-sm bg-yellow-200/60 px-0.5 dark:bg-yellow-500/30">
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
 
 interface NavigationPanelProps {
   width?: number;
@@ -33,6 +55,7 @@ export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
   } = useAppStore();
 
   const [search, setSearch] = useState("");
+  const [searchTab, setSearchTab] = useState<SearchTab>("all");
   const [showRisksOnly, setShowRisksOnly] = useState(false);
   const [showFlagsOnly, setShowFlagsOnly] = useState(false);
 
@@ -98,16 +121,26 @@ export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
     [contentParas]
   );
 
-  // Search-filtered numbered paragraphs
-  const searchFilteredNumbered = useMemo(() => {
-    if (!search.trim()) return numberedParas;
+  // Search-filtered numbered paragraphs — split by match type
+  const { captionMatches, contentMatches, allMatches } = useMemo(() => {
+    if (!search.trim()) return { captionMatches: numberedParas, contentMatches: numberedParas, allMatches: numberedParas };
     const q = search.toLowerCase();
-    return numberedParas.filter(
+    const cap = numberedParas.filter(
       (p) =>
-        (p.text ?? "").toLowerCase().includes(q) ||
+        (p.caption ?? "").toLowerCase().includes(q) ||
         (p.section_ref ?? "").toLowerCase().includes(q)
     );
+    const content = numberedParas.filter((p) => (p.text ?? "").toLowerCase().includes(q));
+    const all = numberedParas.filter(
+      (p) =>
+        (p.text ?? "").toLowerCase().includes(q) ||
+        (p.section_ref ?? "").toLowerCase().includes(q) ||
+        (p.caption ?? "").toLowerCase().includes(q)
+    );
+    return { captionMatches: cap, contentMatches: content, allMatches: all };
   }, [numberedParas, search]);
+
+  const searchFilteredNumbered = searchTab === "caption" ? captionMatches : searchTab === "content" ? contentMatches : allMatches;
 
   // Risk/flag filter toggles applied
   const finalFilteredParas = useMemo(() => {
@@ -188,10 +221,40 @@ export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
         </div>
       )}
 
+      {/* Search tabs — only when search is active */}
+      {search.trim() && (
+        <div className="flex items-center gap-1 border-b px-3 py-1.5 text-[10px]">
+          {(["all", "caption", "content"] as const).map((tab) => {
+            const count = tab === "all" ? allMatches.length : tab === "caption" ? captionMatches.length : contentMatches.length;
+            const label = tab === "all" ? "All" : tab === "caption" ? "Captions" : "Content";
+            return (
+              <button
+                key={tab}
+                onClick={() => setSearchTab(tab)}
+                className={`rounded px-1.5 py-0.5 transition-colors ${
+                  searchTab === tab
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Outline */}
       <div className="flex-1 overflow-y-auto px-1 py-1">
         {contentParas.length === 0 ? (
           <NavigatorEmptyState />
+        ) : finalFilteredParas.length === 0 ? (
+          <NavigatorFilterEmptyState
+            hasSearch={!!search.trim()}
+            showRisksOnly={showRisksOnly}
+            showFlagsOnly={showFlagsOnly}
+            onClearFilters={() => { setSearch(""); setSearchTab("all"); setShowRisksOnly(false); setShowFlagsOnly(false); }}
+          />
         ) : (
           <LinearOutline
             paragraphs={finalFilteredParas}
@@ -199,6 +262,7 @@ export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
             maxSeverity={maxSeverity}
             isReviewed={isReviewed}
             onJump={handleJump}
+            searchQuery={search.trim() || undefined}
           />
         )}
       </div>
@@ -261,12 +325,14 @@ function LinearOutline({
   maxSeverity,
   isReviewed,
   onJump,
+  searchQuery,
 }: {
   paragraphs: Paragraph[];
   selectedParaId: string | null;
   maxSeverity: (id: string) => Severity | null;
   isReviewed: (id: string) => boolean;
   onJump: (id: string) => void;
+  searchQuery?: string;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
@@ -335,6 +401,7 @@ function LinearOutline({
               reviewed={isReviewed(para.id)}
               selected={para.id === selectedParaId}
               onJump={onJump}
+              searchQuery={searchQuery}
             />
           </div>
         </div>
@@ -358,6 +425,7 @@ function OutlineItem({
   reviewed,
   selected,
   onJump,
+  searchQuery,
 }: {
   paraId: string;
   sectionRef: string;
@@ -366,6 +434,7 @@ function OutlineItem({
   reviewed: boolean;
   selected: boolean;
   onJump: (id: string) => void;
+  searchQuery?: string;
 }) {
   const severityBorderClass = severity
     ? {
@@ -389,7 +458,7 @@ function OutlineItem({
       <span className="shrink-0 pr-1.5 font-semibold tabular-nums text-muted-foreground text-[10px]">
         {sectionRef || "—"}
       </span>
-      <span className="flex-1 truncate">{caption}</span>
+      <span className="flex-1 truncate">{searchQuery ? highlightMatch(caption, searchQuery) : caption}</span>
       {reviewed && (
         <Check className="ml-auto h-3 w-3 shrink-0 text-green-500" />
       )}
@@ -404,6 +473,31 @@ function NavigatorEmptyState() {
       <p className="max-w-[200px] text-xs text-muted-foreground">
         No document loaded. Start by uploading a contract.
       </p>
+    </div>
+  );
+}
+
+function NavigatorFilterEmptyState({
+  hasSearch,
+  onClearFilters,
+}: {
+  hasSearch: boolean;
+  showRisksOnly: boolean;
+  showFlagsOnly: boolean;
+  onClearFilters: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+      <SearchX className="h-5 w-5 text-muted-foreground/60" />
+      <p className="max-w-[200px] text-xs text-muted-foreground">
+        No clauses match the current filters{hasSearch ? " and search term" : ""}.
+      </p>
+      <button
+        onClick={onClearFilters}
+        className="text-xs text-primary hover:underline"
+      >
+        Clear all filters
+      </button>
     </div>
   );
 }

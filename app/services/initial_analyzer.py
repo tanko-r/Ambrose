@@ -206,7 +206,7 @@ The granular analysis happens in batch processing. Your job is to:
 Return a DETAILED analysis in JSON format:
 
 1. PARAGRAPH_MAP: For EVERY substantive paragraph, provide:
-   - caption: Short identifying label (2-6 words, e.g. "Delinquent Rents" or "Operating Expense Pass-throughs")
+   - caption: Short noun-phrase LABEL (1-7 words, NEVER a full sentence or verb phrase). Good: "Delinquent Rents", "Operating Expense Pass-throughs", "Default Notice Period". Bad: "This section addresses default notice requirements"
    - section: What section this belongs to
    - obligations: List of obligations created (if any), with format: "Party must do X"
    - rights: List of rights granted (if any), with format: "Party may do X"
@@ -248,7 +248,8 @@ Return as JSON with these top-level keys:
 Remember:
 - FULL definition text for every defined term
 - Obligations/rights/conditions with party identification for each paragraph
-- Risk categories map WHERE risks appear, not specific risks"""
+- Risk categories map WHERE risks appear, not specific risks
+- Captions MUST be noun-phrase labels (1-7 words), NEVER full sentences or verb phrases"""
 
         user_prompt = f"""Analyze this complete {contract_type_full} document where we represent the {representation}:
 

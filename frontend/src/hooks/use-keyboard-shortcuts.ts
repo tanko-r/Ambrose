@@ -99,6 +99,20 @@ export function useKeyboardShortcuts({
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if ((e.target as HTMLElement)?.isContentEditable) return;
 
+      // Alt+Left: Go back in focus history
+      if (e.key === "ArrowLeft" && e.altKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        useAppStore.getState().goBackInHistory();
+        return;
+      }
+
+      // Alt+Right: Go forward in focus history
+      if (e.key === "ArrowRight" && e.altKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        useAppStore.getState().goForwardInHistory();
+        return;
+      }
+
       // ? key (Shift+/): Open keyboard help
       if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
