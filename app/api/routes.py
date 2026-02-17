@@ -75,11 +75,20 @@ def load_test_session():
     """
     Load a saved analysis for testing without re-running the expensive LLM analysis.
 
-    Looks for saved_document.json and saved_analysis.json in the output folder.
+    Looks for saved_document.json and saved_analysis.json in the output folder,
+    then falls back to fixtures/sample-psa/ if not found.
     """
-    output_dir = Path(__file__).parent.parent.parent / 'output'
+    root = Path(__file__).parent.parent.parent
+    output_dir = root / 'output'
+    fixture_dir = root / 'fixtures' / 'sample-psa'
+
+    # Try output/ first, then fixtures/sample-psa/ as fallback
     doc_path = output_dir / 'saved_document.json'
     analysis_path = output_dir / 'saved_analysis.json'
+
+    if not doc_path.exists() or not analysis_path.exists():
+        doc_path = fixture_dir / 'document.json'
+        analysis_path = fixture_dir / 'analysis.json'
 
     if not doc_path.exists() or not analysis_path.exists():
         return jsonify({'error': 'No saved test data found. Run a full analysis first.'}), 404
@@ -91,6 +100,13 @@ def load_test_session():
     with open(analysis_path, 'r', encoding='utf-8') as f:
         analysis = json.load(f)
 
+    # Load fixture session metadata if available
+    session_meta_path = fixture_dir / 'session.json'
+    session_meta = {}
+    if session_meta_path.exists():
+        with open(session_meta_path, 'r', encoding='utf-8') as f:
+            session_meta = json.load(f)
+
     # Create a test session
     session_id = 'test-' + str(uuid.uuid4())[:8]
 
@@ -98,10 +114,12 @@ def load_test_session():
         'session_id': session_id,
         'created_at': datetime.now().isoformat(),
         'status': 'analyzed',
-        'representation': analysis.get('representation', 'seller'),
-        'contract_type': analysis.get('contract_type', 'psa'),
-        'aggressiveness': analysis.get('aggressiveness', 3),
-        'deal_context': '',
+        'representation': session_meta.get('representation', analysis.get('representation', 'buyer')),
+        'contract_type': session_meta.get('contract_type', analysis.get('contract_type', 'psa')),
+        'approach': session_meta.get('approach', 'competitive-bid'),
+        'aggressiveness': session_meta.get('aggressiveness', analysis.get('aggressiveness', 4)),
+        'deal_context': session_meta.get('deal_context', ''),
+        'target_filename': session_meta.get('target_filename', 'Sample PSA - Seller Side.docx'),
         'parsed_doc': document,
         'analysis': analysis,
         'revisions': {},
@@ -114,6 +132,7 @@ def load_test_session():
     return jsonify({
         'session_id': session_id,
         'message': 'Test session loaded successfully',
+        'target_filename': session.get('target_filename'),
         'risks_count': analysis.get('summary', {}).get('total_risks', 0),
         'paragraphs_count': len(document.get('content', []))
     })
