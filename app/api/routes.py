@@ -110,6 +110,12 @@ def load_test_session():
     # Create a test session
     session_id = 'test-' + str(uuid.uuid4())[:8]
 
+    # Resolve the target DOCX path for HTML rendering
+    # Try output/ first (if a real analysis was saved), then fixture
+    target_docx = output_dir / 'target.docx'
+    if not target_docx.exists():
+        target_docx = fixture_dir / 'target.docx'
+
     session = {
         'session_id': session_id,
         'created_at': datetime.now().isoformat(),
@@ -120,6 +126,7 @@ def load_test_session():
         'aggressiveness': session_meta.get('aggressiveness', analysis.get('aggressiveness', 4)),
         'deal_context': session_meta.get('deal_context', ''),
         'target_filename': session_meta.get('target_filename', 'Sample PSA - Seller Side.docx'),
+        'target_path': str(target_docx) if target_docx.exists() else None,
         'parsed_doc': document,
         'analysis': analysis,
         'revisions': {},
