@@ -74,6 +74,7 @@ interface ReviewState {
   revisions: Record<string, Revision>;
   flags: Flag[];
   savedSessions: SavedSessionListItem[];
+  bookmarks: Set<string>;
 }
 
 // --- UI State ---
@@ -147,6 +148,7 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   removeFlag: (flagId: string) => void;
   setFlags: (flags: Flag[]) => void;
   setSavedSessions: (sessions: SavedSessionListItem[]) => void;
+  toggleBookmark: (paraId: string) => void;
 
   // UI actions
   setView: (view: View) => void;
@@ -224,6 +226,7 @@ const initialReviewState: ReviewState = {
   revisions: {},
   flags: [],
   savedSessions: [],
+  bookmarks: new Set<string>(),
 };
 
 const initialUIState: UIState = {
@@ -338,6 +341,13 @@ export const useAppStore = create<AppStore>((set) => ({
     })),
   setFlags: (flags) => set({ flags }),
   setSavedSessions: (sessions) => set({ savedSessions: sessions }),
+  toggleBookmark: (paraId) =>
+    set((state) => {
+      const next = new Set(state.bookmarks);
+      if (next.has(paraId)) next.delete(paraId);
+      else next.add(paraId);
+      return { bookmarks: next };
+    }),
 
   // UI actions
   setView: (view) => set({ view }),

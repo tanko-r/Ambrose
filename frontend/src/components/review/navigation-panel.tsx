@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   List,
   AlertTriangle,
+  Bookmark,
   Flag,
   Search,
   SearchX,
@@ -52,6 +53,8 @@ export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
     selectParagraph,
     navPanelOpen,
     toggleNavPanel,
+    bookmarks,
+    toggleBookmark,
   } = useAppStore();
 
   const [search, setSearch] = useState("");
@@ -263,6 +266,8 @@ export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
             isReviewed={isReviewed}
             onJump={handleJump}
             searchQuery={search.trim() || undefined}
+            bookmarks={bookmarks}
+            onToggleBookmark={toggleBookmark}
           />
         )}
       </div>
@@ -326,6 +331,8 @@ function LinearOutline({
   isReviewed,
   onJump,
   searchQuery,
+  bookmarks,
+  onToggleBookmark,
 }: {
   paragraphs: Paragraph[];
   selectedParaId: string | null;
@@ -333,6 +340,8 @@ function LinearOutline({
   isReviewed: (id: string) => boolean;
   onJump: (id: string) => void;
   searchQuery?: string;
+  bookmarks: Set<string>;
+  onToggleBookmark: (paraId: string) => void;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
@@ -400,7 +409,9 @@ function LinearOutline({
               severity={maxSeverity(para.id)}
               reviewed={isReviewed(para.id)}
               selected={para.id === selectedParaId}
+              bookmarked={bookmarks.has(para.id)}
               onJump={onJump}
+              onToggleBookmark={onToggleBookmark}
               searchQuery={searchQuery}
             />
           </div>
@@ -424,7 +435,9 @@ function OutlineItem({
   severity,
   reviewed,
   selected,
+  bookmarked,
   onJump,
+  onToggleBookmark,
   searchQuery,
 }: {
   paraId: string;
@@ -433,7 +446,9 @@ function OutlineItem({
   severity: Severity | null;
   reviewed: boolean;
   selected: boolean;
+  bookmarked: boolean;
   onJump: (id: string) => void;
+  onToggleBookmark: (id: string) => void;
   searchQuery?: string;
 }) {
   const severityBorderClass = severity
@@ -449,18 +464,29 @@ function OutlineItem({
   return (
     <button
       onClick={() => onJump(paraId)}
-      className={`flex w-full items-center rounded px-1 py-0.5 text-left text-[11px] leading-tight transition-colors ${
+      className={`group flex w-full items-center rounded px-1 py-0.5 text-left text-[11px] leading-tight transition-colors ${
         selected
           ? "bg-primary/10 text-foreground ring-1 ring-primary/30"
-          : "text-foreground hover:bg-accent"
+          : "text-foreground hover:bg-primary/8"
       } ${reviewed ? "opacity-55" : ""} ${severityBorderClass}`}
     >
       <span className="shrink-0 pr-1.5 font-semibold tabular-nums text-muted-foreground text-[10px]">
         {sectionRef || "—"}
       </span>
       <span className="flex-1 truncate">{searchQuery ? highlightMatch(caption, searchQuery) : caption}</span>
+      <span
+        role="button"
+        tabIndex={-1}
+        onClick={(e) => { e.stopPropagation(); onToggleBookmark(paraId); }}
+        className={`ml-1 shrink-0 rounded p-0.5 transition-opacity hover:bg-accent ${
+          bookmarked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
+        title={bookmarked ? "Remove bookmark" : "Bookmark clause"}
+      >
+        <Bookmark className={`h-3 w-3 ${bookmarked ? "fill-green-500 text-green-500" : "text-muted-foreground"}`} />
+      </span>
       {reviewed && (
-        <Check className="ml-auto h-3 w-3 shrink-0 text-green-500" />
+        <Check className="ml-0.5 h-3 w-3 shrink-0 text-green-500" />
       )}
     </button>
   );

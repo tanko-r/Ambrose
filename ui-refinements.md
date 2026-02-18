@@ -21,11 +21,13 @@ Legend: `🔧 Partial` `🆕 New`
 - **Status (2026-02-18):** Commented on issue — revision workflow exists but no multi-approach selector
 
 ### 2. Bookmark clauses / breadcrumbs bar (#16) `🔧 Partial`
+- ~~Breadcrumb bar~~ → replaced with floating history navigator (back/forward through focus history)
+- ~~Bookmark toggle on nav panel items~~ → hover to reveal bookmark icon, click to toggle green fill
 - Bookmark any clause with single click + optional label
-- Persistent breadcrumbs bar (§4.2, Article VII(b))
 - Drag-and-drop reorder, category grouping, keyboard shortcuts
 - Persist in session/localStorage
-- **Status (2026-02-18):** Flag system covers mark+navigate; breadcrumb bar UX not built
+- Filter nav panel to show only bookmarked clauses
+- **Status (2026-02-18):** History navigator + bookmark toggle done; persistence, filtering, labels, grouping remain
 
 ### 3. Document numbering & fidelity (#2, #23, #40) `🔧 Partial`
 - MS Word automatic numbering not rendering (1.3, (iv), Section 2.1)
