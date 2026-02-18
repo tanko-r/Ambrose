@@ -1,353 +1,637 @@
-# Domain Pitfalls: Railway Deployment of Flask + Next.js
+# Pitfalls Research
 
-**Domain:** Cloud deployment of two-service legal contract review app
-**Researched:** 2026-02-11
-**Overall confidence:** HIGH (Railway docs verified, project files inspected)
+**Domain:** Adding multi-user auth + PostgreSQL + cloud deployment to existing single-user Flask + Next.js contract redlining app
+**Researched:** 2026-02-18
+**Confidence:** HIGH (verified against Railway docs, Clerk docs, SQLAlchemy docs, and live codebase inspection of routes.py, server.py, store.ts)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause deployment failures, data loss, or broken production functionality.
+Mistakes that cause deployment blockers, data loss, or confidential document exposure.
 
 ---
 
-### Pitfall 1: Railway's 15-Minute HTTP Timeout Kills Long LLM Analysis Requests
+### Pitfall 1: Railway Hard-Kills HTTP Requests at 5 Minutes — Analysis Takes Up to 30 Minutes
 
-**What goes wrong:** Railway enforces a hard 15-minute platform-level HTTP timeout on all requests. Full-document contract analysis (risk mapping an entire PSA) can take 5-30+ minutes depending on document length and LLM response times. Any request exceeding 15 minutes gets a 502/504 from Railway's edge proxy. There is no configuration to increase this.
+**What goes wrong:**
+The current `GET /api/analysis/<session_id>` endpoint runs a synchronous, blocking LLM analysis inside the HTTP request handler. The analysis takes 5-30+ minutes depending on contract length. Railway enforces a **5-minute hard limit** at the network proxy layer — the connection is killed at exactly 300 seconds regardless of application or Gunicorn timeout settings. The client browser gets a silent dead connection. The Flask worker keeps burning Gemini API tokens for the remaining 25 minutes with no way to return results.
 
-**Why it happens:** Railway's edge proxy (not your application) terminates connections after 15 minutes. This limit was increased from 5 minutes in mid-2025, but 15 minutes is the hard ceiling regardless of plan.
+Note: the existing PITFALLS.md from the prior deployment phase said 15 minutes. Railway's help station explicitly states 5 minutes is the network-level cap even if Railway support says otherwise. Test with a real large document before trusting either number.
 
-**Consequences:** Analysis requests for large contracts fail silently -- the frontend sees a connection error with no useful message. The backend may continue processing after the connection drops, wasting Gemini API credits with no way to deliver results to the user.
+**Why it happens:**
+On localhost with a single user, a 30-minute blocking HTTP request "just works" — the developer's browser waits. Railway's proxy infrastructure enforces timeouts that cannot be raised via application configuration. This is non-negotiable platform behavior.
 
-**Prevention:**
-1. For the MVP, most analyses complete within 15 minutes. Deploy and test with real documents to confirm.
-2. For large documents, implement a background job pattern: POST starts the job and returns a job ID immediately, frontend polls GET `/api/jobs/{id}/status` every few seconds.
-3. The existing progress polling endpoint (`/api/analysis/{session_id}/progress`) already follows this pattern partially -- it returns incremental results while analysis runs. But the analysis call itself (`GET /api/analysis/{session_id}`) is synchronous and blocks until complete.
-4. Consider breaking analysis into per-section batches (the parallel_analyzer.py already does this internally via async batches to Gemini).
+**How to avoid:**
+The current codebase already has 90% of what's needed. The fix is to split the analysis into true fire-and-forget:
 
-**Detection:** Any API endpoint making synchronous LLM calls that process a full document is at risk.
+1. `POST /api/analysis/<session_id>/start` — spawn a background thread (already done in `claude_service.py` via threading), return `202 Accepted` with `{"status": "started"}` immediately
+2. `GET /api/analysis/<session_id>/progress` — already exists and is already polled by the frontend
+3. Remove the blocking analysis logic from `GET /api/analysis/<session_id>` — this endpoint should only return cached analysis if it already exists, or redirect to `/start`
 
-**Confidence:** HIGH -- Railway docs and help station confirm the 15-minute hard limit.
+The threading approach (`threading.Thread`) requires zero new infrastructure. Celery + Redis is a later optimization, not a prerequisite.
 
-**Sources:**
-- [Railway Help Station: Increase Max HTTP Timeout](https://station.railway.com/questions/increase-max-http-timeout-1c360bf9)
-- [Railway Help Station: Increase Beyond 5 Minutes](https://station.railway.com/feedback/increase-max-platform-timeout-beyond-5-m-9d15d4ee)
+**Warning signs:**
+- Analysis works for small docs on Railway, silently fails for large contracts
+- Browser shows no error — request hangs then dies with no message
+- Railway logs show Flask worker still executing LLM calls after client disconnected
+- Gunicorn gthread workers are blocked
 
----
-
-### Pitfall 2: In-Memory Session Dict Lost on Every Deploy
-
-**What goes wrong:** The Flask app stores all session state in a Python dict (`sessions = {}` in routes.py line 50). Railway redeploys create a new container, destroying all in-memory state. Every deploy -- including automatic deploys triggered by git push -- wipes all active review sessions.
-
-**Why it happens:** The architecture was designed for local development where the Flask process runs continuously. Containers are ephemeral. Railway redeploys create entirely new containers.
-
-**Consequences:** Complete loss of all active sessions on every deploy. Uploaded documents, analysis results, review progress, and flags all disappear from the in-memory cache. The JSON files persist on the volume, but the app cannot find them because `sessions = {}` is empty.
-
-**Prevention:**
-1. Mount a Railway volume at `/app/app/data` to persist session JSON files and uploads.
-2. On startup, scan `SESSION_FOLDER` and load existing session JSON files back into the `sessions` dict.
-3. The `save_session()` function already writes to disk (routes.py line 60-70). The missing piece is a `load_all_sessions()` function called during `create_app()`.
-
-**Detection:** Check if `sessions` dict is populated from disk on startup. Currently it is not.
-
-**Confidence:** HIGH -- verified by reading routes.py line 50.
+**Phase to address:** Must be resolved before any Railway deployment. Do not deploy the blocking pattern.
 
 ---
 
-### Pitfall 3: Docker Build Fails on Python C Extensions (lxml, scikit-learn)
+### Pitfall 2: The `sessions = {}` Global Dict Is Lost on Every Deploy, Restart, and Worker Fork
 
-**What goes wrong:** `pip install` fails during Docker build because lxml and scikit-learn require C compilation tools that are not in slim Python images. Error: `error: command 'gcc' not found` or `fatal error: libxml/xmlversion.h: No such file or directory`.
+**What goes wrong:**
+`routes.py` line 50 declares `sessions = {}` as a module-level global. This has two fatal production problems:
 
-**Why it happens:** The project requires `lxml` (via python-docx) and `scikit-learn` (TF-IDF matching). Both have C components. `python:3.12-slim` ships without build tools. Alpine is worse -- musl libc breaks prebuilt wheels entirely.
+1. **Gunicorn multi-worker isolation:** Each Gunicorn worker process has its own copy of `sessions`. A session created in Worker 1 is invisible to Worker 2. Railway load-balances across workers — requests for the same session ID are silently routed to workers that have no record of it, returning "Session not found."
 
-**Consequences:** Build fails completely. No deployment.
+2. **Container ephemerality:** Every Railway redeploy creates a new container. All in-memory sessions are wiped. The JSON file backup (`SESSION_FOLDER`) persists on a Railway Volume, but the in-memory dict is empty so `get_session()` returns None for every existing session until the JSON files are manually loaded.
 
-**Prevention:**
-1. Use `python:3.12-slim` (NOT Alpine) as base image.
-2. Multi-stage build: install gcc/g++/libxml2-dev/libxslt-dev in builder stage, copy only installed packages to runtime stage with just libxml2/libxslt1.1 runtime libs.
-3. Most packages (numpy, scikit-learn) have prebuilt manylinux wheels for slim. Only lxml sometimes needs compilation.
+**Why it happens:**
+This works perfectly on localhost because `flask run` runs a single process/worker that never restarts during development. The multi-process reality of production is invisible in local dev.
 
-**Detection:** Run `docker build` locally before pushing.
+**How to avoid:**
+Migrate session storage to PostgreSQL as part of the database phase. The `sessions` dict becomes a `sessions` table with a JSONB column for analysis data. The `save_session()` and `get_session()` functions already abstract the read/write interface — replace their implementations to use the database.
 
-**Confidence:** HIGH -- lxml C extension requirements are extensively documented.
+Do NOT use Redis as a session store for this app. Analysis JSON blobs can be 2-10MB. Redis is expensive at this blob size and PostgreSQL JSONB handles it better. The PostgreSQL migration is required anyway for user accounts, so using it for sessions too eliminates Redis as a dependency.
 
-**Sources:**
-- [GitHub: python-lxml Docker images](https://github.com/Logiqx/python-lxml)
-- [Medium: lxml in multi-step Docker images](https://cr0hn.medium.com/lxml-in-multi-step-docker-images-243e11f4e9ac)
+**Warning signs:**
+- "Session not found" errors in production that never happen locally
+- Sessions disappear after every `git push` (which triggers a redeploy)
+- Different refresh requests return different data (hitting different workers)
+
+**Phase to address:** Database Migration Phase — must precede auth and deployment
 
 ---
 
-### Pitfall 4: Next.js Standalone Build Missing Static Assets
+### Pitfall 3: CORS Wildcard Breaks Auth Token Forwarding and Is Hardcoded to Localhost
 
-**What goes wrong:** You set `output: 'standalone'`, build the Docker image, deploy, and every page loads unstyled or with 404 errors on CSS/JS. The app appears completely broken.
+**What goes wrong:**
+`server.py` line 26: `CORS(app, origins=[r"http://localhost:\d+"])`. Two problems:
 
-**Why it happens:** Next.js standalone mode intentionally does NOT copy `public/` or `.next/static/` into the standalone output. This is documented behavior. The Dockerfile must explicitly copy these directories.
+1. **Production requests rejected:** The Railway-deployed frontend origin (`https://your-app.railway.app`) does not match `http://localhost:\d+`. Every API call from the deployed frontend returns a CORS error.
 
-**Consequences:** App renders HTML but with no styles, no JavaScript interactivity, missing images.
+2. **Credentials incompatibility:** When you add auth (any platform — Clerk, Auth0, etc.), the frontend must send auth tokens via `Authorization` header or cookies. If you use httpOnly cookies for auth, `supports_credentials=True` is required on the Flask CORS config. The wildcard or localhost pattern combined with credentials is a browser-level protocol violation that produces silent failures.
 
-**Prevention:** In the Dockerfile runner stage, always copy three things:
-```dockerfile
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+**Why it happens:**
+The localhost CORS config was intentional for local dev. Nobody updates CORS before the first prod deploy because it works fine locally.
+
+**How to avoid:**
+```python
+# server.py
+allowed_origins = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+CORS(app, origins=allowed_origins, supports_credentials=True)
 ```
-Missing any one causes different failures:
-- Missing standalone: nothing runs at all
-- Missing static: no CSS, no JS bundles
-- Missing public: favicons, images, public assets 404
 
-**Detection:** After building locally, run the Docker image and check browser DevTools Network tab for 404s on `/_next/static/*` paths.
+Set `ALLOWED_ORIGINS=https://your-frontend.railway.app` in Railway environment variables. Do this on day one of deployment setup, not as a post-debug fix.
 
-**Confidence:** HIGH -- single most common Next.js Docker issue.
+Do NOT add CORS headers in both Flask and Nginx/Railway proxy — duplicate headers cause browser errors.
 
-**Sources:**
-- [Next.js docs: output standalone (v16.1.6)](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output)
+**Warning signs:**
+- Every API call in production browser console shows CORS errors
+- Auth tokens not transmitted because browser refuses credentialed cross-origin requests
+- Works in Postman (which ignores CORS) but fails in browser
 
----
-
-### Pitfall 5: Next.js 16 Rewrites Bug in Standalone Mode
-
-**What goes wrong:** You keep the existing `rewrites()` config in `next.config.ts` to proxy `/api/*` to the Flask backend. It works in `next dev` but returns HTTP 500 in production after `next build`.
-
-**Why it happens:** Next.js 16 has a known regression where rewrites to external domains fail in standalone mode (GitHub issue #87071). A fix was submitted in PR #87244 but may not be in all releases. Even when fixed, rewrites are baked at build time -- the destination URL cannot change between environments without rebuilding.
-
-**Consequences:** Every API call returns 500 in production. The app is non-functional despite working perfectly in local development.
-
-**Prevention:**
-1. Use `proxy.ts` instead of `rewrites()`. Next.js 16 renamed `middleware.ts` to `proxy.ts` and this is the officially recommended approach for request routing.
-2. `proxy.ts` runs at request time and can read environment variables, making it environment-aware.
-3. Remove the `rewrites()` block from `next.config.ts` entirely.
-
-**Detection:** Test the production Docker build locally (`docker run`) and verify API calls succeed.
-
-**Confidence:** HIGH -- confirmed in Next.js GitHub issue #87071, fix in PR #87244.
-
-**Sources:**
-- [Next.js 16 Rewrite Bug (#87071)](https://github.com/vercel/next.js/issues/87071)
-- [Next.js Proxy Docs (v16.1.6)](https://nextjs.org/docs/app/getting-started/proxy)
+**Phase to address:** Auth + Deployment Phase — required before any production testing
 
 ---
 
-### Pitfall 6: Railway Volume Data Written at Build Time Does Not Persist
+### Pitfall 4: Adding Auth to New Routes While Legacy Routes Stay Open Forever
 
-**What goes wrong:** Your Dockerfile creates initial data or directories during `docker build`. After deploy, the volume mount overwrites those paths with the volume contents (empty if new).
+**What goes wrong:**
+When retrofitting auth onto an existing codebase, the instinct is to add a `@require_auth` decorator to new endpoints as they're built. The existing 30+ endpoints in `routes.py` — `/intake`, `/document/<session_id>`, `/revise`, `/accept`, `/finalize`, `/load-test-session`, etc. — remain completely open. Any user who learns a session ID (from browser history, server logs, a shared link, or a referrer header) can access confidential legal documents without authentication.
 
-**Why it happens:** Railway mounts volumes ONLY at runtime, not during build or pre-deploy. The mount "masks" whatever the Dockerfile put in that directory.
+Session IDs are UUIDs with ~122 bits of entropy. This is security through obscurity. The moment one session ID leaks, the document it protects is fully accessible.
 
-**Consequences:** Session directories, upload directories, or seed data disappear. App may crash trying to read expected paths.
+**Why it happens:**
+Route-by-route auth decoration is tedious and error-prone. Developers protect the routes they remember. Legacy routes get skipped. There is no compile-time enforcement that every route is protected.
 
-**Prevention:**
-1. Create directories at runtime in app startup code (already done: `mkdir(parents=True, exist_ok=True)` in server.py).
-2. Never rely on build-time file creation for volume-mounted paths.
+**How to avoid:**
+Add auth at the blueprint level with an explicit allowlist of public routes:
 
-**Detection:** If `app/data/` is the volume mount, any `COPY` or `RUN mkdir` for paths under it will be invisible at runtime.
+```python
+# routes.py
+PUBLIC_ROUTES = {'api.health_check'}
 
-**Confidence:** HIGH -- stated in Railway volume documentation.
+@api_bp.before_request
+def require_auth():
+    if request.endpoint in PUBLIC_ROUTES:
+        return None
+    token = request.headers.get('Authorization', '').replace('Bearer ', '')
+    if not token:
+        return jsonify({'error': 'Unauthorized'}), 401
+    user_id = verify_clerk_jwt(token)  # raises 401 if invalid/expired
+    g.user_id = user_id
+```
+
+This approach makes every new route automatically protected. Public routes must be explicitly opted out, not implicitly assumed to need protection.
+
+Also: remove or hard-gate `/load-test-session` — it loads arbitrary saved analysis files without any session ownership check.
+
+**Warning signs:**
+- `curl -X GET https://your-app.railway.app/api/document/<any_uuid>` without an Authorization header returns 200 and document data
+- `/load-test-session` is accessible from the public internet
+- Route count in `routes.py` doesn't match count of `@require_auth` decorators
+
+**Phase to address:** Auth Phase — must be done atomically with JWT verification setup
+
+---
+
+### Pitfall 5: Session ID Lookup Without Ownership Check — IDOR Exposes Any User's Documents
+
+**What goes wrong:**
+Even after adding JWT verification (Pitfall 4), if `get_session()` only checks "does this session exist?" rather than "does this session belong to the authenticated user?", any logged-in user can access any other user's session by providing its ID.
+
+Current `get_session()` in `routes.py` lines 53-57:
+```python
+def get_session(session_id):
+    if session_id not in sessions:
+        return None
+    return sessions[session_id]
+```
+
+Post-migration this must become:
+```python
+def get_session(session_id, user_id):
+    session = db.query(Session).filter_by(id=session_id, user_id=user_id).first()
+    return session
+```
+
+Without the `user_id` filter, authenticated-as-User-B + known-session-ID-of-User-A = full access to User A's confidential legal documents. This is a textbook Insecure Direct Object Reference (IDOR) vulnerability.
+
+**Why it happens:**
+The "session ID = authorization" mental model works for single-user apps. The multi-user transition requires a second ownership check that developers often add to new endpoints but forget to retrofit onto the shared helper used by all existing routes.
+
+**How to avoid:**
+Fix `get_session()` to require `user_id` as a mandatory parameter. This makes every call site compile-time enforced — any route that calls `get_session()` without passing `g.user_id` will fail, forcing the developer to consciously pass it.
+
+Also namespace file storage by user ID (see Pitfall 6) so the file system layer independently enforces isolation.
+
+**Warning signs:**
+- Auth pen test: log in as User B, call `GET /api/document/<User_A_session_id>` with User B's JWT — if it returns data, IDOR is present
+- No `user_id` foreign key on the sessions database table
+- `get_session()` has one parameter (session_id) instead of two (session_id, user_id)
+
+**Phase to address:** Auth Phase — simultaneously with JWT verification
+
+---
+
+### Pitfall 6: Uploaded Documents at Hardcoded Local Paths — Lost on Redeploy, No User Isolation
+
+**What goes wrong:**
+`routes.py` line 149: `upload_folder = current_app.config['UPLOAD_FOLDER'] / session_id`
+
+This stores uploaded `.docx` files at `app/data/uploads/<session_id>/`. In multi-user cloud deployment:
+
+1. **Ephemerality:** Railway's default filesystem is ephemeral. Files written there are destroyed on every redeploy/restart. A Railway Volume helps for single-service deployments but does not work across multiple Flask instances.
+2. **No user scope:** File paths contain only the session ID, not the user ID. If a user somehow knows another user's session ID (see Pitfall 5), file paths are derivable.
+3. **Finalization output:** The finalize endpoint generates Word output files at similar hardcoded paths. These also vanish post-redeploy, making the finalized document undownloadable.
+
+**Why it happens:**
+Local file paths are the simplest possible storage solution. They work perfectly for localhost single-user dev. Cloud storage complexity is deferred until deployment — which is too late.
+
+**How to avoid:**
+Use Railway Buckets (native S3-compatible object storage, $0.015/GB-month, unlimited S3 API operations) with paths namespaced by user ID:
+
+```
+{user_id}/{session_id}/target.docx
+{user_id}/{session_id}/precedent.docx
+{user_id}/{session_id}/output.docx
+```
+
+Use `boto3` with Railway's bucket `endpoint_url`. The path abstraction already exists via `UPLOAD_FOLDER` config — replace the read/write calls with S3 operations when `RAILWAY_ENVIRONMENT` is set.
+
+For local development, keep the local filesystem path. Use an environment variable to switch between local and S3 storage backends.
+
+**Warning signs:**
+- Documents upload on Railway but disappear after next git push
+- Finalization fails because the original `.docx` the finalize step needs no longer exists
+- No `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, or S3 endpoint variables in Railway service settings
+- Upload folder path contains no user ID component
+
+**Phase to address:** Storage Migration Phase — must precede deployment
+
+---
+
+### Pitfall 7: Clerk Webhook Arrives After First API Call — User Record Missing, FK Constraint Error
+
+**What goes wrong:**
+The standard Clerk + PostgreSQL pattern: Clerk sends a `user.created` webhook → backend creates a row in the `users` table → subsequent requests look up the user by Clerk user ID. The failure mode: webhook delivery is asynchronous and not guaranteed to be fast. A user who signs up and immediately hits the API (which Clerk's frontend SDK can trigger within milliseconds via `useAuth()` returning) will arrive at the Flask backend before the webhook has been processed. The backend throws a foreign key constraint error or "user not found" on the first real API call.
+
+Clerk documents this explicitly: "you can't rely on webhook delivery as part of the user onboarding flow." Svix (the webhook delivery infrastructure Clerk uses) delivers at-least-once — you can also receive duplicate or out-of-order events.
+
+**Why it happens:**
+Developers build the "happy path" where webhook arrives first, test it locally with artificial delays, and ship to production where the race condition triggers on every new signup.
+
+**How to avoid:**
+Two complementary fixes:
+
+1. Use upsert in the webhook handler:
+```python
+db.execute("""
+    INSERT INTO users (clerk_id, email, created_at)
+    VALUES (:clerk_id, :email, NOW())
+    ON CONFLICT (clerk_id) DO UPDATE SET email = EXCLUDED.email
+""", ...)
+```
+
+2. Add lazy user creation in the JWT verification middleware as a fallback:
+```python
+user = db.query(User).filter_by(clerk_id=g.clerk_user_id).first()
+if not user:
+    user = User(clerk_id=g.clerk_user_id, email=g.clerk_email)
+    db.add(user)
+    db.commit()
+    g.user = user
+```
+
+**Warning signs:**
+- New user signup returns 500 or FK constraint error in Flask logs on first API call
+- User authenticates via Clerk frontend but Flask backend returns "user not found"
+- Webhook delivery logs show 2-10 second delay after signup
+
+**Phase to address:** Auth Phase — user provisioning design
+
+---
+
+### Pitfall 8: JWT Token Stored in Browser Storage — Legal Documents Are High-Value Targets
+
+**What goes wrong:**
+If the Next.js frontend stores Clerk's JWT in `localStorage` or `sessionStorage`, any XSS vulnerability in the application (including those introduced by npm dependencies) can steal the token and impersonate the user. For a legal contract review tool handling confidential client documents, privileged communications, and deal strategy, this is a high-value target.
+
+Clerk's built-in session management stores tokens in memory and uses short-lived JWTs (60-second expiry, auto-refreshed). This is the correct default. The pitfall occurs when developers manually persist tokens — e.g., saving `getToken()` output to `localStorage` for debugging, or building a custom token refresh mechanism.
+
+**Why it happens:**
+Tutorials for generic web apps often store JWTs in localStorage for simplicity. Legal document apps handle information that creates liability if leaked, but developers often copy these patterns without considering the confidentiality implications.
+
+**How to avoid:**
+Use Clerk's SDK exclusively for token management. When calling Flask APIs from Next.js, call `useAuth().getToken()` per request — this returns a fresh short-lived token each time and stores nothing to browser storage:
+
+```typescript
+// api.ts
+const token = await getToken();
+const response = await fetch('/api/document/' + sessionId, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+```
+
+Never call `localStorage.setItem` with any auth token. On the Flask backend, verify the JWT on every request against Clerk's JWKS endpoint using PyJWT with RS256.
+
+**Warning signs:**
+- `localStorage.getItem('token')` or similar returns anything in browser console
+- Flask API client reads token from Zustand store state (persisted between page loads) rather than calling `getToken()` per request
+- JWT debugging adds a localStorage write "just temporarily"
+
+**Phase to address:** Auth Phase — frontend token handling design
 
 ---
 
 ## Moderate Pitfalls
 
-Mistakes that cause subtle bugs, degraded performance, or painful debugging.
+---
+
+### Pitfall 9: Analysis Blocks All Gunicorn Workers — All Other Requests Time Out
+
+**What goes wrong:**
+With Gunicorn sync workers (the default), running a 30-minute LLM analysis inside a request handler blocks that worker process completely. With 2-4 workers (typical Railway deployment), one ongoing analysis consumes 25-50% of server capacity. Two simultaneous analyses saturate all workers. Health checks, document loads, and revision requests all hang waiting for an available worker.
+
+**Why it happens:**
+Invisible on localhost with a single user. Flask's dev server is single-threaded and blocking by design. Multi-worker behavior is only visible in production.
+
+**How to avoid:**
+Run Gunicorn with gthread workers:
+```
+gunicorn app.server:create_app() --worker-class gthread --threads 4 --workers 2 --timeout 1800
+```
+
+The `gthread` class uses real OS threads (not gevent's greenlets), which is critical because the codebase uses `asyncio` for parallel Gemini calls. Gevent monkey-patching conflicts with asyncio. Do not use gevent.
+
+Ensure analysis itself runs as a background thread (see Pitfall 1 fix), not inside the request handler. The thread pool handles I/O concurrency; gthread workers handle HTTP concurrency.
+
+**Warning signs:**
+- `/health` endpoint stops responding during analysis
+- All API calls return 502 or timeout during LLM analysis runs
+- Railway CPU shows one worker at 100% while others sit idle
+
+**Phase to address:** Deployment Phase — Gunicorn configuration
 
 ---
 
-### Pitfall 7: Gunicorn Worker Timeout Kills LLM Calls
+### Pitfall 10: PostgreSQL Connection Pool Exhaustion from Long-Running Analysis Threads
 
-**What goes wrong:** Gunicorn's default timeout is 30 seconds. A worker processing a Gemini API call that takes 2 minutes gets SIGKILL'd. The user sees a 502.
+**What goes wrong:**
+When analysis runs as a background thread, that thread may hold an open SQLAlchemy database session for 30 minutes (reading parsed_doc, writing incremental progress). With SQLAlchemy's default pool settings (`pool_size=5`, `max_overflow=10`), 15 concurrent long-running analysis threads saturate the connection pool. All other requests hang waiting for a database connection, then timeout. Railway's hobby PostgreSQL plan allows 25 simultaneous connections total — Gunicorn workers + analysis threads + overhead can hit this within minutes.
 
-**Why it happens:** Gunicorn's arbiter monitors workers and kills any silent beyond the timeout. With sync workers, a blocked I/O call prevents the worker from heartbeating.
+**Why it happens:**
+Background thread holds a SQLAlchemy session object. SQLAlchemy sessions pin a database connection for their entire lifetime unless explicitly closed. Threads that don't call `session.close()` hold their connection indefinitely.
 
-**Consequences:** Random 502 errors on LLM-powered endpoints. If timeout is set too high, a stuck worker is never reclaimed.
+**How to avoid:**
+Scope database sessions explicitly in background threads using context managers:
 
-**Prevention:**
-1. Use `--worker-class gthread --threads 4` so threads can handle concurrent requests while one thread waits on an LLM API call.
-2. Set `--timeout 1800` (30 min) as a generous backstop. Railway's 15-min proxy timeout is the real ceiling.
-3. Do NOT use `--timeout 0` (infinite) -- a genuinely stuck worker would never be reclaimed.
-4. Set `--graceful-timeout 30` so workers being shut down during deploys have time to finish.
+```python
+# analysis thread
+with db.session() as session:
+    doc = session.query(Document).filter_by(id=session_id).first()
+    # do analysis
+    session.commit()
+# connection returned to pool here
+```
 
-**Why gthread, not gevent:** The codebase uses `asyncio` (aiohttp, aiolimiter) for parallel Gemini calls. Gevent monkey-patches the event loop in ways that conflict with asyncio. gthread uses real OS threads, no conflicts.
+Configure pool conservatively for Railway:
+```python
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=3,
+    max_overflow=5,
+    pool_recycle=1800,
+    pool_pre_ping=True   # detect stale connections from Railway's idle timeout
+)
+```
 
-**Detection:** Check Railway deploy logs for `[CRITICAL] WORKER TIMEOUT` messages.
+`pool_pre_ping=True` is essential — Railway PostgreSQL drops idle connections after ~5 minutes and SQLAlchemy will try to reuse stale connections without it.
 
-**Confidence:** HIGH -- gunicorn timeout is the most common production issue.
+**Warning signs:**
+- `QueuePool limit of size X overflow Y reached` errors in Flask logs
+- Database connections spike and never decrease in `pg_stat_activity`
+- Works for the first 10-15 minutes of deployment, then all DB calls start timing out
 
-**Sources:**
-- [Gunicorn Issue #588: Worker timeouts after long requests](https://github.com/benoitc/gunicorn/issues/588)
-- [Railway Community: Gunicorn worker timeouts](https://station.railway.com/questions/gunicorn-worker-timeouts-8cd90860)
-
----
-
-### Pitfall 8: CORS Misconfiguration (If Flask Is Made Public)
-
-**What goes wrong:** If Flask gets a public domain instead of being private-only, the browser blocks cross-origin API calls. The current CORS config allows `http://localhost:\d+` which does not match Railway domains.
-
-**Why it happens:** Current Flask CORS is hardcoded to localhost patterns (server.py line 28). Production Railway domains are `https://*.up.railway.app`.
-
-**Consequences:** Every API call from the browser fails with CORS errors.
-
-**Prevention:**
-1. Keep Flask private (no public domain). Next.js proxy.ts handles all routing server-side. No CORS needed.
-2. If Flask must be public for any reason, update CORS to: `CORS(app, origins=[os.environ.get('FRONTEND_URL', r'http://localhost:\d+')])`.
-
-**Detection:** Browser DevTools console shows CORS errors immediately.
-
-**Confidence:** HIGH -- verified from codebase.
+**Phase to address:** Database Migration Phase — connection pool design
 
 ---
 
-### Pitfall 9: Private Networking DNS Not Immediately Available
+### Pitfall 11: Railway 15-Minute HTTP Timeout (Backup Concern After Pitfall 1 Is Fixed)
 
-**What goes wrong:** The Next.js proxy.ts rewrites to `http://flask.railway.internal:8000`. Intermittently, DNS resolution fails with `ENOTFOUND`, especially on cold starts.
+**What goes wrong:**
+The prior PITFALLS.md for this project (from the deployment milestone) stated Railway's limit is 15 minutes. Research for this milestone found conflicting information: Railway help station posts say 5 minutes is enforced at the network layer, with 15 minutes as the official platform maximum but not always achievable in practice. The exact limit may vary by Railway plan or infrastructure configuration.
 
-**Why it happens:** Railway's internal DNS uses WireGuard mesh. DNS resolution may not be immediately available when a container first starts. Legacy Railway environments (pre-October 2025) only support IPv6 internally, and Node.js may prefer IPv4.
+**How to avoid:**
+Do not rely on any specific HTTP timeout number. If Pitfall 1 is fixed (analysis becomes async/background), this pitfall is irrelevant for analysis. It remains relevant for the `/finalize` endpoint which generates a Word document — verify finalization completes within 2 minutes for all expected document sizes.
 
-**Consequences:** Intermittent API failures. Works sometimes, fails sometimes.
-
-**Prevention:**
-1. Ensure the Railway environment was created after October 2025 (dual-stack IPv4 + IPv6).
-2. Add retry logic or a small startup delay for the first backend call.
-3. Test private networking before relying on it -- fall back to public networking temporarily if needed.
-
-**Detection:** Check Next.js server logs for `ENOTFOUND` errors on `.railway.internal` domains.
-
-**Confidence:** MEDIUM -- documented in Railway private networking docs, not verified with this specific app.
+**Phase to address:** Deployment Phase — verify finalization latency
 
 ---
 
-### Pitfall 10: Healthcheck Fails Due to Slow Flask Startup
+### Pitfall 12: Alembic Migration Applied to Production Before Testing — Irreversible Data Loss
 
-**What goes wrong:** Railway's default healthcheck timeout is 300 seconds (5 minutes). If scikit-learn import or session rehydration takes too long, the healthcheck never sees a 200 and Railway rolls back the deploy.
+**What goes wrong:**
+SQLAlchemy + Alembic (Flask-Migrate) is the correct tool for managing schema changes. The pitfall: `alembic upgrade head` run against a production PostgreSQL database with wrong migrations can drop columns or tables. Unlike SQLite, PostgreSQL `DROP COLUMN` is immediately permanent and not recoverable without a backup.
 
-**Why it happens:** scikit-learn imports can take 5-15 seconds. Session rehydration from volume adds more time. Railway sends healthchecks from `healthcheck.railway.app` -- if Flask has host-based restrictions, it may reject the request.
+**Why it happens:**
+Alembic auto-generates migrations from model diffs. If the model definition doesn't match the actual database state (common when adding Alembic to an existing project), auto-generated migrations may include incorrect destructive operations.
 
-**Consequences:** Deploy appears to build successfully but fails during "deploying" phase. Old version stays running.
+**How to avoid:**
+1. On first setup of Alembic on an existing database, use `alembic stamp head` to mark the current schema as the baseline without running any migration. Do NOT run `alembic upgrade head` against a database that already has schema.
+2. Always review auto-generated migration scripts before applying them — they are not guaranteed to be correct.
+3. Set up Railway PostgreSQL with automated daily backups before running any migration in production.
+4. Test migrations against a Railway dev environment (separate Railway project) before applying to production.
 
-**Prevention:**
-1. The existing `/health` endpoint is lightweight (just returns `{'status': 'ok'}`). Keep it that way.
-2. Lazy-load heavy imports (scikit-learn) -- only import when needed, not at module level.
-3. Increase healthcheck timeout to 600s in service settings if needed.
+**Warning signs:**
+- Alembic auto-generates `DROP TABLE` or `DROP COLUMN` operations
+- First migration script is very long (means Alembic doesn't know the current state)
+- No database backup exists before running migration
 
-**Detection:** Railway dashboard shows "Deploy failed" with healthcheck error.
-
-**Confidence:** HIGH.
+**Phase to address:** Database Migration Phase — Alembic setup
 
 ---
 
-### Pitfall 11: Uploaded Documents Lost If Volume Mount Is Too Specific
+### Pitfall 13: Clerk Python SDK Not Available — Manual JWT Verification Required for Flask
 
-**What goes wrong:** Volume mounted at `app/data/sessions/` instead of `app/data/`. Uploads in `app/data/uploads/` are on ephemeral container storage and lost on redeploy.
+**What goes wrong:**
+Clerk has a JavaScript/TypeScript SDK with full-featured backend support. The Python SDK (`clerk-backend-api` on PyPI) is newer, less documented, and may not have parity with the JS SDK for JWT verification patterns. Documentation for Clerk + Flask integration is sparse compared to Clerk + FastAPI or Clerk + Node.
 
-**Why it happens:** Railway allows only one volume per service. If mount point is too narrow, not all data directories are covered.
+**Why it happens:**
+Clerk's primary market is JavaScript/React developers. Flask is a secondary integration target. The Python SDK exists but verification patterns for Flask specifically require manual implementation or adaptation of FastAPI examples.
 
-**Consequences:** Session JSON references file paths that no longer exist. Review sessions are corrupted.
+**How to avoid:**
+Use PyJWT directly with Clerk's JWKS endpoint. This is the most reliable approach for Flask and doesn't depend on SDK completeness:
 
-**Prevention:** Mount at `/app/app/data` to cover BOTH `sessions/` and `uploads/` subdirectories.
+```python
+import jwt
+from jwt import PyJWKClient
 
-**Confidence:** HIGH -- verified from project structure (server.py lines 32-37).
+jwks_client = PyJWKClient('https://<your-clerk-frontend-api>/.well-known/jwks.json')
+
+def verify_clerk_jwt(token: str) -> str:
+    signing_key = jwks_client.get_signing_key_from_jwt(token)
+    data = jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=['RS256'],
+        options={'verify_aud': False},  # Clerk doesn't use aud claim
+    )
+    return data['sub']  # Clerk user ID
+```
+
+Set `azp` claim validation to your Railway domain to prevent token use from unauthorized origins.
+
+Cache the JWKS client (it fetches keys from Clerk's servers) — do not create a new `PyJWKClient` per request.
+
+**Warning signs:**
+- JWT verification always fails due to HS256 vs RS256 algorithm mismatch
+- Decoding works locally but not in production (clock drift — add leeway)
+- New JWKS keys after Clerk key rotation invalidate cached keys (PyJWKClient handles this automatically)
+
+**Phase to address:** Auth Phase — backend JWT verification
 
 ---
 
 ## Minor Pitfalls
 
-Issues that waste time but are recoverable.
+---
+
+### Pitfall 14: `/load-test-session` Endpoint Remains Active in Production
+
+**What goes wrong:**
+`routes.py` defines `/api/load-test-session` which loads saved analysis files from the `output/` directory without any authentication or session ownership check. In production, this endpoint allows any user to load analysis data that was pre-computed and saved to disk.
+
+**Prevention:** Add an environment guard:
+```python
+@api_bp.route('/load-test-session', methods=['POST'])
+def load_test_session():
+    if os.environ.get('FLASK_ENV') != 'development':
+        return jsonify({'error': 'Not available in production'}), 404
+    ...
+```
+
+**Phase to address:** Auth Phase — remove or gate before deployment
 
 ---
 
-### Pitfall 12: NEXT_PUBLIC_ Prefix Requirement
+### Pitfall 15: `parsed_doc` JSON Blob Stored in In-Memory Session Bloats Worker Memory
 
-**What goes wrong:** You set `BACKEND_URL` as a Railway variable. Client-side code references `process.env.BACKEND_URL`. It is always `undefined` in the browser.
+**What goes wrong:**
+The session dict stores `parsed_doc` (the full parsed document JSON) in memory. A large PSA can produce 2-5MB of parsed JSON. With multiple workers and multiple sessions, this accumulates. Railway's hobby tier has limited RAM.
 
-**Why it happens:** Next.js only exposes env vars to client code if prefixed with `NEXT_PUBLIC_`. Variables without the prefix are server-side only.
+**Prevention:** Store `parsed_doc` only on disk (or in PostgreSQL JSONB). Load it lazily when needed. The current code already writes it to `parsed_doc_path` — remove it from the in-memory dict and always load from disk/DB.
 
-**Consequences:** API calls go to wrong URL.
-
-**Prevention:**
-1. `BACKEND_URL` is server-side only (used in proxy.ts). This is correct -- no `NEXT_PUBLIC_` prefix needed.
-2. The browser never needs to know the Flask URL because proxy.ts handles routing server-side.
-3. Only prefix with `NEXT_PUBLIC_` if the value must be available in React components.
-
-**Confidence:** HIGH -- fundamental Next.js behavior.
+**Phase to address:** Database Migration Phase — session data model
 
 ---
 
-### Pitfall 13: Windows CRLF Line Endings in Docker
+### Pitfall 16: Windows CRLF Line Endings Break Docker Entrypoint Scripts
 
-**What goes wrong:** Shell scripts or entrypoint files from Windows have `\r\n` endings. Linux Docker container fails with `\r: command not found`.
+**What goes wrong:**
+Shell scripts (`*.sh`) committed from Windows have `\r\n` line endings. Linux Railway containers fail with `\r: command not found`.
 
-**Why it happens:** Git on Windows converts to CRLF (depending on `core.autocrlf`).
+**Prevention:** Add to `.gitattributes`: `*.sh text eol=lf`
 
-**Prevention:**
-1. Add `.gitattributes`: `* text=auto` and `*.sh text eol=lf`.
-2. Safety net in Dockerfile: `RUN sed -i 's/\r$//' /app/entrypoint.sh` (if using entrypoint scripts).
-
-**Detection:** Container crashes immediately with `\r` in error message.
-
-**Confidence:** HIGH -- universal Windows-to-Linux Docker pitfall.
+**Phase to address:** Deployment Phase — pre-deploy checklist
 
 ---
 
-### Pitfall 14: API Key Exposure in Docker Image Layers
+### Pitfall 17: API Keys Included in Docker Image Layers via `COPY . .`
 
-**What goes wrong:** `.env` or `api.txt` with API keys gets copied into Docker image via `COPY . .`. Keys persist in image layers even if deleted later.
+**What goes wrong:**
+`api.txt` (containing the Gemini API key) or `.env` files copied into Docker image via `COPY . .`. Keys persist in image layers even if deleted in a later layer.
 
-**Why it happens:** Docker images are layered. COPY followed by RUN rm does not remove from earlier layers.
+**Prevention:** Add to `.dockerignore`: `api.txt`, `.env`, `*.key`, `output/`, `test documents/`. Use Railway environment variables for all secrets.
 
-**Consequences:** API key leak for anyone with Docker image access.
-
-**Prevention:**
-1. Add `.env`, `api.txt`, `*.key` to `.dockerignore`.
-2. Use Railway environment variables for all secrets.
-3. Never `COPY . .` without comprehensive `.dockerignore`.
-
-**Detection:** `docker run <image> cat /app/.env` should return "file not found".
-
-**Confidence:** HIGH -- fundamental Docker security.
+**Phase to address:** Deployment Phase — Dockerfile review
 
 ---
 
-### Pitfall 15: Railway Reference Variables Not Available at Build Time
+## Technical Debt Patterns
 
-**What goes wrong:** `${{flask.RAILWAY_PRIVATE_DOMAIN}}` used in Dockerfile or next.config.ts at build time. Variable is empty.
-
-**Why it happens:** Railway reference variables resolve at runtime, not during Docker build.
-
-**Consequences:** Next.js bakes empty strings into JavaScript bundle if `NEXT_PUBLIC_*` vars are absent at build.
-
-**Prevention:**
-1. `BACKEND_URL` is read at runtime by proxy.ts, not baked into the build. This is correct.
-2. Do not use `NEXT_PUBLIC_*` for the backend URL -- it is server-side only.
-3. For any vars needed at build time, set them as plain Railway variables (not reference variables).
-
-**Confidence:** MEDIUM -- Railway docs confirm reference vars are runtime-resolved.
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Keep `sessions = {}` as a cache layer over PostgreSQL | Faster reads | Cache-DB inconsistency after crash; stale data | Never — use PostgreSQL as source of truth |
+| Skip per-route ownership checks; rely on UUID entropy | Less code | IDOR vulnerability; one leaked session ID exposes confidential legal docs | Never |
+| Use Railway Volume for `.docx` files instead of Buckets | Simpler file API | Volume is single-mount; not designed for many binary files; no URL-based access | Acceptable as temporary MVP; migrate to Buckets before scaling |
+| Skip Alembic; manage schema via raw SQL | Fewer tools | No migration history; impossible to reproduce schema; high risk of prod errors | Acceptable for first deploy only if schema is finalized before launch |
+| Store Clerk JWT in Zustand (persisted state) for convenience | Simpler API client | Token persists in browser storage → XSS risk on sensitive legal documents | Never |
+| Deploy without converting analysis to async/background | Fewer moving parts | Deploy blocker — analysis is killed at 5-min Railway timeout | Never |
+| Use gevent Gunicorn workers | Better concurrency numbers | Conflicts with asyncio used in parallel_analyzer.py | Never for this codebase |
 
 ---
 
-## Phase-Specific Warnings
+## Integration Gotchas
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Dockerize Flask backend | C extension build failures (Pitfall 3) | Multi-stage build with gcc in builder stage; test locally first |
-| Dockerize Next.js frontend | Missing static assets (Pitfall 4) | Three-line COPY pattern; test with `docker run` locally |
-| Replace rewrites with proxy.ts | Next.js 16 rewrites bug (Pitfall 5) | Use proxy.ts, remove rewrites(), test locally |
-| Railway volume setup | Upload + session on single volume (Pitfalls 6, 11) | Mount at `/app/app/data`, verify both subdirs persist |
-| Gunicorn configuration | Worker timeouts on LLM calls (Pitfall 7) | gthread workers, 1800s timeout, NOT gevent |
-| Service networking | DNS resolution timing (Pitfall 9) | Test private networking; fall back to public if needed |
-| Long-running analysis | Railway 15-min HTTP timeout (Pitfall 1) | Background job pattern for large documents (defer) |
-| Session persistence | In-memory dict loss (Pitfall 2) | Rehydrate from volume on startup |
-| Secret management | API key in Docker layer (Pitfall 14) | .dockerignore + Railway env vars |
-| Initial deploy | Healthcheck failures (Pitfall 10) | Lightweight /health (exists); lazy-load scikit-learn |
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Clerk + Flask JWT | Attempting HS256 (symmetric) decoding — Clerk uses RS256 (asymmetric) | Fetch public key from `https://<clerk-frontend-api>/.well-known/jwks.json`; use PyJWT with `algorithms=['RS256']` |
+| Clerk + Flask JWT | Not validating `azp` (authorized parties) claim | Set `azp` to your Railway frontend domain; reject tokens from unknown origins |
+| Clerk webhooks + PostgreSQL | Using `INSERT` for user creation — duplicates break on retry | Always use `INSERT ... ON CONFLICT (clerk_id) DO UPDATE` |
+| Railway Buckets + boto3 | Using default `s3.amazonaws.com` endpoint | Set `endpoint_url` to Railway's bucket endpoint (not AWS) |
+| PostgreSQL + SQLAlchemy | Not setting `pool_pre_ping=True` | Railway drops idle connections; stale connections cause cryptic errors without pre-ping |
+| flask-cors + credentials | `origins='*'` with `supports_credentials=True` | Browsers block this per spec; use explicit origin list with credentials |
+| Gunicorn + asyncio | Using gevent workers | Gevent monkey-patches the event loop; breaks asyncio used in parallel_analyzer.py |
+| Next.js + Flask on Railway | Deploying as a single Railway service | Deploy as two separate services; Next.js routes `/api/*` to Flask via `next.config.ts` rewrites to Railway internal URL |
+| Alembic on existing DB | Running `alembic upgrade head` against a pre-existing database schema | Use `alembic stamp head` to baseline; never auto-migrate a live database without reviewing the generated script |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Loading full `parsed_doc` (2-5MB) into every session dict | High RAM usage per worker; OOM errors | Store in PostgreSQL JSONB; load lazily on demand | At 5+ concurrent users with large documents |
+| Serving `.docx` files directly from Flask via `send_file()` | Flask worker blocked during download | Redirect to signed Railway Bucket URL (pre-signed S3 URL) | At 2+ concurrent downloads |
+| Re-rendering document HTML on every page load | CPU-intensive; 5-10 second rendering time | Cache rendered HTML keyed by session_id + doc_hash | At 3+ concurrent users |
+| DB connection held open for 30-minute analysis thread | Pool exhaustion; all DB calls timeout | Scope sessions with context managers; close connections between analysis steps | At 3+ concurrent analyses |
+| JWKS key fetch on every request | Latency spike on every API call; Clerk rate limit risk | Create `PyJWKClient` once at module load; cache signing keys per `kid` | At 50+ requests/second |
+
+---
+
+## Security Mistakes
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| No JWT verification on legacy endpoints | Any user can access any session by guessing UUID | `@api_bp.before_request` validates JWT on every route except allowlisted public routes |
+| Session ID lookup without `user_id` filter | IDOR — authenticated User B reads User A's confidential documents | `get_session(session_id, user_id)` filters by both columns in PostgreSQL |
+| File paths contain only session_id, not user_id | File path guessing if session ID leaks | Namespace file paths as `{user_id}/{session_id}/filename` |
+| `/load-test-session` accessible in production | Unauthenticated access to saved analysis data | Gate behind `FLASK_ENV == 'development'` check |
+| No rate limiting on `/revise` | One user can trigger unlimited Gemini API calls → runaway costs | Flask-Limiter with per-user limit (e.g., 50 revisions/hour) backed by PostgreSQL or Redis |
+| `api.txt` in Docker image | API key leaked to anyone who can pull the image | `.dockerignore`; Railway environment variables for all secrets |
+| CORS `supports_credentials=True` without `SameSite` policy | CSRF if cookies used for auth | Set `SameSite=Strict` on auth cookies; use CSRF token for state-mutating requests |
+| Legal documents without encryption at rest | Breach exposes attorney-client privileged documents | Railway Buckets encrypt at rest (verify in Railway docs); PostgreSQL encrypts at rest on Railway's managed service |
+| Clerk `sub` used directly as user ID in all DB queries | User ID spoofing if JWT verification is skipped elsewhere | Always verify JWT before trusting `sub` claim; the `@before_request` hook is the single verification point |
+
+---
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Session state wipes on browser close mid-analysis | 30-minute analysis lost; must restart from scratch | Store analysis state in PostgreSQL; user can close browser and return to find analysis complete |
+| No session list on login — user must know their session ID | Can't resume work after logging back in | Sessions dashboard: list of past sessions with document name, date, status, keyed to authenticated user |
+| Auth redirect loop if Clerk token expires mid-session | User loses place in document review | Clerk auto-refreshes tokens in background; handle 401 in API client by re-calling `getToken()` and retrying once |
+| No indication that "analysis in background" means browser tab can be closed | Users keep browser open for 30 minutes unnecessarily | Explicit messaging: "Analysis is running. You can close this tab and return — your progress is saved." |
+| First-time sign-up + document upload in same immediate flow | Friction on first use; users confused by auth + file upload combined | Separate auth (sign in/up) from document intake; let user authenticate first, then start a new session |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Auth on all routes:** `curl -X GET https://your-app.railway.app/api/document/<any_session_id>` without Authorization header returns 401, not 200 with document data
+- [ ] **IDOR protection:** Log in as User B; call `GET /api/document/<User_A_session_id>` with User B's JWT; verify 403 or 404 is returned, not document data
+- [ ] **Analysis survives Railway redeploy:** Trigger a redeploy mid-analysis; confirm the analysis completes and the session is accessible post-redeploy
+- [ ] **Documents survive Railway redeploy:** Upload a `.docx`, trigger a redeploy, verify the file still loads and renders
+- [ ] **CORS correct in production:** API calls from Railway frontend succeed; requests from unauthorized origins are blocked
+- [ ] **JWT expiry handled gracefully:** Invalidate a Clerk session; confirm Flask returns 401 and Next.js frontend prompts re-login, not a blank error
+- [ ] **No analysis blocking workers:** Run two simultaneous analyses; `/health` still responds in under 200ms during both
+- [ ] **Connection pool not exhausted:** Two concurrent analyses plus normal document loads; all DB queries complete in under 1 second
+- [ ] **No tokens in browser storage:** Open browser devtools; `localStorage.getItem('token')` and similar return null
+- [ ] **`/load-test-session` not in production:** Endpoint returns 404 or 401 on Railway deployment
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Analysis killed at Railway timeout (blocking pattern deployed) | MEDIUM | Hotfix: split analysis into POST-start + GET-progress pattern; redeploy; alert active users |
+| Sessions dict wiped on redeploy — users lose work | HIGH | Warn users before first production deploy; export session JSON files if volume exists; import into PostgreSQL |
+| IDOR discovered post-launch | HIGH | Immediate hotfix: add `user_id` filter to `get_session()`; audit logs for cross-user access events; notify affected users per bar ethics rules |
+| Documents lost to ephemeral filesystem | HIGH | No recovery for lost files; migrate to Railway Buckets before first real user upload |
+| Connection pool exhaustion | MEDIUM | Railway service restart clears connections; fix pool config and redeploy; add monitoring on `pg_stat_activity` |
+| CORS blocking all API calls | LOW | Set `ALLOWED_ORIGINS` env var in Railway; redeploy (minutes to fix) |
+| Clerk webhook missing — user locked out on first login | LOW | Add lazy user creation to JWT middleware; affected user resolves by signing out and back in |
+| Alembic migration corrupts production schema | HIGH | Restore from Railway database backup; treat daily backups as non-optional before any migration |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Railway 5-min timeout kills analysis | Database Migration + Deployment Phase | Analysis completes on Railway for a 100-page document (proves async path is taken) |
+| `sessions = {}` wipes on redeploy | Database Migration Phase | Redeploy Railway service; verify session survives and is accessible post-deploy |
+| CORS hardcoded to localhost | Auth + Deployment Phase | API calls succeed from Railway-deployed frontend with auth header |
+| All legacy routes open | Auth Phase | `curl` without auth header returns 401 on every route except `/health` |
+| IDOR — session lookup without ownership filter | Auth Phase | Cross-user session access attempt returns 403 with valid JWT for wrong user |
+| File paths hardcoded to local disk | Storage Migration Phase | Upload document; redeploy; verify document still renders |
+| Clerk webhook async — user missing on first login | Auth Phase | New user signup + immediate API call succeeds without 500 |
+| Analysis blocks all Gunicorn workers | Deployment Phase | Two simultaneous analyses; health check responds in under 200ms |
+| JWT in browser storage | Auth Phase | No auth tokens in localStorage or sessionStorage in browser devtools |
+| DB connection pool exhaustion | Database Migration Phase | Load test with 3 concurrent analyses; all response times stay under 1 second |
+| `/load-test-session` in production | Auth Phase | Endpoint returns 404 or 401 on Railway |
+| Alembic migration risk | Database Migration Phase | Migration tested on dev DB; schema matches expected; backup confirmed before prod migration |
+
+---
 
 ## Sources
 
-- [Railway Volumes](https://docs.railway.com/reference/volumes)
-- [Railway Private Networking](https://docs.railway.com/reference/private-networking)
-- [Railway Healthchecks](https://docs.railway.com/reference/healthchecks)
-- [Railway Dockerfile Builds](https://docs.railway.com/builds/dockerfiles)
-- [Railway Help Station: HTTP Timeout](https://station.railway.com/questions/increase-max-http-timeout-1c360bf9)
-- [Next.js Output Standalone (v16.1.6)](https://nextjs.org/docs/pages/api-reference/config/next-config-js/output)
-- [Next.js 16 Rewrite Bug (#87071)](https://github.com/vercel/next.js/issues/87071)
-- [Next.js Proxy (v16.1.6)](https://nextjs.org/docs/app/getting-started/proxy)
-- [Gunicorn Issue #588: Worker timeouts](https://github.com/benoitc/gunicorn/issues/588)
-- [Gunicorn Docker Guide](https://gunicorn.org/guides/docker/)
+- [Railway HTTP timeout (5-minute confirmed at network layer)](https://station.railway.com/questions/any-workarounds-for-the-5-min-request-ti-b055adde)
+- [Railway Help Station: Increase Max HTTP Timeout](https://station.railway.com/questions/increase-max-http-timeout-1c360bf9)
+- [Railway ephemeral storage and Volumes](https://docs.railway.com/reference/volumes)
+- [Railway Buckets — S3-compatible object storage ($0.015/GB-month)](https://docs.railway.com/storage-buckets)
+- [Gunicorn multi-worker in-memory session isolation](https://medium.com/@jgleeee/sharing-data-across-workers-in-a-gunicorn-flask-application-2ad698591875)
+- [Clerk webhook delivery guarantees (at-least-once, async, not immediate)](https://clerk.com/docs/guides/development/webhooks/syncing)
+- [Clerk manual JWT verification with JWKS + RS256](https://clerk.com/docs/guides/sessions/manual-jwt-verification)
+- [Clerk Python SDK (clerk-backend-api)](https://pypi.org/project/clerk-backend-api/)
+- [Clerk: sync user data to database via webhooks](https://clerk.com/articles/how-to-sync-clerk-user-data-to-your-database)
+- [SQLAlchemy connection pooling documentation](https://docs.sqlalchemy.org/en/20/core/pooling.html)
+- [PostgreSQL connection pool exhaustion post-mortem](https://www.c-sharpcorner.com/article/postgresql-connection-pool-exhaustion-lessons-from-a-production-outage/)
+- [flask-cors wildcard + credentials conflict (GitHub #202)](https://github.com/corydolphin/flask-cors/issues/202)
+- [JWT storage security: localStorage vs httpOnly cookies](https://www.wisp.blog/blog/understanding-token-storage-local-storage-vs-httponly-cookies)
+- [Legal document cloud storage — attorney-client privilege risks](https://www.cloudwards.net/best-cloud-storage-for-lawyers/)
+- [Multi-tenant data isolation architecture](https://complydog.com/blog/multi-tenant-saas-privacy-data-isolation-compliance-architecture)
+- [Flask-Migrate on existing projects — Alembic stamp head pattern](https://blog.miguelgrinberg.com/post/how-to-add-flask-migrate-to-an-existing-project)
+- [Clerk + FastAPI JWT verification (adaptable to Flask)](https://medium.com/@didierlacroix/building-with-clerk-authentication-user-management-part-2-implementing-a-protected-fastapi-f0a727c038e9)
+
+---
+*Pitfalls research for: Adding multi-user auth + PostgreSQL + Railway deployment to single-user Flask + Next.js contract redlining app*
+*Researched: 2026-02-18*
