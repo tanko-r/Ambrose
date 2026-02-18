@@ -189,7 +189,11 @@ Plans:
   3. A 50+ page document completes analysis without being killed by an HTTP timeout
   4. Database schema can be upgraded via `flask db upgrade` without data loss
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md -- Database foundation: SQLAlchemy/Migrate setup, SessionRecord model, updated get/save_session with DB persistence
+- [ ] 09-02-PLAN.md -- Async analysis: POST /start endpoint, background thread, frontend POST+poll pattern
 
 ---
 
