@@ -285,9 +285,9 @@ def get_document(session_id):
             llm_info = paragraph_map.get(para.get('id', ''), {})
             llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
             if llm_caption:
-                # Cap at 6 words
+                # Cap at 7 words
                 words = llm_caption.split()
-                para['caption'] = ' '.join(words[:6])
+                para['caption'] = ' '.join(words[:7])
 
     return jsonify({
         'session_id': session_id,
@@ -471,7 +471,7 @@ def get_analysis(session_id):
                 llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
                 if llm_caption:
                     words = llm_caption.split()
-                    para['caption'] = ' '.join(words[:6])
+                    para['caption'] = ' '.join(words[:7])
 
         # Store analysis and maps in session
         session['analysis'] = analysis

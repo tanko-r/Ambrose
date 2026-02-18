@@ -178,7 +178,7 @@ export function BottomBar() {
             onClick={toggleShowRisks}
             icon={<AlertTriangle className={cn(compactMode ? "h-2.5 w-2.5" : "h-3 w-3")} />}
             label="Risks"
-            tooltip="Filter to paragraphs with risks"
+            tooltip={showRisks ? "Remove risks filter" : "Filter to paragraphs with risks"}
             compactMode={compactMode}
           />
           <FilterPill
@@ -186,7 +186,7 @@ export function BottomBar() {
             onClick={toggleShowRevisions}
             icon={<Pencil className={cn(compactMode ? "h-2.5 w-2.5" : "h-3 w-3")} />}
             label="Revisions"
-            tooltip="Filter to paragraphs with revisions"
+            tooltip={showRevisions ? "Remove revisions filter" : "Filter to paragraphs with revisions"}
             compactMode={compactMode}
           />
           <FilterPill
@@ -194,7 +194,7 @@ export function BottomBar() {
             onClick={toggleShowFlags}
             icon={<Flag className={cn(compactMode ? "h-2.5 w-2.5" : "h-3 w-3")} />}
             label="Flags"
-            tooltip="Filter to flagged paragraphs"
+            tooltip={showFlags ? "Remove flags filter" : "Filter to flagged paragraphs"}
             compactMode={compactMode}
           />
         </div>

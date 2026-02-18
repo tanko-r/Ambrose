@@ -17,10 +17,12 @@ import { ResizeHandle } from "@/components/review/resize-handle";
 import { PrecedentPanel } from "@/components/review/precedent-panel";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardHelp } from "@/components/keyboard-help";
+import { NewProjectDialog } from "@/components/dialogs/new-project-dialog";
 import type { NavigatorPosition } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ReviewPage({
   params,
@@ -45,9 +47,20 @@ export default function ReviewPage({
   // Read session status for finalized banner
   const status = useAppStore((s) => s.status);
 
-  // Command palette + keyboard help dialog state
+  // Command palette + keyboard help + new project dialog state
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const router = useRouter();
+
+  const handleNewProject = () => {
+    if (useAppStore.getState().sessionId) {
+      setNewProjectOpen(true);
+    } else {
+      useAppStore.getState().resetSession();
+      router.push("/");
+    }
+  };
 
   // Register keyboard shortcuts
   useKeyboardShortcuts({
@@ -108,7 +121,7 @@ export default function ReviewPage({
   if (documentError && !loading) {
     return (
       <div className="flex h-screen flex-col overflow-hidden">
-        <Header />
+        <Header onNewProject={handleNewProject} />
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4 text-center">
             <AlertTriangle className="h-10 w-10 text-destructive" />
@@ -128,7 +141,7 @@ export default function ReviewPage({
   return (
     <div className={`flex h-screen flex-col overflow-hidden${compactMode ? " compact" : ""}`}>
       {/* Header */}
-      <Header />
+      <Header onNewProject={handleNewProject} />
 
       {/* Finalized project banner */}
       {status === "finalized" && (
@@ -201,6 +214,9 @@ export default function ReviewPage({
 
       {/* Keyboard shortcuts help dialog (? key) */}
       <KeyboardHelp open={helpOpen} onOpenChange={setHelpOpen} />
+
+      {/* New project confirmation dialog */}
+      <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} />
     </div>
   );
 }
