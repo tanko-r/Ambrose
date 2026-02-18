@@ -18,7 +18,6 @@ import { PrecedentPanel } from "@/components/review/precedent-panel";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardHelp } from "@/components/keyboard-help";
 import { NewProjectDialog } from "@/components/dialogs/new-project-dialog";
-import { BreadcrumbBar } from "@/components/review/breadcrumb-bar";
 import { RiskReport } from "@/components/review/risk-report";
 import type { NavigatorPosition } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -148,9 +147,6 @@ export default function ReviewPage({
         onNewProject={handleNewProject}
         onExportRiskReport={() => setRiskReportOpen(true)}
       />
-
-      {/* Breadcrumb navigation bar (shown when a paragraph is selected) */}
-      <BreadcrumbBar />
 
       {/* Finalized project banner */}
       {status === "finalized" && (

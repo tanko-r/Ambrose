@@ -170,6 +170,7 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   // History actions
   goBackInHistory: () => void;
   goForwardInHistory: () => void;
+  goToHistoryIndex: (index: number) => void;
 
   // Precedent actions
   setLockedParaId: (paraId: string | null) => void;
@@ -386,6 +387,15 @@ export const useAppStore = create<AppStore>((set) => ({
       return {
         selectedParaId: focusHistory[newPos],
         focusHistoryIndex: newPos === focusHistory.length - 1 ? -1 : newPos,
+      };
+    }),
+  goToHistoryIndex: (index) =>
+    set((state) => {
+      const { focusHistory } = state;
+      if (index < 0 || index >= focusHistory.length) return {};
+      return {
+        selectedParaId: focusHistory[index],
+        focusHistoryIndex: index === focusHistory.length - 1 ? -1 : index,
       };
     }),
 

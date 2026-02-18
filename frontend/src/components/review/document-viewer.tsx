@@ -8,6 +8,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 import { calculateConnectorPath } from "@/lib/utils/connector";
 import { Flag as FlagIcon, FileText } from "lucide-react";
+import { HistoryNav } from "@/components/review/history-nav";
 
 interface DocumentViewerProps {
   loading: boolean;
@@ -359,11 +360,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     if (!selectedParaId || !containerRef.current) return;
     const el = containerRef.current.querySelector(`[data-para-id="${selectedParaId}"]`);
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    if (rect.top < viewportHeight / 3 || rect.bottom > (viewportHeight * 2) / 3) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [selectedParaId]);
 
   // Effect: Sync bubble context with focusedFlagId
@@ -550,7 +547,8 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   if (documentHtml) {
     return (
       <ErrorBoundary friendlyMessage="Failed to render the document.">
-        <div role="main" aria-label="Document viewer" className="flex-1 overflow-y-auto bg-card px-6 py-4">
+        <div role="main" aria-label="Document viewer" className="relative flex-1 overflow-y-auto bg-card px-6 py-4">
+          <HistoryNav />
           <div className="relative" ref={containerRef}>
             <StaticHTML html={documentHtml} />
             
