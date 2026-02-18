@@ -18,6 +18,8 @@ import { PrecedentPanel } from "@/components/review/precedent-panel";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardHelp } from "@/components/keyboard-help";
 import { NewProjectDialog } from "@/components/dialogs/new-project-dialog";
+import { BreadcrumbBar } from "@/components/review/breadcrumb-bar";
+import { RiskReport } from "@/components/review/risk-report";
 import type { NavigatorPosition } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
@@ -51,6 +53,7 @@ export default function ReviewPage({
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [riskReportOpen, setRiskReportOpen] = useState(false);
   const router = useRouter();
 
   const handleNewProject = () => {
@@ -141,7 +144,13 @@ export default function ReviewPage({
   return (
     <div className={`flex h-screen flex-col overflow-hidden${compactMode ? " compact" : ""}`}>
       {/* Header */}
-      <Header onNewProject={handleNewProject} />
+      <Header
+        onNewProject={handleNewProject}
+        onExportRiskReport={() => setRiskReportOpen(true)}
+      />
+
+      {/* Breadcrumb navigation bar (shown when a paragraph is selected) */}
+      <BreadcrumbBar />
 
       {/* Finalized project banner */}
       {status === "finalized" && (
@@ -208,6 +217,9 @@ export default function ReviewPage({
 
       {/* Analysis progress overlay (renders only during analysis) */}
       <AnalysisOverlay />
+
+      {/* Risk report overlay (accessible from header menu) */}
+      <RiskReport open={riskReportOpen} onClose={() => setRiskReportOpen(false)} />
 
       {/* Command palette (Cmd/Ctrl+K) */}
       <CommandPalette open={cmdPaletteOpen} onOpenChange={setCmdPaletteOpen} />
