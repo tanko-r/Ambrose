@@ -17,6 +17,7 @@ import {
   Plus,
   User,
   FolderOpen,
+  FileText,
   Settings,
   HelpCircle,
   UserCircle,
@@ -30,9 +31,10 @@ import { SettingsDialog } from "@/components/settings-dialog";
 
 interface HeaderProps {
   onNewProject?: () => void;
+  onExportRiskReport?: () => void;
 }
 
-export function Header({ onNewProject }: HeaderProps) {
+export function Header({ onNewProject, onExportRiskReport }: HeaderProps) {
   const { targetFilename, view } = useAppStore();
   const { resolvedTheme } = useTheme();
   const { setThemePreference } = usePreferences();
@@ -81,6 +83,12 @@ export function Header({ onNewProject }: HeaderProps) {
                 <FolderOpen className="mr-2 h-4 w-4" />
                 Document Library
               </DropdownMenuItem>
+              {view === "review" && (
+                <DropdownMenuItem onClick={onExportRiskReport}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Export Risk Report
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
                 <Settings className="mr-2 h-4 w-4" />

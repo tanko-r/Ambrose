@@ -602,4 +602,20 @@
   .no-print {
     display: none !important;
   }
+
+  /* Risk report print styles: hide everything except the report overlay */
+  body * {
+    visibility: hidden;
+  }
+
+  .risk-report-overlay,
+  .risk-report-overlay * {
+    visibility: visible !important;
+  }
+
+  .risk-report-overlay {
+    position: relative !important;
+    z-index: auto !important;
+    overflow: visible !important;
+  }
 }
