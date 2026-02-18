@@ -4,59 +4,9 @@ Sorted easiest → hardest. Items fully implemented have been removed.
 
 Legend: `🔧 Partial` `🆕 New`
 
-**Last updated:** 2026-02-18 (Issue triage — closed 4 issues, commented on 13, consolidated duplicates)
+**Last updated:** 2026-02-17 (Audit pass — marked 6 completed items, 1 needs verification)
 
 ---
-
-## Tier 2: Small (30 min – 1 hr each)
-
-### 1. Connector elbow routing verification `🔧 Needs verification`
-- Elbow routing implemented (straight lines with rounded corners)
-- Visual verification needed — does it route cleanly without crossing text?
-- Test with flags at different Y positions relative to bubble
-- Files: `connector.ts`, `document-viewer.tsx`
-
-### 2. Clause caption generation tweaks `🔧 Needs refinement`
-- Current: LLM generates 2-6 word captions, hard-capped at 6 words server-side
-- Issue: Some captions may be complete sentences or too verbose
-- Needed: Update initial analysis prompt to request 1-7 word **labels** (noun phrases, not sentences)
-- Examples: "Delinquent Rents", "Operating Expense Pass-throughs", "Default Notice Period"
-- Files: `initial_analyzer.py` (prompt), `routes.py` (word cap logic)
-
----
-
-## Tier 3: Medium (1–3 hrs each)
-
-### 1. "+New" button broken on review page (#47 H1, H2, M2) `🆕`
-- Header on review page doesn't pass `onNewProject` prop — button inert
-- `resetSession()` clears `sessions` array — looks like data loss
-- New Project Dialog not rendered on review page
-- Fix: wire up prop, exclude sessions from reset, render dialog on review page
-
-### 2. `resetSession()` clears recent projects (#47 H2) `🆕`
-- "+New" wipes store's `sessions` array
-- Fix: exclude `sessions` from reset scope, or re-fetch after reset
-
-### 3. Empty/loading states (#49) `🆕`
-- No skeleton loading for document area
-- No "no results" state for filtered navigation
-- No filter direction clarity ("Hide risks" vs "Show risks")
-
-### 5. Edit mode / review mode toggle (#53) `🆕`
-- Add dropdown pill to document pane: Review Mode / Edit Mode
-- Review: shortcuts active, read-only. Edit: single-key shortcuts disabled, contentEditable on
-- Store in Zustand, persist in localStorage
-- Need to thread mode through `useKeyboardShortcuts`
-
-### 6. Text selection lost before flag button (#47 H6) `🆕`
-- Selection collapses ~50ms before RAF callback processes it
-- DOM mutations from `updateParagraphStates` collapse selection
-- Fix: defer mutations or save/restore selection range
-
-### 7. Revision font doesn't inherit from source (#38) `🆕`
-- RevisionSheet uses generic styles regardless of source paragraph formatting
-- Need to extract computed styles or use CSS class categories from source
-- Files: `revision-sheet.tsx`, `track-changes-editor.tsx`, `globals.css`
 
 ---
 
@@ -138,6 +88,14 @@ These were on the original list but are confirmed working in the codebase:
 - ~~Finalize: review dismissed/unaddressed risks (#25)~~ — `unreviewedRisks` with severity sort, expandable accordion, "Go to" navigation
 - ~~Risk analysis print/export (#34)~~ — closed as duplicate of #14
 
+### Audit pass (2026-02-17)
+- ~~Connector elbow routing (#T2-1)~~ — moved to Needs Verification
+- ~~Clause caption generation (#T2-2)~~ — `initial_analyzer.py` prompt already requests "noun-phrase LABEL (1-7 words)" with good/bad examples
+- ~~"+New" button on review page (#47 H1, H2, M2)~~ — `handleNewProject` wired in review page, `NewProjectDialog` rendered, `Header` receives `onNewProject` prop
+- ~~`resetSession()` preserves sessions (#47 H2)~~ — `resetSession` in store explicitly preserves `savedSessions` via spread
+- ~~Text selection lost before flag button (#47 H6)~~ — `savedRangeRef` saves Range on selection, `useLayoutEffect` restores after re-render, flag button uses `preventDefault`
+- ~~Revision font inherits from source (#38)~~ — moved to Needs Verification
+
 ### Earlier implementations
 - ~~Grammar: "1 revisions approved" (#47 L4)~~ — singular/plural ternary added
 - ~~Header missing role="banner" (#49)~~ — added to header.tsx
@@ -161,6 +119,26 @@ These were on the original list but are confirmed working in the codebase:
 
 ---
 
+## Needs Verification
+
+These items appear implemented in code but need visual/functional verification:
+
+### 1. Empty/loading states (#49)
+- Skeleton loading for document area — `document-viewer.tsx` renders `<Skeleton>` components with `useDelayedLoading` hook
+- "No results" state for filtered navigation — `NavigatorFilterEmptyState` shows `SearchX` icon + "Clear all filters" button
+- **Still unclear:** filter direction clarity ("Hide risks" vs "Show risks") — needs visual check
+- **Verify:** skeletons appear during load, empty state renders when all items filtered out
+
+### 2. Connector elbow routing visual quality
+- `calculateConnectorPath()` in `connector.ts` draws H-V-H elbow with 6px rounded corners; `document-viewer.tsx` renders SVG connector layer
+- **Verify:** connectors don't cross text, route cleanly with flags at various Y positions
+
+### 3. Revision font inherits from source (#38)
+- `revision-sheet.tsx` reads `getComputedStyle()` from source paragraph, sets CSS vars `--revision-font-family/size/line-height`
+- **Verify:** revision sheet text visually matches source paragraph font/size/spacing
+
+---
+
 ## Deferred / Out of Scope for Now
 
 - Configurable flag audiences with routed transmittals (#46) — still hard-coded binary `client`/`attorney` toggle; major refactor needed
@@ -170,6 +148,9 @@ These were on the original list but are confirmed working in the codebase:
 - Revisions cheatsheet (#26) — not started
 - Track changes per-run formatting (#27) — export works but per-word formatting not preserved through diff pipeline
 - Performance diagnostics (#37) — works but no timing breakdown or optimization
+- Edit mode / review mode toggle (#53) — deferred per user decision
+- Show revision options before calling agent (#4) — deferred per user decision
+- Document numbering & fidelity (#2, #23, #40) — deferred; works well enough for now
 
 ## Issues Commented On (2026-02-18)
 
