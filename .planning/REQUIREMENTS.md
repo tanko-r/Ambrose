@@ -157,20 +157,45 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PREC-01..04 | v1.0 Phase 5 | Complete |
 | NEW-01..04 | v1.0 Phase 6 | In Progress |
 | RENDER-01..04 | v1.0 Phase A | Complete |
-| AUTH-01..08 | v1.1 TBD | Pending |
-| PROT-01..03 | v1.1 TBD | Pending |
-| WORK-01..04 | v1.1 TBD | Pending |
-| DB-01..04 | v1.1 TBD | Pending |
-| DOCK-01..04 | v1.1 TBD | Pending |
-| CONF-01..04 | v1.1 TBD | Pending |
-| ASYNC-01..02 | v1.1 TBD | Pending |
-| RAIL-01..04 | v1.1 TBD | Pending |
+| DB-01 | v1.1 Phase 9 | Pending |
+| DB-02 | v1.1 Phase 9 | Pending |
+| DB-03 | v1.1 Phase 9 | Pending |
+| DB-04 | v1.1 Phase 9 | Pending |
+| ASYNC-01 | v1.1 Phase 9 | Pending |
+| ASYNC-02 | v1.1 Phase 9 | Pending |
+| AUTH-01 | v1.1 Phase 10 | Pending |
+| AUTH-02 | v1.1 Phase 10 | Pending |
+| AUTH-03 | v1.1 Phase 10 | Pending |
+| AUTH-04 | v1.1 Phase 10 | Pending |
+| AUTH-05 | v1.1 Phase 10 | Pending |
+| AUTH-06 | v1.1 Phase 10 | Pending |
+| AUTH-07 | v1.1 Phase 10 | Pending |
+| AUTH-08 | v1.1 Phase 10 | Pending |
+| PROT-02 | v1.1 Phase 10 | Pending |
+| PROT-01 | v1.1 Phase 11 | Pending |
+| PROT-03 | v1.1 Phase 11 | Pending |
+| CONF-01 | v1.1 Phase 11 | Pending |
+| CONF-03 | v1.1 Phase 11 | Pending |
+| WORK-01 | v1.1 Phase 12 | Pending |
+| WORK-02 | v1.1 Phase 12 | Pending |
+| WORK-03 | v1.1 Phase 12 | Pending |
+| WORK-04 | v1.1 Phase 12 | Pending |
+| CONF-02 | v1.1 Phase 12 | Pending |
+| DOCK-01 | v1.1 Phase 13 | Pending |
+| DOCK-02 | v1.1 Phase 13 | Pending |
+| DOCK-03 | v1.1 Phase 13 | Pending |
+| DOCK-04 | v1.1 Phase 13 | Pending |
+| CONF-04 | v1.1 Phase 13 | Pending |
+| RAIL-01 | v1.1 Phase 13 | Pending |
+| RAIL-02 | v1.1 Phase 13 | Pending |
+| RAIL-03 | v1.1 Phase 13 | Pending |
+| RAIL-04 | v1.1 Phase 13 | Pending |
 
 **Coverage:**
 - v1.0 requirements: 20 total (12 complete, 8 in progress)
-- v1.1 requirements: 28 total
-- Unmapped: 28 (awaiting roadmap)
+- v1.1 requirements: 33 total, all mapped (0 complete, 33 pending)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-01*
-*Last updated: 2026-02-18 after v1.1 milestone redefinition (Users and Deployment)*
+*Last updated: 2026-02-18 — v1.1 traceability fully mapped (33/33)*

@@ -1,13 +1,13 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-14
+**Updated:** 2026-02-18
 **Branch:** `nextjs-migration`
 
 ## Milestones
 
 - **v1.0 Next.js Migration + Feature Completion** - Phases A, B, 0-8, 8.1 (in progress)
-- **v1.1 Cloud Deployment** - Phases 9-13 (planned)
+- **v1.1 Users and Deployment** - Phases 9-13 (planned)
 
 ## Phases
 
@@ -158,100 +158,106 @@ Plans:
 
 ---
 
-## v1.1 Cloud Deployment
+## v1.1 Users and Deployment
 
-**Milestone Goal:** Make the app deployable to Railway as a two-service project (Flask backend + Next.js frontend) while preserving the local dev workflow.
+**Milestone Goal:** Transform the single-user local tool into a multi-user cloud application — individual attorney workspaces with Clerk authentication, PostgreSQL persistent storage, Docker containers, and Railway deployment. Every session and document is isolated per user; the app handles long-running analysis without HTTP timeouts.
 
 **Phase Overview:**
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 9 | Containerization | Both services run in Docker with env-var-driven config | DOCK-01..04, CONF-01, CONF-02, CONF-04 | Not started |
-| 10 | API Routing Migration | Frontend routes API via proxy.ts with runtime backend URL | PROX-01, PROX-02, CONF-03 | Not started |
-| 11 | Session Resilience | Sessions survive server restarts | SESS-01, SESS-02 | Not started |
-| 12 | Railway Deployment | App runs on Railway with persistent storage and health checks | RAIL-01, RAIL-02, RAIL-03 | Not started |
-| 13 | Background Analysis | Long-running analysis avoids HTTP timeouts | ASYNC-01, ASYNC-02 | Not started |
+| 9 | Database + Async Analysis | PostgreSQL sessions + non-blocking analysis | DB-01..04, ASYNC-01..02 | Not started |
+| 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Not started |
+| 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Not started |
+| 12 | Workspace Isolation | Per-user sessions, file paths, storage config | WORK-01..04, CONF-02 | Not started |
+| 13 | Containerization + Railway | Docker, env-var config, Railway deployment | DOCK-01..04, CONF-04, RAIL-01..04 | Not started |
+
+**Execution Order:** 9 and 10 can run in parallel. 11 requires both 9 and 10. 12 requires 9, 10, and 11. 13 requires all prior phases.
 
 ---
 
-### Phase 9: Containerization
+### Phase 9: Database + Async Analysis
 
-**Goal**: Both services build and run as Docker containers with all configuration driven by environment variables, while local development works exactly as before.
+**Goal**: Sessions persist in PostgreSQL across server restarts, and analysis runs as a non-blocking background job so Railway's HTTP timeout cannot kill it.
 
-**Depends on**: v1.0 complete (Phases 5-8)
-**Requirements**: DOCK-01, DOCK-02, DOCK-03, DOCK-04, CONF-01, CONF-02, CONF-04
+**Depends on**: v1.0 complete (Phases 8.1)
+**Requirements**: DB-01, DB-02, DB-03, DB-04, ASYNC-01, ASYNC-02
 
 **Success Criteria** (what must be TRUE):
-  1. `docker compose up` starts both services and the app is usable at localhost
-  2. `python run.py` + `npm run dev` still works exactly as before with zero additional configuration
-  3. Backend container uses gunicorn with gthread workers (not the Flask dev server)
-  4. Docker images build in under 5 minutes and do not contain node_modules, .git, or data directories
+  1. User can close and reopen the app and their session is still there (data survived server restart)
+  2. Starting analysis returns immediately — the UI shows a job ID and polls for progress without holding an HTTP connection open
+  3. A 50+ page document completes analysis without being killed by an HTTP timeout
+  4. Database schema can be upgraded via `flask db upgrade` without data loss
 
 **Plans**: TBD
 
 ---
 
-### Phase 10: API Routing Migration
+### Phase 10: Clerk Frontend Auth
 
-**Goal**: Frontend uses Next.js proxy.ts for all API routing, reading the backend URL from an environment variable at runtime, eliminating the standalone-mode rewrites bug.
+**Goal**: Users can sign up, log in (email/password + Google + Microsoft OAuth), enable MFA, and are redirected to sign-in when not authenticated. User identity appears in the app header.
 
-**Depends on**: Phase 9
-**Requirements**: PROX-01, PROX-02, CONF-03
+**Depends on**: v1.0 complete (can develop in parallel with Phase 9)
+**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06, AUTH-07, AUTH-08, PROT-02
 
 **Success Criteria** (what must be TRUE):
-  1. All API calls from the frontend go through proxy.ts (no rewrites() in next.config.ts)
-  2. `npm run dev` routes API calls to localhost:5000 with no env vars set (default fallback)
-  3. Setting `BACKEND_URL` env var changes where API calls are routed without rebuilding the frontend
+  1. User can create an account with email and password, receive a verification email, and only access the app after verifying
+  2. User can log in with Google OAuth or Microsoft OAuth in one click
+  3. User can enable TOTP-based MFA on their account from account settings
+  4. User can log out and all browser sessions are terminated
+  5. Unauthenticated users who visit any app URL are redirected to the sign-in page
 
 **Plans**: TBD
 
 ---
 
-### Phase 11: Session Resilience
+### Phase 11: Flask Auth Middleware + API Token Forwarding
 
-**Goal**: Sessions persist across server restarts by auto-loading from disk when not found in memory, with optimized serialization that excludes large parsed document objects.
+**Goal**: Every Flask API endpoint verifies a Clerk JWT on every request. The Next.js frontend automatically injects auth tokens into API calls. CORS is env-var-driven, not hardcoded.
 
-**Depends on**: Phase 9 (containers must exist to test restart behavior)
-**Requirements**: SESS-01, SESS-02
+**Depends on**: Phase 9 (user records storable in PostgreSQL), Phase 10 (Clerk JWT format known)
+**Requirements**: PROT-01, PROT-03, CONF-01, CONF-03
 
 **Success Criteria** (what must be TRUE):
-  1. User can restart the backend server and resume their session without re-uploading documents
-  2. Session JSON files on disk do not contain parsed_doc or parsed_precedent (keeping file sizes small)
-  3. Large objects (parsed_doc, parsed_precedent) are re-derived from source files on session reload
+  1. Any API call without a valid Clerk JWT receives a 401 response — no exceptions, no missed endpoints
+  2. A logged-in user's API calls succeed without any manual token handling in the frontend
+  3. CORS allowed origins are changed by setting an environment variable (no code change or rebuild required)
+  4. The backend URL used by the frontend is changed by setting an environment variable (no rebuild required)
 
 **Plans**: TBD
 
 ---
 
-### Phase 12: Railway Deployment
+### Phase 12: Workspace Isolation + Storage Config
 
-**Goal**: The app runs on Railway as two services with persistent storage, health checks, and automatic restarts.
+**Goal**: Each authenticated user sees only their own sessions and documents. Session lookups filter by user_id. Uploaded files live in user-scoped directories. Data directory is env-var configurable.
 
-**Depends on**: Phase 10 (proxy.ts required for standalone mode), Phase 11 (session resilience required for deploy restarts)
-**Requirements**: RAIL-01, RAIL-02, RAIL-03
+**Depends on**: Phase 9 (PostgreSQL session storage), Phase 10 (user identity), Phase 11 (g.clerk_user_id in Flask)
+**Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, CONF-02
 
 **Success Criteria** (what must be TRUE):
-  1. Frontend is accessible at a public Railway URL and API calls reach the Flask backend via private networking
-  2. Uploaded documents and session data survive a Railway redeploy
-  3. `/api/version` returns git commit info from environment variables (not from .git directory)
-  4. Health check endpoints respond correctly and Railway auto-restarts crashed services
+  1. Logged-in user A cannot access, view, or retrieve any session or document belonging to user B — even by guessing a session ID
+  2. Uploaded documents are stored in a path that includes the user's ID, enforcing filesystem-level isolation
+  3. Deleting a session removes both the database record and the associated files from disk
+  4. The data directory location is changed by setting DATA_DIR environment variable (no code change required)
 
 **Plans**: TBD
 
 ---
 
-### Phase 13: Background Analysis
+### Phase 13: Containerization + Railway Deployment
 
-**Goal**: Analysis endpoints return immediately with a job ID and process in a background thread, avoiding Railway's 15-minute HTTP timeout for large documents.
+**Goal**: Both services run in Docker containers configurable entirely by environment variables. The app is deployed and running on Railway with persistent file storage, health checks, and local development unchanged.
 
-**Depends on**: Phase 12 (only needed in deployed environment; Railway timeout is the trigger)
-**Requirements**: ASYNC-01, ASYNC-02
+**Depends on**: Phases 9, 10, 11, 12 (all functional components complete and locally tested)
+**Requirements**: DOCK-01, DOCK-02, DOCK-03, DOCK-04, CONF-04, RAIL-01, RAIL-02, RAIL-03, RAIL-04
 
 **Success Criteria** (what must be TRUE):
-  1. Analysis request returns immediately with a job ID (no HTTP connection held open for minutes)
-  2. Frontend polls for analysis progress and displays incremental status updates
-  3. A 50+ page document completes analysis without being killed by HTTP timeout
-  4. Existing local development workflow (which does not hit the timeout) still works unchanged
+  1. `docker compose up` starts both services and the full app is usable at localhost with no additional configuration
+  2. `python run.py` + `npm run dev` still works exactly as before — zero configuration changes for local development
+  3. The app is accessible at a public Railway URL, authenticated users can log in, upload documents, and run analysis
+  4. Uploaded documents and session data survive a Railway redeploy (persistent volume confirmed)
+  5. `/api/version` returns git commit information from environment variables (no .git directory required in container)
 
 **Plans**: TBD
 
@@ -261,31 +267,47 @@ Plans:
 
 | Requirement | Phase | Description |
 |-------------|-------|-------------|
-| DOCK-01 | Phase 9 | Backend Docker container with gunicorn gthread |
-| DOCK-02 | Phase 9 | Frontend Docker container with standalone output |
-| DOCK-03 | Phase 9 | docker-compose.yml for local integration testing |
-| DOCK-04 | Phase 9 | .dockerignore files prevent bloat |
-| CONF-01 | Phase 9 | CORS origins configurable via env var |
-| CONF-02 | Phase 9 | Data directory configurable via env var |
-| CONF-03 | Phase 10 | Backend URL configurable in frontend via env var |
-| CONF-04 | Phase 9 | Local dev workflow works unchanged |
-| PROX-01 | Phase 10 | Frontend uses proxy.ts instead of rewrites() |
-| PROX-02 | Phase 10 | proxy.ts reads backend URL from env var |
-| SESS-01 | Phase 11 | Sessions auto-load from disk on miss |
-| SESS-02 | Phase 11 | Large objects excluded from session JSON |
-| RAIL-01 | Phase 12 | railway.toml with health checks and restart policy |
-| RAIL-02 | Phase 12 | Persistent volume for sessions and uploads |
-| RAIL-03 | Phase 12 | Version endpoint via env vars |
-| ASYNC-01 | Phase 13 | Analysis returns immediately with job ID |
-| ASYNC-02 | Phase 13 | Background thread with progress polling |
+| DB-01 | Phase 9 | PostgreSQL stores user accounts and session metadata |
+| DB-02 | Phase 9 | Session metadata persists across server restarts |
+| DB-03 | Phase 9 | Large blobs on filesystem, not in database |
+| DB-04 | Phase 9 | Schema managed via migrations (Flask-Migrate/Alembic) |
+| ASYNC-01 | Phase 9 | Analysis endpoints return immediately with job ID |
+| ASYNC-02 | Phase 9 | Analysis runs in background thread with progress polling |
+| AUTH-01 | Phase 10 | User can sign up with email and password |
+| AUTH-02 | Phase 10 | User receives email verification after signup |
+| AUTH-03 | Phase 10 | User can reset password via email link |
+| AUTH-04 | Phase 10 | User can log in with Google OAuth |
+| AUTH-05 | Phase 10 | User can log in with Microsoft OAuth |
+| AUTH-06 | Phase 10 | User can enable MFA (TOTP/authenticator app) |
+| AUTH-07 | Phase 10 | User can log out (including all devices) |
+| AUTH-08 | Phase 10 | User session persists across browser close/reopen |
+| PROT-02 | Phase 10 | Frontend redirects unauthenticated users to sign-in |
+| PROT-01 | Phase 11 | All /api/* endpoints return 401 without valid auth token |
+| PROT-03 | Phase 11 | Flask verifies Clerk JWT on every API request via Blueprint middleware |
+| CONF-01 | Phase 11 | CORS origins configurable via CORS_ORIGINS env var |
+| CONF-03 | Phase 11 | Backend URL configurable in frontend via env var |
+| WORK-01 | Phase 12 | User can only see and access their own sessions/projects |
+| WORK-02 | Phase 12 | Session lookup requires both session_id and user_id |
+| WORK-03 | Phase 12 | Uploaded documents stored in user-scoped file paths |
+| WORK-04 | Phase 12 | Deleting a session removes associated files from disk |
+| CONF-02 | Phase 12 | Data directory configurable via DATA_DIR env var |
+| DOCK-01 | Phase 13 | Backend runs in Docker container with gunicorn gthread workers |
+| DOCK-02 | Phase 13 | Frontend runs in Docker container with Next.js standalone output |
+| DOCK-03 | Phase 13 | docker-compose.yml enables local integration testing |
+| DOCK-04 | Phase 13 | .dockerignore files prevent bloat |
+| CONF-04 | Phase 13 | Local development workflow works unchanged |
+| RAIL-01 | Phase 13 | railway.toml config files with health checks and restart policy |
+| RAIL-02 | Phase 13 | Backend uses persistent volume for uploads and session files |
+| RAIL-03 | Phase 13 | Version endpoint provides git info via env vars |
+| RAIL-04 | Phase 13 | Railway PostgreSQL plugin configured with DATABASE_URL auto-injection |
 
-**Coverage: 17/17 v1.1 requirements mapped. No orphans.**
+**Coverage: 33/33 v1.1 requirements mapped. No orphans.**
 
 ---
 
 ## Progress
 
-**Execution Order:** 9 -> 10 -> 11 -> 12 -> 13
+**Execution Order:** 9 and 10 in parallel → 11 → 12 → 13
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -301,14 +323,15 @@ Plans:
 | 7. Polish | v1.0 | 0/5 | Not started | - |
 | 8. Cleanup | v1.0 | 2/2 | Complete | 2026-02-13 |
 | 8.1 Doc Sync + Verify | v1.0 | 0/3 | Not started | - |
-| 9. Containerization | v1.1 | 0/? | Not started | - |
-| 10. API Routing | v1.1 | 0/? | Not started | - |
-| 11. Session Resilience | v1.1 | 0/? | Not started | - |
-| 12. Railway Deploy | v1.1 | 0/? | Not started | - |
-| 13. Background Analysis | v1.1 | 0/? | Not started | - |
+| 9. DB + Async Analysis | v1.1 | 0/? | Not started | - |
+| 10. Clerk Frontend Auth | v1.1 | 0/? | Not started | - |
+| 11. Flask Auth Middleware | v1.1 | 0/? | Not started | - |
+| 12. Workspace Isolation | v1.1 | 0/? | Not started | - |
+| 13. Containerization + Railway | v1.1 | 0/? | Not started | - |
 
 ---
 
 _Roadmap created: 2026-02-01_
 _Unified: 2026-02-07 (consolidated GSD + Next.js migration into single roadmap)_
 _v1.1 milestone added: 2026-02-11_
+_v1.1 expanded: 2026-02-18 (Users and Deployment — auth + PostgreSQL + workspace isolation + deployment)_
