@@ -26,6 +26,8 @@ import type {
   ReanalyzeResponse,
   FlagRequest,
   FlagResponse,
+  UpdateFlagRequest,
+  UpdateFlagResponse,
   UnflagRequest,
   UnflagResponse,
   FinalizeRequest,
@@ -256,6 +258,14 @@ export async function reanalyze(data: ReanalyzeRequest): Promise<ReanalyzeRespon
 
 export async function flagItem(data: FlagRequest): Promise<FlagResponse> {
   return request('/api/flag', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateFlag(data: UpdateFlagRequest): Promise<UpdateFlagResponse> {
+  return request('/api/flag/update', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

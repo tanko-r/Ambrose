@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FlagBubble } from "@/components/review/flag-bubble";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useDelayedLoading } from "@/hooks/use-delayed-loading";
+import { calculateConnectorPath } from "@/lib/utils/connector";
 import { Flag as FlagIcon, FileText } from "lucide-react";
 
 interface DocumentViewerProps {
@@ -38,8 +39,8 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
   const risks = useAppStore((s) => s.risks);
   const hoveredRiskId = useAppStore((s) => s.hoveredRiskId);
   const focusedRiskId = useAppStore((s) => s.focusedRiskId);
-  const focusedFlagParaId = useAppStore((s) => s.focusedFlagParaId);
-  const setFocusedFlagParaId = useAppStore((s) => s.setFocusedFlagParaId);
+  const focusedFlagId = useAppStore((s) => s.focusedFlagId);
+  const setFocusedFlagId = useAppStore((s) => s.setFocusedFlagId);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const originalHtmlCache = useRef<Map<string, string>>(new Map());
@@ -95,8 +96,9 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
       // Risk state
       const hasRisk = riskParaIds.has(paraId);
-      if (el.classList.contains("has-risk") !== hasRisk) {
-        el.classList.toggle("has-risk", hasRisk);
+      const showRisk = hasRisk && isSelected;
+      if (el.classList.contains("has-risk") !== showRisk) {
+        el.classList.toggle("has-risk", showRisk);
       }
 
       // Revision state
@@ -224,6 +226,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     if (bubbleContext && !flags.some(f => f.para_id === bubbleContext.paraId)) {
         // Mock a flag for the one being created
         allFlagsToHighlight.push({
+            id: `temp-${bubbleContext.paraId}`,
             para_id: bubbleContext.paraId,
             text_excerpt: bubbleContext.textExcerpt,
             note: '',
@@ -237,7 +240,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       const paraEl = container.querySelector(`[data-para-id="${flag.para_id}"]`);
       if (!paraEl || paraEl.classList.contains("showing-diff")) return;
 
-      const isFocused = flag.para_id === focusedFlagParaId || (bubbleContext?.paraId === flag.para_id);
+      const isFocused = flag.id === focusedFlagId || (bubbleContext?.paraId === flag.para_id);
       const textContent = flag.text_excerpt;
       if (!textContent) return;
 
@@ -249,6 +252,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
           const markEl = document.createElement("mark");
           markEl.className = isFocused ? "flag-highlight-active" : "flag-highlight-unfocused";
           markEl.textContent = textContent;
+          markEl.setAttribute('data-flag-id', flag.id);
 
           const before = node.textContent.substring(0, idx);
           const after = node.textContent.substring(idx + textContent.length);
@@ -262,7 +266,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
         }
       }
     });
-  }, [flags, focusedFlagParaId, bubbleContext]);
+  }, [flags, focusedFlagId, bubbleContext]);
 
   // Update connector line
   const updateConnector = useCallback(() => {
@@ -288,8 +292,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     const endX = bubbleContext.anchorRect.right - cRect.left;
     const endY = bubbleContext.anchorRect.top - cRect.top;
 
-    // Simple line with a slight curve toward the end point
-    setConnectorPath(`M ${startX} ${startY} L ${endX} ${endY}`);
+    setConnectorPath(calculateConnectorPath(startX, startY, endX, endY));
   }, [bubbleContext]);
 
   // Restore browser selection after React re-renders
@@ -331,20 +334,23 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
         updateConnector();
       });
     }
-  }, [documentHtml, highlightFlags, updateConnector]);
+  }, [documentHtml, highlightFlags, updateConnector, focusedFlagId]);
 
   // Effect: Update connector on scroll/resize
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const handleScroll = () => requestAnimationFrame(updateConnector);
-    container.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleScroll);
+    const scrollParent = container.parentElement;
+    if (!scrollParent) return;
+
+    const handleUpdate = () => requestAnimationFrame(updateConnector);
+    scrollParent.addEventListener("scroll", handleUpdate);
+    window.addEventListener("resize", handleUpdate);
 
     return () => {
-      container.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
+      scrollParent.removeEventListener("scroll", handleUpdate);
+      window.removeEventListener("resize", handleUpdate);
     };
   }, [updateConnector]);
 
@@ -360,12 +366,12 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     }
   }, [selectedParaId]);
 
-  // Effect: Sync bubble context with focusedFlagParaId
+  // Effect: Sync bubble context with focusedFlagId
   useEffect(() => {
-    if (focusedFlagParaId && containerRef.current) {
-        const flag = flags.find(f => f.para_id === focusedFlagParaId);
+    if (focusedFlagId && containerRef.current) {
+        const flag = flags.find(f => f.id === focusedFlagId);
         if (flag) {
-            const paraEl = containerRef.current.querySelector(`[data-para-id="${focusedFlagParaId}"]`);
+            const paraEl = containerRef.current.querySelector(`[data-para-id="${flag.para_id}"]`);
             if (paraEl) {
                 const pRect = paraEl.getBoundingClientRect();
                 const cRect = containerRef.current.getBoundingClientRect();
@@ -382,7 +388,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
     } else if (!selectionContext) {
         setBubbleContext(null);
     }
-  }, [focusedFlagParaId, flags]);
+  }, [focusedFlagId, flags]);
 
   // Effect: Main event handlers
   useEffect(() => {
@@ -391,6 +397,22 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
     const handleContainerClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      
+      // Check if clicking a flag highlight
+      const flagMark = target.closest<HTMLElement>('mark[data-flag-id]');
+      if (flagMark) {
+          const flagId = flagMark.getAttribute('data-flag-id');
+          if (flagId) {
+              setFocusedFlagId(flagId);
+              const paraEl = flagMark.closest<HTMLElement>("[data-para-id]");
+              if (paraEl) {
+                  const paraId = paraEl.getAttribute("data-para-id");
+                  if (paraId) selectParagraph(paraId);
+              }
+              return;
+          }
+      }
+
       const paraEl = target.closest<HTMLElement>("[data-para-id]");
       if (!paraEl || !container.contains(paraEl)) return;
 
@@ -406,7 +428,9 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
       const rect = paraEl.getBoundingClientRect();
       const clickX = e.clientX;
       if (paraEl.classList.contains("flagged") && clickX > rect.right - 30) {
-        setFocusedFlagParaId(paraId);
+        // If multiple flags, we'll just focus the first one for now
+        const firstFlag = flags.find(f => f.para_id === paraId);
+        if (firstFlag) setFocusedFlagId(firstFlag.id);
         selectParagraph(paraId);
         return;
       }
@@ -459,29 +483,43 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
       savedRangeRef.current = null;
       setSelectionContext(null);
-      setFocusedFlagParaId(null);
+      setFocusedFlagId(null);
     }
 
-    function handleKeyDown(e: KeyboardEvent) {
+    function handleDocumentKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         savedRangeRef.current = null;
         setSelectionContext(null);
-        setFocusedFlagParaId(null);
+        setFocusedFlagId(null);
+      }
+    }
+
+    function handleContainerKeyDown(e: KeyboardEvent) {
+      if (e.key === "Enter" || e.key === " ") {
+        const target = e.target as HTMLElement;
+        const paraEl = target.closest<HTMLElement>("[data-para-id]");
+        if (paraEl && container!.contains(paraEl)) {
+          e.preventDefault();
+          const paraId = paraEl.getAttribute("data-para-id");
+          if (paraId) selectParagraph(paraId);
+        }
       }
     }
 
     container.addEventListener("click", handleContainerClick);
     container.addEventListener("mouseup", handleMouseUp);
+    container.addEventListener("keydown", handleContainerKeyDown);
     document.addEventListener("mousedown", handleMouseDown);
-    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleDocumentKeyDown);
 
     return () => {
       container.removeEventListener("click", handleContainerClick);
       container.removeEventListener("mouseup", handleMouseUp);
+      container.removeEventListener("keydown", handleContainerKeyDown);
       document.removeEventListener("mousedown", handleMouseDown);
-      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleDocumentKeyDown);
     };
-  }, [documentHtml, selectParagraph, setFocusedFlagParaId]);
+  }, [documentHtml, selectParagraph, setFocusedFlagId, flags]);
 
   const handleSelectionFlag = useCallback(() => {
     if (!selectionContext) return;
@@ -542,6 +580,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
 
             {bubbleContext && (
               <FlagBubble
+                key={focusedFlagId || 'new-flag'}
                 paraId={bubbleContext.paraId}
                 textExcerpt={bubbleContext.textExcerpt}
                 anchorRect={bubbleContext.anchorRect}
@@ -550,7 +589,7 @@ export function DocumentViewer({ loading }: DocumentViewerProps) {
                   savedRangeRef.current = null;
                   window.getSelection()?.removeAllRanges();
                   setBubbleContext(null);
-                  setFocusedFlagParaId(null);
+                  setFocusedFlagId(null);
                 }}
               />
             )}

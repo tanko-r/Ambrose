@@ -57,6 +57,7 @@ export function useDocument(sessionId: string | null) {
       setSession({
         targetFilename: doc.filename,
         hasPrecedent: doc.has_precedent ?? false,
+        status: (doc.status as 'initialized' | 'analyzing' | 'analyzed' | 'finalized' | null) ?? null,
       });
 
       // Load flags and revisions from document response

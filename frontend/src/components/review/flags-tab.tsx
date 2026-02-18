@@ -40,11 +40,11 @@ function FlagCard({
   onClickSection,
 }: {
   flag: Flag;
-  onRemove: (paraId: string) => void;
+  onRemove: (flagId: string) => void;
   onEdit?: (flag: Flag) => void;
   onClickSection?: (paraId: string) => void;
 }) {
-  const setFocusedFlagParaId = useAppStore((s) => s.setFocusedFlagParaId);
+  const setFocusedFlagId = useAppStore((s) => s.setFocusedFlagId);
   const isAttorney = flag.flag_type === "attorney";
   const categoryLabel = isAttorney
     ? "Attorney"
@@ -60,8 +60,8 @@ function FlagCard({
     <div
       className="group relative cursor-pointer rounded-lg border p-3 transition-colors hover:bg-accent/30"
       onClick={() => onClickSection?.(flag.para_id)}
-      onMouseEnter={() => setFocusedFlagParaId(flag.para_id)}
-      onMouseLeave={() => setFocusedFlagParaId(null)}
+      onMouseEnter={() => setFocusedFlagId(flag.id)}
+      onMouseLeave={() => setFocusedFlagId(null)}
     >
       {/* Top row: section_ref + category + timestamp */}
       <div className="mb-1.5 flex items-center gap-1.5 pr-12">
@@ -110,7 +110,7 @@ function FlagCard({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onRemove(flag.para_id);
+            onRemove(flag.id);
           }}
           className="rounded p-0.5 text-muted-foreground/50 hover:bg-destructive/10 hover:text-destructive"
           title="Remove flag"
@@ -149,8 +149,8 @@ export function FlagsTab({ paraId }: FlagsTabProps) {
     return { paraFlags: pf, otherFlags: of };
   }, [flags, paraId]);
 
-  const handleRemove = (flagParaId: string) => {
-    remove(flagParaId);
+  const handleRemove = (flagId: string) => {
+    remove(flagId);
   };
 
   const handleClickSection = (flagParaId: string) => {

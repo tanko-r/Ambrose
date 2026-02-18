@@ -79,8 +79,6 @@ interface ReviewState {
 // --- UI State ---
 
 type View = 'dashboard' | 'review';
-type ReviewMode = 'linear' | 'by-risk' | 'by-category';
-
 type SidebarTab = 'risks' | 'related' | 'definitions' | 'flags';
 
 interface UIState {
@@ -89,17 +87,19 @@ interface UIState {
   sidebarOpen: boolean;
   bottomSheetOpen: boolean;
   precedentPanelOpen: boolean;
-  reviewMode: ReviewMode;
+
   compactMode: boolean;
   showRisks: boolean;
   showRevisions: boolean;
   showFlags: boolean;
   hoveredRiskId: string | null;
   focusedRiskId: string | null;
-  focusedFlagParaId: string | null;
+  focusedFlagId: string | null;
   generatingRevision: boolean;
   defaultSidebarTab: SidebarTab;
   navPanelVisibleDefault: boolean;
+  navPanelWidth: number;
+  sidebarWidth: number;
 }
 
 // --- Precedent State ---
@@ -115,9 +115,16 @@ interface PrecedentState {
   precedentScrollTarget: string | null;
 }
 
+// --- Focus History State ---
+
+interface HistoryState {
+  focusHistory: string[];       // Circular buffer of para IDs, max 20
+  focusHistoryIndex: number;    // Current position (-1 = at head)
+}
+
 // --- Combined Store ---
 
-interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewState, UIState, PrecedentState {
+interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewState, UIState, PrecedentState, HistoryState {
   // Session actions
   setSession: (session: Partial<SessionState>) => void;
   resetSession: () => void;
@@ -136,7 +143,8 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   removeRevision: (paraId: string) => void;
   setRevisions: (revisions: Record<string, Revision>) => void;
   addFlag: (flag: Flag) => void;
-  removeFlag: (paraId: string) => void;
+  updateFlag: (flag: Flag) => void;
+  removeFlag: (flagId: string) => void;
   setFlags: (flags: Flag[]) => void;
   setSavedSessions: (sessions: SavedSessionListItem[]) => void;
 
@@ -146,16 +154,22 @@ interface AppStore extends SessionState, DocumentState, AnalysisState, ReviewSta
   toggleSidebar: () => void;
   toggleBottomSheet: () => void;
   togglePrecedentPanel: () => void;
-  setReviewMode: (mode: ReviewMode) => void;
+
+  setNavPanelWidth: (w: number) => void;
+  setSidebarWidth: (w: number) => void;
   toggleCompactMode: () => void;
   toggleShowRisks: () => void;
   toggleShowRevisions: () => void;
   toggleShowFlags: () => void;
   setHoveredRiskId: (riskId: string | null) => void;
   setFocusedRiskId: (riskId: string | null) => void;
-  setFocusedFlagParaId: (paraId: string | null) => void;
+  setFocusedFlagId: (flagId: string | null) => void;
   setGeneratingRevision: (v: boolean) => void;
   setRevisionSheetParaId: (paraId: string | null) => void;
+
+  // History actions
+  goBackInHistory: () => void;
+  goForwardInHistory: () => void;
 
   // Precedent actions
   setLockedParaId: (paraId: string | null) => void;
@@ -217,17 +231,24 @@ const initialUIState: UIState = {
   sidebarOpen: true,
   bottomSheetOpen: false,
   precedentPanelOpen: false,
-  reviewMode: 'linear',
+
   compactMode: false,
   showRisks: true,
   showRevisions: true,
   showFlags: true,
   hoveredRiskId: null,
   focusedRiskId: null,
-  focusedFlagParaId: null,
+  focusedFlagId: null,
   generatingRevision: false,
   defaultSidebarTab: 'risks',
   navPanelVisibleDefault: true,
+  navPanelWidth: 260,
+  sidebarWidth: 380,
+};
+
+const initialHistoryState: HistoryState = {
+  focusHistory: [],
+  focusHistoryIndex: -1,
 };
 
 const initialPrecedentState: PrecedentState = {
@@ -249,18 +270,22 @@ export const useAppStore = create<AppStore>((set) => ({
   ...initialReviewState,
   ...initialUIState,
   ...initialPrecedentState,
+  ...initialHistoryState,
 
   // Session actions
   setSession: (session) => set((state) => ({ ...state, ...session })),
   resetSession: () =>
-    set({
+    set((state) => ({
       ...initialSessionState,
       ...initialDocumentState,
       ...initialAnalysisState,
       ...initialReviewState,
       ...initialPrecedentState,
+      ...initialHistoryState,
       view: 'dashboard',
-    }),
+      // Preserve savedSessions across reset — they are project-level, not session-level
+      savedSessions: state.savedSessions,
+    })),
 
   // Document actions
   setDocument: (doc) => set((state) => ({ ...state, ...doc })),
@@ -276,7 +301,21 @@ export const useAppStore = create<AppStore>((set) => ({
     }),
 
   // Review actions
-  selectParagraph: (paraId) => set({ selectedParaId: paraId }),
+  selectParagraph: (paraId) =>
+    set((state) => {
+      if (!paraId || paraId === state.selectedParaId) return { selectedParaId: paraId };
+      // Truncate future entries when navigating from a mid-history position
+      const history = state.focusHistoryIndex >= 0
+        ? state.focusHistory.slice(0, state.focusHistoryIndex + 1)
+        : [...state.focusHistory];
+      history.push(paraId);
+      if (history.length > 20) history.shift();
+      return {
+        selectedParaId: paraId,
+        focusHistory: history,
+        focusHistoryIndex: -1,
+      };
+    }),
   setRevision: (paraId, revision) =>
     set((state) => ({
       revisions: { ...state.revisions, [paraId]: revision },
@@ -288,9 +327,13 @@ export const useAppStore = create<AppStore>((set) => ({
     }),
   setRevisions: (revisions) => set({ revisions }),
   addFlag: (flag) => set((state) => ({ flags: [...state.flags, flag] })),
-  removeFlag: (paraId) =>
+  updateFlag: (flag) =>
     set((state) => ({
-      flags: state.flags.filter((f) => f.para_id !== paraId),
+      flags: state.flags.map((f) => (f.id === flag.id ? flag : f)),
+    })),
+  removeFlag: (flagId) =>
+    set((state) => ({
+      flags: state.flags.filter((f) => f.id !== flagId),
     })),
   setFlags: (flags) => set({ flags }),
   setSavedSessions: (sessions) => set({ savedSessions: sessions }),
@@ -299,6 +342,8 @@ export const useAppStore = create<AppStore>((set) => ({
   setView: (view) => set({ view }),
   toggleNavPanel: () => set((state) => ({ navPanelOpen: !state.navPanelOpen })),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  setNavPanelWidth: (w) => set({ navPanelWidth: Math.max(180, Math.min(400, w)) }),
+  setSidebarWidth: (w) => set({ sidebarWidth: Math.max(280, Math.min(560, w)) }),
   toggleBottomSheet: () => set((state) => ({ bottomSheetOpen: !state.bottomSheetOpen })),
   togglePrecedentPanel: () =>
     set((state) => {
@@ -309,7 +354,7 @@ export const useAppStore = create<AppStore>((set) => ({
         ...(opening ? {} : { lockedParaId: null, lockedRelatedClauses: null }),
       };
     }),
-  setReviewMode: (mode) => set({ reviewMode: mode }),
+
   toggleCompactMode: () => set((state) => ({ compactMode: !state.compactMode })),
   toggleShowRisks: () => set((state) => ({ showRisks: !state.showRisks })),
   toggleShowRevisions: () => set((state) => ({ showRevisions: !state.showRevisions })),
@@ -319,9 +364,30 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => ({
       focusedRiskId: state.focusedRiskId === riskId ? null : riskId,
     })),
-  setFocusedFlagParaId: (paraId) => set({ focusedFlagParaId: paraId }),
+  setFocusedFlagId: (flagId) => set({ focusedFlagId: flagId }),
   setGeneratingRevision: (v) => set({ generatingRevision: v }),
   setRevisionSheetParaId: (paraId) => set({ revisionSheetParaId: paraId }),
+
+  // History actions
+  goBackInHistory: () =>
+    set((state) => {
+      const { focusHistory, focusHistoryIndex } = state;
+      if (focusHistory.length === 0) return {};
+      const currentPos = focusHistoryIndex === -1 ? focusHistory.length - 1 : focusHistoryIndex;
+      if (currentPos <= 0) return {};
+      const newPos = currentPos - 1;
+      return { selectedParaId: focusHistory[newPos], focusHistoryIndex: newPos };
+    }),
+  goForwardInHistory: () =>
+    set((state) => {
+      const { focusHistory, focusHistoryIndex } = state;
+      if (focusHistoryIndex === -1 || focusHistoryIndex >= focusHistory.length - 1) return {};
+      const newPos = focusHistoryIndex + 1;
+      return {
+        selectedParaId: focusHistory[newPos],
+        focusHistoryIndex: newPos === focusHistory.length - 1 ? -1 : newPos,
+      };
+    }),
 
   // Precedent actions
   setLockedParaId: (paraId) =>

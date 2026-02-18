@@ -1,0 +1,57 @@
+Total messages: 43 (Errors: 6, Warnings: 0)
+Returning 6 messages for level "error"
+
+[ERROR] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+%s%s https://react.dev/link/hydration-mismatch 
+
+  ...
+    <LoadingBoundary name="test-sampl..." loading={null}>
+      <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+        <RedirectBoundary>
+          <RedirectErrorBoundary router={{...}}>
+            <InnerLayoutRouter url="/review/te..." tree={[...]} params={{...}} cacheNode={{rsc:<Fragment>, ...}} ...>
+              <SegmentViewNode type="page" pagePath="review/[se...">
+                <SegmentTrieNode>
+                <ClientPageRoot Component={function ReviewPage} serverProvidedParams={{...}}>
+                  <ReviewPage params={Promise} searchParams={Promise}>
+                    <div className="flex h-scr...">
+                      <Header>
+                        <header className="no-print f...">
+                          <div>
+                          <div className="flex items...">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={function cycleTheme} ...>
+                              <button
+                                data-slot="button"
+                                data-variant="ghost"
+                                data-size="icon"
+                                className={"inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-m..."}
+                                onClick={function cycleTheme}
++                               title="Switch to light mode"
+-                               title="Switch to dark mode"
+                                aria-label="Toggle color theme"
+                              >
+                            ...
+                        ...
+                      ...
+              ...
+            ...
+ @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  ARIA role navigation is not allowed for given element @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Element has insufficient color contrast of 2.37 (foreground color: #a8a8a8, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Element has insufficient color contrast of 4.41 (foreground color: #787878, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1 @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Some page content is not contained by landmarks @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[ERROR] Fix any of the following:
+  Some page content is not contained by landmarks @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127

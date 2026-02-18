@@ -1,0 +1,131 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - button "Open menu" [ref=e4]:
+        - img
+        - generic [ref=e5]: Open menu
+      - heading "Contract Review" [level=1] [ref=e6]
+    - generic [ref=e7]:
+      - button "New" [ref=e8]:
+        - img
+        - text: New
+      - button "User menu" [ref=e9]:
+        - img
+        - generic [ref=e10]: User menu
+  - main [ref=e11]:
+    - generic [ref=e12]:
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - heading "New Contract Review" [level=2] [ref=e16]
+          - paragraph [ref=e17]: Upload your contract and configure the review parameters.
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]: Target Contract *
+            - button "Drop or click to upload" [ref=e21] [cursor=pointer]:
+              - img [ref=e22]
+              - generic [ref=e25]: Drop or click to upload
+          - generic [ref=e26]:
+            - generic [ref=e27]: Precedent (optional)
+            - button "Drop or click to upload" [ref=e28] [cursor=pointer]:
+              - img [ref=e29]
+              - generic [ref=e32]: Drop or click to upload
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - text: Representation
+            - combobox [ref=e35]:
+              - generic: Seller
+              - img
+            - combobox [ref=e36]
+          - generic [ref=e37]:
+            - text: Review Approach
+            - combobox [ref=e38]:
+              - generic: Competitive Bid
+              - img
+            - combobox [ref=e39]
+          - generic [ref=e40]:
+            - generic [ref=e41]:
+              - text: "Intensity:"
+              - generic [ref=e42]: 3 — Balanced
+            - slider [ref=e47]
+        - generic [ref=e48]:
+          - generic [ref=e49]: Deal Context (optional)
+          - textbox "Key deal points, client concerns, special considerations..." [ref=e50]
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - checkbox "Include exhibits" [ref=e53]
+            - text: Include exhibits
+          - generic [ref=e54]:
+            - button "Load Test Data" [ref=e55]:
+              - img
+              - text: Load Test Data
+            - button "Start Review" [disabled]:
+              - img
+              - text: Start Review
+      - complementary [ref=e56]:
+        - generic [ref=e58]:
+          - generic [ref=e59]:
+            - img [ref=e60]
+            - text: Recent Projects
+          - generic [ref=e63]:
+            - generic [ref=e76]:
+              - button "Sample PSA - Seller Side.docx Finalized 16h ago · 11 revisions · 2 flags" [ref=e77]:
+                - img [ref=e78]
+                - generic [ref=e81]:
+                  - generic [ref=e82]:
+                    - generic [ref=e83]: Sample PSA - Seller Side.docx
+                    - generic [ref=e84]: Finalized
+                  - generic [ref=e85]:
+                    - generic [ref=e86]: 16h ago
+                    - generic [ref=e87]: ·
+                    - generic [ref=e88]: 11 revisions
+                    - generic [ref=e89]: ·
+                    - generic [ref=e90]: 2 flags
+              - button "Delete project" [ref=e91]:
+                - img
+            - generic [ref=e92]:
+              - button "Sample PSA - Buyer Side.docx In Progress 18h ago" [ref=e93]:
+                - img [ref=e94]
+                - generic [ref=e97]:
+                  - generic [ref=e98]:
+                    - generic [ref=e99]: Sample PSA - Buyer Side.docx
+                    - generic [ref=e100]: In Progress
+                  - generic [ref=e102]: 18h ago
+              - button "Delete project" [ref=e103]:
+                - img
+            - generic [ref=e104]:
+              - button "Sample PSA - Seller Side.docx In Progress 3d ago" [ref=e105]:
+                - img [ref=e106]
+                - generic [ref=e109]:
+                  - generic [ref=e110]:
+                    - generic [ref=e111]: Sample PSA - Seller Side.docx
+                    - generic [ref=e112]: In Progress
+                  - generic [ref=e114]: 3d ago
+              - button "Delete project" [ref=e115]:
+                - img
+            - generic [ref=e116]:
+              - button "Sample PSA - Seller Side.docx In Progress 4d ago" [ref=e117]:
+                - img [ref=e118]
+                - generic [ref=e121]:
+                  - generic [ref=e122]:
+                    - generic [ref=e123]: Sample PSA - Seller Side.docx
+                    - generic [ref=e124]: In Progress
+                  - generic [ref=e126]: 4d ago
+              - button "Delete project" [ref=e127]:
+                - img
+            - generic [ref=e128]:
+              - button "Sample PSA - Seller Side.docx In Progress 4d ago · 2 flags" [ref=e129]:
+                - img [ref=e130]
+                - generic [ref=e133]:
+                  - generic [ref=e134]:
+                    - generic [ref=e135]: Sample PSA - Seller Side.docx
+                    - generic [ref=e136]: In Progress
+                  - generic [ref=e137]:
+                    - generic [ref=e138]: 4d ago
+                    - generic [ref=e139]: ·
+                    - generic [ref=e140]: 2 flags
+              - button "Delete project" [ref=e141]:
+                - img
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e71] [cursor=pointer]:
+    - img [ref=e72]
+  - alert [ref=e75]

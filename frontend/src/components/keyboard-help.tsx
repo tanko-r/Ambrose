@@ -102,8 +102,41 @@ export function KeyboardHelp({ open, onOpenChange }: KeyboardHelpProps) {
               keys={<Kbd>K</Kbd>}
             />
             <ShortcutRow
-              label="Close / Dismiss"
+              label="Go Back (History)"
+              keys={
+                <>
+                  <Kbd>Alt</Kbd>
+                  <span className="text-xs text-muted-foreground">+</span>
+                  <Kbd>&larr;</Kbd>
+                </>
+              }
+            />
+            <ShortcutRow
+              label="Go Forward (History)"
+              keys={
+                <>
+                  <Kbd>Alt</Kbd>
+                  <span className="text-xs text-muted-foreground">+</span>
+                  <Kbd>&rarr;</Kbd>
+                </>
+              }
+            />
+            <ShortcutRow
+              label="Close Active Panel or Dismiss"
               keys={<Kbd>Esc</Kbd>}
+            />
+          </ShortcutSection>
+
+          <ShortcutSection title="Document">
+            <ShortcutRow
+              label="Activate Paragraph"
+              keys={
+                <>
+                  <Kbd>Enter</Kbd>
+                  <span className="text-xs text-muted-foreground mx-0.5">or</span>
+                  <Kbd>Space</Kbd>
+                </>
+              }
             />
           </ShortcutSection>
 
@@ -117,7 +150,7 @@ export function KeyboardHelp({ open, onOpenChange }: KeyboardHelpProps) {
               keys={<Kbd>G</Kbd>}
             />
             <ShortcutRow
-              label="Toggle Revision Sheet"
+              label="Toggle Revision Sheet (Bottom Panel)"
               keys={
                 <>
                   <Kbd>{mod}</Kbd>

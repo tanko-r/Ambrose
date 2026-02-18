@@ -20,7 +20,6 @@ import {
   BookOpen,
   Flag,
   Eye,
-  Loader2,
   Square,
   X,
   Info,
@@ -33,40 +32,6 @@ import { RelatedClausesTab } from "./related-clauses-tab";
 import { FlagsTab } from "./flags-tab";
 import { FlagDialog } from "@/components/dialogs/flag-dialog";
 
-const GENERATING_VERBS = [
-  "Analyzing risk exposure",
-  "Reviewing clause structure",
-  "Drafting protective language",
-  "Cross-referencing provisions",
-  "Evaluating counterparty position",
-  "Identifying negotiation leverage",
-  "Assessing materiality threshold",
-  "Checking defined terms",
-  "Calibrating revision scope",
-  "Preparing redline markup",
-];
-
-function useRotatingVerb(active: boolean) {
-  const [index, setIndex] = useState(0);
-  const [fading, setFading] = useState(false);
-
-  useEffect(() => {
-    if (!active) {
-      setIndex(0);
-      return;
-    }
-    const id = setInterval(() => {
-      setFading(true);
-      setTimeout(() => {
-        setIndex((i) => (i + 1) % GENERATING_VERBS.length);
-        setFading(false);
-      }, 200);
-    }, 2400);
-    return () => clearInterval(id);
-  }, [active]);
-
-  return { verb: GENERATING_VERBS[index], fading };
-}
 
 type SidebarTab = "risks" | "related" | "definitions" | "flags";
 
@@ -93,7 +58,11 @@ const TABS: { value: SidebarTab; label: string; icon: React.ReactNode }[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  width?: number;
+}
+
+export function Sidebar({ width = 380 }: SidebarProps) {
   const {
     sessionId,
     selectedParaId,
@@ -110,7 +79,7 @@ export function Sidebar() {
   const removePrecedentSnippet = useAppStore((s) => s.removePrecedentSnippet);
 
   const flags = useAppStore((s) => s.flags);
-  const setFocusedFlagParaId = useAppStore((s) => s.setFocusedFlagParaId);
+  const setFocusedFlagId = useAppStore((s) => s.setFocusedFlagId);
 
   const [activeTab, setActiveTab] = useState<SidebarTab>("risks");
   const [flagDialogOpen, setFlagDialogOpen] = useState(false);
@@ -121,7 +90,6 @@ export function Sidebar() {
   // Revision hook and ref for collecting included risk IDs
   const { generate, generating, stopGeneration } = useRevision();
   const getIncludedRiskIdsRef = useRef<(() => string[]) | null>(null);
-  const { verb: generatingVerb, fading: verbFading } = useRotatingVerb(generating);
 
   // Revision state for current paragraph
   const revisions = useAppStore((s) => s.revisions);
@@ -169,24 +137,19 @@ export function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="min-w-0">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Clause Analysis
-          </div>
           {selectedPara ? (
-            <div className="mt-1 flex items-center gap-2">
+            <>
               {selectedPara.section_ref && (
-                <Badge
-                  variant="secondary"
-                  className="shrink-0 text-[10px] px-1.5 py-0 font-semibold text-primary"
-                >
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {selectedPara.section_ref}
-                </Badge>
+                </div>
               )}
-              <span className="truncate text-sm font-semibold">
-                {selectedPara.section_hierarchy?.at(-1)?.caption ||
-                  selectedPara.text.slice(0, 40)}
-              </span>
-            </div>
+              <div className={`text-sm font-semibold leading-snug ${selectedPara.section_ref ? "mt-0.5" : ""}`}>
+                {selectedPara.caption ||
+                  selectedPara.section_hierarchy?.at(-1)?.caption ||
+                  selectedPara.text.slice(0, 60)}
+              </div>
+            </>
           ) : (
             <div className="mt-1 text-sm text-muted-foreground">
               Select a clause
@@ -205,13 +168,43 @@ export function Sidebar() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b bg-secondary/50 px-1" role="tablist" aria-label="Clause analysis tabs">
-        {TABS.map((tab) => (
+      <div
+        className="flex border-b bg-secondary/50 px-1"
+        role="tablist"
+        aria-label="Clause analysis tabs"
+        onKeyDown={(e) => {
+          const currentIdx = TABS.findIndex((t) => t.value === activeTab);
+          let newIdx = currentIdx;
+
+          if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+            e.preventDefault();
+            newIdx = currentIdx <= 0 ? TABS.length - 1 : currentIdx - 1;
+          } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+            e.preventDefault();
+            newIdx = currentIdx >= TABS.length - 1 ? 0 : currentIdx + 1;
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            newIdx = 0;
+          } else if (e.key === "End") {
+            e.preventDefault();
+            newIdx = TABS.length - 1;
+          }
+
+          if (newIdx !== currentIdx) {
+            setActiveTab(TABS[newIdx].value);
+            // Focus the new tab button
+            const tabButtons = e.currentTarget.querySelectorAll('button[role="tab"]');
+            (tabButtons[newIdx] as HTMLButtonElement)?.focus();
+          }
+        }}
+      >
+        {TABS.map((tab, idx) => (
           <button
             key={tab.value}
             role="tab"
             aria-selected={activeTab === tab.value}
             aria-controls={`tabpanel-${tab.value}`}
+            tabIndex={activeTab === tab.value ? 0 : -1}
             onClick={() => setActiveTab(tab.value)}
             className={`flex flex-1 items-center justify-center gap-1.5 border-b-2 px-2 py-2.5 text-[10px] font-semibold uppercase tracking-wider transition-colors ${
               activeTab === tab.value
@@ -259,7 +252,7 @@ export function Sidebar() {
               // If already flagged, just focus it
               const existingFlag = flags.find(f => f.para_id === selectedParaId);
               if (existingFlag) {
-                setFocusedFlagParaId(selectedParaId);
+                setFocusedFlagId(existingFlag.id);
                 return;
               }
               setFlagDialogParaId(selectedParaId);
@@ -368,27 +361,20 @@ export function Sidebar() {
                 </Button>
               )}
               {generating ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                    <span
-                      className="transition-opacity duration-200"
-                      style={{ opacity: verbFading ? 0 : 1 }}
-                    >
-                      {generatingVerb}...
-                    </span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={stopGeneration}
-                    aria-label="Stop generating revision"
-                  >
-                    <Square className="size-3 fill-current" />
-                    Stop
-                  </Button>
-                </div>
+                <button
+                  onClick={stopGeneration}
+                  aria-label="Stop generating revision"
+                  className="flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs text-muted-foreground animate-in fade-in duration-300 hover:bg-muted"
+                >
+                  <span className="relative flex h-4 w-4 items-center justify-center">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
+                      <path d="M14.5 8a6.5 6.5 0 0 0-6.5-6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                    <Square className="absolute h-1.5 w-1.5 fill-current" />
+                  </span>
+                  Generating…
+                </button>
               ) : (
                 <Button
                   size="sm"
@@ -444,7 +430,7 @@ export function Sidebar() {
           className="fixed inset-0 z-30 bg-black/10"
           onClick={toggleSidebar}
         />
-        <aside role="complementary" aria-label="Analysis sidebar" className="fixed top-14 right-0 bottom-0 z-40 flex w-[380px] flex-col border-l bg-card shadow-[-8px_0_24px_rgba(0,0,0,0.12)]">
+        <aside role="complementary" aria-label="Analysis sidebar" className="fixed top-14 right-0 bottom-0 z-40 flex flex-col border-l bg-muted/70 shadow-[-8px_0_24px_rgba(0,0,0,0.12)]" style={{ width }}>
           {sidebarContent}
         </aside>
       </>
@@ -458,7 +444,7 @@ export function Sidebar() {
       {!sidebarOpen && (
         <button
           onClick={toggleSidebar}
-          className="fixed right-0 top-1/2 z-40 -translate-y-1/2 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
+          className="fixed right-0 top-[64px] z-40 rounded-l-lg border border-r-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
           aria-label="Open sidebar"
         >
           <PanelRightOpen className="h-4 w-4 text-muted-foreground" />
@@ -467,10 +453,10 @@ export function Sidebar() {
 
       {/* Animated sidebar */}
       <div
-        className="shrink-0 overflow-hidden border-l bg-card shadow-sm transition-[width] duration-200 ease-out"
-        style={{ width: sidebarOpen ? 380 : 0 }}
+        className="shrink-0 overflow-hidden border-l bg-muted/70 shadow-sm"
+        style={{ width: sidebarOpen ? width : 0 }}
       >
-        <aside role="complementary" aria-label="Analysis sidebar" className="flex h-full w-[380px] flex-col">
+        <aside role="complementary" aria-label="Analysis sidebar" className="flex h-full flex-col" style={{ width }}>
           {sidebarContent}
         </aside>
       </div>

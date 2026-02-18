@@ -7,7 +7,7 @@ import type { FlagCategory, FlagType, Flag } from "@/lib/types";
 import { FLAG_CATEGORY_LABELS } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, Trash2 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Category pill colors (compact version)
@@ -66,7 +66,7 @@ export function FlagBubble({
   onClose,
   initialFlag,
 }: FlagBubbleProps) {
-  const { create } = useFlags();
+  const { create, update, remove } = useFlags();
   const bubbleRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -74,11 +74,61 @@ export function FlagBubble({
   const [category, setCategory] = useState<FlagCategory>(initialFlag?.category ?? "for-discussion");
   const [note, setNote] = useState(initialFlag?.note ?? "");
   const [saving, setSaving] = useState(false);
+  const [localFlagId, setLocalFlagId] = useState<string | null>(initialFlag?.id ?? null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // SSR guard — only render portal after mount
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-save logic
+  useEffect(() => {
+    if (!mounted) return;
+
+    // Don't auto-save if values haven't changed from initial/local
+    // (This check needs to be careful about new flags)
+    const isNew = !localFlagId;
+    
+    if (!isNew && initialFlag && note === initialFlag.note && category === initialFlag.category && flagType === initialFlag.flag_type) {
+        return;
+    }
+
+    // Don't auto-save if note is empty for a NEW flag
+    if (isNew && !note.trim()) {
+        return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSaveStatus('saving');
+      try {
+        if (localFlagId) {
+          await update(localFlagId, {
+            note,
+            category: flagType === "client" ? category : undefined,
+            flagType,
+          });
+        } else {
+          const newFlag = await create(
+            paraId,
+            flagType,
+            flagType === "client" ? category : undefined,
+            note,
+            textExcerpt
+          );
+          if (newFlag) {
+            setLocalFlagId(newFlag.id);
+          }
+        }
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (err) {
+        setSaveStatus('error');
+      }
+    }, 1000); // 1s debounce for auto-save
+
+    return () => clearTimeout(timer);
+  }, [note, category, flagType, localFlagId, initialFlag, mounted, update, create, paraId, textExcerpt]);
 
   // Close on Escape
   useEffect(() => {
@@ -114,13 +164,21 @@ export function FlagBubble({
   const handleSubmit = async () => {
     setSaving(true);
     try {
-      await create(
-        paraId,
-        flagType,
-        flagType === "client" ? category : undefined,
-        note,
-        textExcerpt
-      );
+      if (localFlagId) {
+        await update(localFlagId, {
+          note,
+          category: flagType === "client" ? category : undefined,
+          flagType,
+        });
+      } else {
+        await create(
+          paraId,
+          flagType,
+          flagType === "client" ? category : undefined,
+          note,
+          textExcerpt
+        );
+      }
       onClose();
     } finally {
       setSaving(false);
@@ -166,27 +224,40 @@ export function FlagBubble({
         }
       }}
     >
-      {/* Arrow pointing toward document text */}
-      <div
-        className={`absolute top-4 h-3 w-3 rotate-45 border bg-card ${
-          flipped
-            ? "-right-[6px] border-r border-t"
-            : "-left-[6px] border-b border-l"
-        }`}
-      />
-
       {/* Header */}
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-semibold text-foreground">
-          {initialFlag ? "Flag Detail" : "Flag for Review"}
-        </span>
-        <button
-          onClick={onClose}
-          className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
-          aria-label="Close"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-foreground">
+            {localFlagId ? "Flag Detail" : "Flag for Review"}
+            </span>
+            {saveStatus !== 'idle' && (
+                <span className="text-[10px] text-muted-foreground animate-pulse">
+                    {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Error saving'}
+                </span>
+            )}
+        </div>
+        <div className="flex items-center gap-1">
+            {localFlagId && (
+                <button
+                    onClick={() => {
+                        remove(localFlagId);
+                        onClose();
+                    }}
+                    className="rounded-sm p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    aria-label="Remove flag"
+                    title="Remove flag"
+                >
+                    <Trash2 className="h-3.5 w-3.5" />
+                </button>
+            )}
+            <button
+            onClick={onClose}
+            className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+            aria-label="Close"
+            >
+            <X className="h-3.5 w-3.5" />
+            </button>
+        </div>
       </div>
 
       <div className="space-y-2.5 px-3 py-2.5">
@@ -271,7 +342,7 @@ export function FlagBubble({
             className="h-7 px-3 text-xs"
           >
             {saving && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-            {initialFlag ? "Update" : "Save"}
+            {localFlagId ? "Update" : "Save"}
           </Button>
         </div>
       </div>

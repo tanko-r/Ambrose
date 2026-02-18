@@ -13,13 +13,16 @@ import { RevisionSheet } from "@/components/review/revision-sheet";
 import { Header } from "@/components/layout/header";
 import { AnalysisOverlay } from "@/components/review/analysis-overlay";
 import { SplitLayout } from "@/components/review/split-layout";
+import { ResizeHandle } from "@/components/review/resize-handle";
 import { PrecedentPanel } from "@/components/review/precedent-panel";
 import { CommandPalette } from "@/components/command-palette";
 import { KeyboardHelp } from "@/components/keyboard-help";
+import { NewProjectDialog } from "@/components/dialogs/new-project-dialog";
 import type { NavigatorPosition } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ReviewPage({
   params,
@@ -44,9 +47,20 @@ export default function ReviewPage({
   // Read session status for finalized banner
   const status = useAppStore((s) => s.status);
 
-  // Command palette + keyboard help dialog state
+  // Command palette + keyboard help + new project dialog state
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const router = useRouter();
+
+  const handleNewProject = () => {
+    if (useAppStore.getState().sessionId) {
+      setNewProjectOpen(true);
+    } else {
+      useAppStore.getState().resetSession();
+      router.push("/");
+    }
+  };
 
   // Register keyboard shortcuts
   useKeyboardShortcuts({
@@ -96,12 +110,18 @@ export default function ReviewPage({
   }, []);
 
   const compactMode = useAppStore((s) => s.compactMode);
+  const navPanelOpen = useAppStore((s) => s.navPanelOpen);
+  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
+  const setNavPanelWidth = useAppStore((s) => s.setNavPanelWidth);
+  const setSidebarWidth = useAppStore((s) => s.setSidebarWidth);
+  const navPanelWidth = useAppStore((s) => s.navPanelWidth);
+  const sidebarWidth = useAppStore((s) => s.sidebarWidth);
 
   // Show error page when session/document fails to load
   if (documentError && !loading) {
     return (
       <div className="flex h-screen flex-col overflow-hidden">
-        <Header />
+        <Header onNewProject={handleNewProject} />
         <div className="flex flex-1 items-center justify-center">
           <div className="flex flex-col items-center gap-4 text-center">
             <AlertTriangle className="h-10 w-10 text-destructive" />
@@ -121,7 +141,7 @@ export default function ReviewPage({
   return (
     <div className={`flex h-screen flex-col overflow-hidden${compactMode ? " compact" : ""}`}>
       {/* Header */}
-      <Header />
+      <Header onNewProject={handleNewProject} />
 
       {/* Finalized project banner */}
       {status === "finalized" && (
@@ -147,7 +167,15 @@ export default function ReviewPage({
       {/* Main content area: nav + document + sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Navigation panel */}
-        <NavigationPanel />
+        <NavigationPanel width={navPanelWidth} />
+
+        {/* Left resize handle */}
+        {navPanelOpen && (
+          <ResizeHandle
+            side="left"
+            onResize={(d) => setNavPanelWidth(navPanelWidth + d)}
+          />
+        )}
 
         {/* Center: Document viewer + precedent split */}
         <SplitLayout
@@ -160,8 +188,16 @@ export default function ReviewPage({
           <DocumentViewer loading={loading} />
         </SplitLayout>
 
+        {/* Right resize handle */}
+        {sidebarOpen && (
+          <ResizeHandle
+            side="right"
+            onResize={(d) => setSidebarWidth(sidebarWidth + d)}
+          />
+        )}
+
         {/* Right: Analysis sidebar (outside split layout) */}
-        <Sidebar />
+        <Sidebar width={sidebarWidth} />
       </div>
 
       {/* Revision bottom sheet (non-modal, renders over document area) */}
@@ -178,6 +214,9 @@ export default function ReviewPage({
 
       {/* Keyboard shortcuts help dialog (? key) */}
       <KeyboardHelp open={helpOpen} onOpenChange={setHelpOpen} />
+
+      {/* New project confirmation dialog */}
+      <NewProjectDialog open={newProjectOpen} onOpenChange={setNewProjectOpen} />
     </div>
   );
 }

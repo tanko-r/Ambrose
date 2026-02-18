@@ -3,6 +3,7 @@
 import { useHotkeys } from "react-hotkeys-hook";
 import { useAppStore } from "@/lib/store";
 import { useCallback, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 
 interface KeyboardShortcutCallbacks {
   openCommandPalette: () => void;
@@ -98,6 +99,20 @@ export function useKeyboardShortcuts({
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if ((e.target as HTMLElement)?.isContentEditable) return;
 
+      // Alt+Left: Go back in focus history
+      if (e.key === "ArrowLeft" && e.altKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        useAppStore.getState().goBackInHistory();
+        return;
+      }
+
+      // Alt+Right: Go forward in focus history
+      if (e.key === "ArrowRight" && e.altKey && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        useAppStore.getState().goForwardInHistory();
+        return;
+      }
+
       // ? key (Shift+/): Open keyboard help
       if (e.key === "?" && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
@@ -135,6 +150,7 @@ export function useKeyboardShortcuts({
       window.dispatchEvent(
         new CustomEvent("keyboard:flag", { detail: { paraId } })
       );
+      toast("Clause flagged", { duration: 1500 });
     },
     { ...singleCharOpts, enabled: !!selectedParaId }
   );
@@ -163,6 +179,10 @@ export function useKeyboardShortcuts({
       // Priority: bottom sheet > sidebar > nav panel
       if (store.bottomSheetOpen) {
         store.toggleBottomSheet();
+        return;
+      }
+      if (store.sidebarOpen) {
+        store.toggleSidebar();
         return;
       }
       // Note: Escape for dialogs (command palette, help) is handled by Dialog component natively

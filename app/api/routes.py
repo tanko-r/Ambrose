@@ -15,7 +15,6 @@ Endpoints:
 
 import json
 import uuid
-import platform
 from datetime import datetime
 from pathlib import Path
 from flask import Blueprint, request, jsonify, current_app, send_file, Response
@@ -23,8 +22,9 @@ from app.services.html_renderer import render_document_html, render_precedent_ht
 
 api_bp = Blueprint('api', __name__)
 
-# Running in WSL but paths may have been saved from Windows
-_IS_WSL = 'microsoft' in platform.uname().release.lower()
+# Detect WSL without platform.uname() which can hang on Windows
+import os as _os
+_IS_WSL = _os.path.exists('/proc/version') and 'microsoft' in open('/proc/version').read().lower() if _os.path.exists('/proc/version') else False
 
 
 def _normalize_path(p: str | None) -> str | None:
@@ -75,11 +75,20 @@ def load_test_session():
     """
     Load a saved analysis for testing without re-running the expensive LLM analysis.
 
-    Looks for saved_document.json and saved_analysis.json in the output folder.
+    Looks for saved_document.json and saved_analysis.json in the output folder,
+    then falls back to fixtures/sample-psa/ if not found.
     """
-    output_dir = Path(__file__).parent.parent.parent / 'output'
+    root = Path(__file__).parent.parent.parent
+    output_dir = root / 'output'
+    fixture_dir = root / 'fixtures' / 'sample-psa'
+
+    # Try output/ first, then fixtures/sample-psa/ as fallback
     doc_path = output_dir / 'saved_document.json'
     analysis_path = output_dir / 'saved_analysis.json'
+
+    if not doc_path.exists() or not analysis_path.exists():
+        doc_path = fixture_dir / 'document.json'
+        analysis_path = fixture_dir / 'analysis.json'
 
     if not doc_path.exists() or not analysis_path.exists():
         return jsonify({'error': 'No saved test data found. Run a full analysis first.'}), 404
@@ -91,17 +100,33 @@ def load_test_session():
     with open(analysis_path, 'r', encoding='utf-8') as f:
         analysis = json.load(f)
 
+    # Load fixture session metadata if available
+    session_meta_path = fixture_dir / 'session.json'
+    session_meta = {}
+    if session_meta_path.exists():
+        with open(session_meta_path, 'r', encoding='utf-8') as f:
+            session_meta = json.load(f)
+
     # Create a test session
     session_id = 'test-' + str(uuid.uuid4())[:8]
+
+    # Resolve the target DOCX path for HTML rendering
+    # Try output/ first (if a real analysis was saved), then fixture
+    target_docx = output_dir / 'target.docx'
+    if not target_docx.exists():
+        target_docx = fixture_dir / 'target.docx'
 
     session = {
         'session_id': session_id,
         'created_at': datetime.now().isoformat(),
         'status': 'analyzed',
-        'representation': analysis.get('representation', 'seller'),
-        'contract_type': analysis.get('contract_type', 'psa'),
-        'aggressiveness': analysis.get('aggressiveness', 3),
-        'deal_context': '',
+        'representation': session_meta.get('representation', analysis.get('representation', 'buyer')),
+        'contract_type': session_meta.get('contract_type', analysis.get('contract_type', 'psa')),
+        'approach': session_meta.get('approach', 'competitive-bid'),
+        'aggressiveness': session_meta.get('aggressiveness', analysis.get('aggressiveness', 4)),
+        'deal_context': session_meta.get('deal_context', ''),
+        'target_filename': session_meta.get('target_filename', 'Sample PSA - Seller Side.docx'),
+        'target_path': str(target_docx) if target_docx.exists() else None,
         'parsed_doc': document,
         'analysis': analysis,
         'revisions': {},
@@ -114,6 +139,7 @@ def load_test_session():
     return jsonify({
         'session_id': session_id,
         'message': 'Test session loaded successfully',
+        'target_filename': session.get('target_filename'),
         'risks_count': analysis.get('summary', {}).get('total_risks', 0),
         'paragraphs_count': len(document.get('content', []))
     })
@@ -272,11 +298,29 @@ def get_document(session_id):
     # Get filename from session or metadata
     filename = session.get('target_filename') or parsed_doc.get('metadata', {}).get('filename') or 'Contract Document'
 
+    # Enrich paragraph captions from LLM paragraph_map (for already-analyzed sessions)
+    content = parsed_doc.get('content', [])
+    progress = session.get('progress', {})
+    initial_ctx = progress.get('initial_context', {})
+    paragraph_map = initial_ctx.get('paragraph_map', {})
+    if not paragraph_map:
+        analysis = session.get('analysis', {})
+        paragraph_map = analysis.get('paragraph_map', {})
+    if paragraph_map:
+        for para in content:
+            llm_info = paragraph_map.get(para.get('id', ''), {})
+            llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
+            if llm_caption:
+                # Cap at 7 words
+                words = llm_caption.split()
+                para['caption'] = ' '.join(words[:7])
+
     return jsonify({
         'session_id': session_id,
         'filename': filename,
         'has_precedent': session.get('precedent_path') is not None,
-        'content': parsed_doc.get('content', []),
+        'status': session.get('status'),
+        'content': content,
         'sections': parsed_doc.get('sections', []),
         'exhibits': parsed_doc.get('exhibits', []),
         'defined_terms': parsed_doc.get('defined_terms', []),
@@ -437,6 +481,23 @@ def get_analysis(session_id):
 
         # Recalculate effective severities based on relationships
         risk_map.recalculate_all_severities()
+
+        # Enrich paragraph captions from LLM-generated paragraph_map
+        paragraph_map = analysis.get('paragraph_map') or {}
+        if not paragraph_map:
+            # Try loading from stored initial_context (progress data)
+            progress = session.get('progress', {})
+            initial_ctx = progress.get('initial_context', {})
+            paragraph_map = initial_ctx.get('paragraph_map', {})
+
+        if paragraph_map and session.get('parsed_doc'):
+            for para in session['parsed_doc'].get('content', []):
+                para_id = para.get('id', '')
+                llm_info = paragraph_map.get(para_id, {})
+                llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
+                if llm_caption:
+                    words = llm_caption.split()
+                    para['caption'] = ' '.join(words[:7])
 
         # Store analysis and maps in session
         session['analysis'] = analysis
@@ -919,6 +980,7 @@ def flag_item():
         excerpt = paragraph.get('text', '')[:200] if paragraph else ''
 
     flag_entry = {
+        'id': str(uuid.uuid4()),
         'para_id': para_id,
         'section_ref': paragraph.get('section_ref', '') if paragraph else '',
         'text_excerpt': excerpt,
@@ -936,21 +998,56 @@ def flag_item():
     return jsonify({'status': 'flagged', 'flag': flag_entry})
 
 
-@api_bp.route('/unflag', methods=['POST'])
-def unflag_item():
-    """Remove a flag from an item."""
+@api_bp.route('/flag/update', methods=['POST'])
+def update_flag():
+    """Update an existing flag's note or category."""
     data = request.get_json()
     session_id = data.get('session_id')
-    para_id = data.get('para_id')
+    flag_id = data.get('flag_id')
+    note = data.get('note')
+    category = data.get('category')
+    flag_type = data.get('flag_type')
 
     session = get_session(session_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
-    session['flags'] = [f for f in session.get('flags', []) if f.get('para_id') != para_id]
+    found = False
+    for flag in session.get('flags', []):
+        if flag.get('id') == flag_id:
+            if note is not None:
+                flag['note'] = note
+            if category is not None:
+                flag['category'] = category
+            if flag_type is not None:
+                flag['flag_type'] = flag_type
+            flag['timestamp'] = datetime.now().isoformat()
+            found = True
+            updated_flag = flag
+            break
+
+    if found:
+        save_session(session_id, session)
+        return jsonify({'status': 'updated', 'flag': updated_flag})
+
+    return jsonify({'error': 'Flag not found'}), 404
+
+
+@api_bp.route('/unflag', methods=['POST'])
+def unflag_item():
+    """Remove a flag from an item."""
+    data = request.get_json()
+    session_id = data.get('session_id')
+    flag_id = data.get('flag_id')
+
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    session['flags'] = [f for f in session.get('flags', []) if f.get('id') != flag_id]
     save_session(session_id, session)
 
-    return jsonify({'status': 'unflagged', 'para_id': para_id})
+    return jsonify({'status': 'unflagged', 'flag_id': flag_id})
 
 
 @api_bp.route('/finalize', methods=['POST'])
@@ -1206,9 +1303,20 @@ def get_transmittal(session_id):
     email_lines.append(f"I have completed my review of {contract_name}. Please see the attached redlined document containing my proposed revisions.")
     email_lines.append("")
 
+    # Helper function to truncate at word boundaries
+    def truncate_at_word(text, max_len=100):
+        if len(text) <= max_len:
+            return text
+        truncated = text[:max_len]
+        last_space = truncated.rfind(' ')
+        if last_space > max_len * 0.6:  # Don't cut too short
+            truncated = truncated[:last_space]
+        return truncated + '...'
+
     # Key Revisions section (only when include_revisions is true)
     if include_revisions and accepted_revisions:
-        email_lines.append("## Key Revisions Made")
+        email_lines.append("KEY REVISIONS MADE")
+        email_lines.append("---")
         parsed_doc = session.get('parsed_doc', {})
         content = parsed_doc.get('content', [])
         # Build para_id -> paragraph lookup
@@ -1224,7 +1332,7 @@ def get_transmittal(session_id):
             if top_section not in section_revisions:
                 section_revisions[top_section] = []
             rationale = rev.get('rationale', 'Revision made')
-            section_revisions[top_section].append(f"[{section_ref}]: {rationale[:100]}")
+            section_revisions[top_section].append(f"[{section_ref}]: {truncate_at_word(rationale)}")
 
         for section, items in section_revisions.items():
             for item in items:
@@ -1233,10 +1341,12 @@ def get_transmittal(session_id):
 
     # Items for Your Review section (only if there are flags)
     if client_flags:
-        email_lines.append("## Items for Your Review")
+        email_lines.append("ITEMS FOR YOUR REVIEW")
+        email_lines.append("---")
         for i, flag in enumerate(client_flags, 1):
             section = flag.get('section_ref', 'N/A')
-            note = flag.get('note', 'Flagged for review')
+            # Empty flag notes fallback: use text_excerpt or "Flagged for review"
+            note = flag.get('note', '') or flag.get('text_excerpt', '') or 'Flagged for review'
             # Use category label if present, fall back to flag_type label
             category = flag.get('category', '')
             if category and category in category_labels:

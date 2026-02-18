@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Copy, Check, Mail } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -157,7 +158,12 @@ export function TransmittalDialog({
           <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Subject:
           </span>
-          <p className="mt-0.5 text-sm font-medium">{subject || "\u00A0"}</p>
+          <Input
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="mt-0.5 text-sm font-medium h-8"
+            placeholder="e.g., Redline Review: Contract Name"
+          />
         </div>
 
         {/* Email textarea */}

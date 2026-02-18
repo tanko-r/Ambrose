@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { Input } from "@/components/ui/input";
@@ -7,49 +8,56 @@ import { Button } from "@/components/ui/button";
 import {
   List,
   AlertTriangle,
-  LayoutGrid,
+  Flag,
   Search,
+  SearchX,
   PanelLeftClose,
   PanelLeftOpen,
   Check,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Paragraph, Risk, Severity } from "@/lib/types";
+import type { Paragraph, Severity } from "@/lib/types";
 
-type ReviewMode = "linear" | "by-risk" | "by-category";
+// --- Helpers ---
 
-const REVIEW_MODES: { value: ReviewMode; label: string; icon: React.ReactNode }[] = [
-  { value: "linear", label: "Linear", icon: <List className="h-3.5 w-3.5" /> },
-  {
-    value: "by-risk",
-    label: "By Risk",
-    icon: <AlertTriangle className="h-3.5 w-3.5" />,
-  },
-  {
-    value: "by-category",
-    label: "By Category",
-    icon: <LayoutGrid className="h-3.5 w-3.5" />,
-  },
-];
+type SearchTab = "all" | "caption" | "content";
 
-export function NavigationPanel() {
+/** Wraps the first match of `query` inside `text` with a <mark> highlight */
+function highlightMatch(text: string, query: string): ReactNode {
+  if (!query.trim()) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded-sm bg-yellow-200/60 px-0.5 dark:bg-yellow-500/30">
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
+}
+
+interface NavigationPanelProps {
+  width?: number;
+}
+
+export function NavigationPanel({ width = 260 }: NavigationPanelProps) {
   const {
     paragraphs,
-    sections,
     risks,
     revisions,
+    flags,
     selectedParaId,
     selectParagraph,
     navPanelOpen,
     toggleNavPanel,
-    reviewMode,
-    setReviewMode,
   } = useAppStore();
 
   const [search, setSearch] = useState("");
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
-    new Set()
-  );
+  const [searchTab, setSearchTab] = useState<SearchTab>("all");
+  const [showRisksOnly, setShowRisksOnly] = useState(false);
+  const [showFlagsOnly, setShowFlagsOnly] = useState(false);
 
   // Ghost hover state (when panel is closed)
   const [ghostVisible, setGhostVisible] = useState(false);
@@ -71,7 +79,7 @@ export function NavigationPanel() {
 
   // Risk lookup by paragraph
   const risksByPara = useMemo(() => {
-    const map = new Map<string, Risk[]>();
+    const map = new Map<string, typeof risks>();
     for (const risk of risks) {
       const existing = map.get(risk.para_id) || [];
       existing.push(risk);
@@ -79,6 +87,12 @@ export function NavigationPanel() {
     }
     return map;
   }, [risks]);
+
+  // Flagged paragraph IDs
+  const flaggedParaIds = useMemo(
+    () => new Set(flags.map((f) => f.para_id)),
+    [flags]
+  );
 
   // Max severity for a paragraph
   const maxSeverity = (paraId: string): Severity | null => {
@@ -107,16 +121,38 @@ export function NavigationPanel() {
     [contentParas]
   );
 
-  // Search-filtered numbered paragraphs (for Linear & Category views)
-  const searchFilteredNumbered = useMemo(() => {
-    if (!search.trim()) return numberedParas;
+  // Search-filtered numbered paragraphs — split by match type
+  const { captionMatches, contentMatches, allMatches } = useMemo(() => {
+    if (!search.trim()) return { captionMatches: numberedParas, contentMatches: numberedParas, allMatches: numberedParas };
     const q = search.toLowerCase();
-    return numberedParas.filter(
+    const cap = numberedParas.filter(
       (p) =>
-        (p.text ?? "").toLowerCase().includes(q) ||
+        (p.caption ?? "").toLowerCase().includes(q) ||
         (p.section_ref ?? "").toLowerCase().includes(q)
     );
+    const content = numberedParas.filter((p) => (p.text ?? "").toLowerCase().includes(q));
+    const all = numberedParas.filter(
+      (p) =>
+        (p.text ?? "").toLowerCase().includes(q) ||
+        (p.section_ref ?? "").toLowerCase().includes(q) ||
+        (p.caption ?? "").toLowerCase().includes(q)
+    );
+    return { captionMatches: cap, contentMatches: content, allMatches: all };
   }, [numberedParas, search]);
+
+  const searchFilteredNumbered = searchTab === "caption" ? captionMatches : searchTab === "content" ? contentMatches : allMatches;
+
+  // Risk/flag filter toggles applied
+  const finalFilteredParas = useMemo(() => {
+    let result = searchFilteredNumbered;
+    if (showRisksOnly) {
+      result = result.filter((p) => risksByPara.has(p.id));
+    }
+    if (showFlagsOnly) {
+      result = result.filter((p) => flaggedParaIds.has(p.id));
+    }
+    return result;
+  }, [searchFilteredNumbered, showRisksOnly, showFlagsOnly, risksByPara, flaggedParaIds]);
 
   // Progress stats
   const riskyParas = numberedParas.filter((p) => risksByPara.has(p.id));
@@ -126,39 +162,21 @@ export function NavigationPanel() {
     selectParagraph(paraId);
   };
 
-  const toggleCategory = (cat: string) => {
-    setCollapsedCategories((prev) => {
-      const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat);
-      else next.add(cat);
-      return next;
-    });
-  };
-
   // Shared nav content (used in both open and ghost modes)
   const navContent = (
     <>
-      {/* Review mode selector */}
-      <div className="flex gap-1 border-b px-2 py-2">
-        {REVIEW_MODES.map((mode) => (
-          <button
-            key={mode.value}
-            onClick={() => setReviewMode(mode.value)}
-            className={`flex flex-1 flex-col items-center gap-0.5 rounded-md px-1 py-1.5 text-[10px] font-medium uppercase tracking-wider transition-colors ${
-              reviewMode === mode.value
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-          >
-            {mode.icon}
-            {mode.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Search */}
-      <div className="border-b px-2 py-2">
-        <div className="relative">
+      {/* Header: close button + search + filter toggles */}
+      <div className="flex items-center gap-1.5 border-b px-2 py-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0 text-muted-foreground"
+          onClick={() => { setGhostVisible(false); toggleNavPanel(); }}
+          title={navPanelOpen ? "Hide navigator" : "Dock navigator"}
+        >
+          <PanelLeftClose className="h-3.5 w-3.5" />
+        </Button>
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -167,6 +185,28 @@ export function NavigationPanel() {
             className="h-7 pl-7 text-xs"
           />
         </div>
+        <button
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
+            showRisksOnly
+              ? "bg-severity-high/15 text-severity-high hover:bg-severity-high/25"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          }`}
+          onClick={() => setShowRisksOnly((v) => !v)}
+          title={showRisksOnly ? "Show all clauses" : "Show only clauses with risks"}
+        >
+          <AlertTriangle className="h-3.5 w-3.5" />
+        </button>
+        <button
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
+            showFlagsOnly
+              ? "bg-primary/15 text-primary hover:bg-primary/25"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          }`}
+          onClick={() => setShowFlagsOnly((v) => !v)}
+          title={showFlagsOnly ? "Show all clauses" : "Show only flagged clauses"}
+        >
+          <Flag className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       {/* Progress */}
@@ -181,36 +221,48 @@ export function NavigationPanel() {
         </div>
       )}
 
+      {/* Search tabs — only when search is active */}
+      {search.trim() && (
+        <div className="flex items-center gap-1 border-b px-3 py-1.5 text-[10px]">
+          {(["all", "caption", "content"] as const).map((tab) => {
+            const count = tab === "all" ? allMatches.length : tab === "caption" ? captionMatches.length : contentMatches.length;
+            const label = tab === "all" ? "All" : tab === "caption" ? "Captions" : "Content";
+            return (
+              <button
+                key={tab}
+                onClick={() => setSearchTab(tab)}
+                className={`rounded px-1.5 py-0.5 transition-colors ${
+                  searchTab === tab
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Outline */}
       <div className="flex-1 overflow-y-auto px-1 py-1">
         {contentParas.length === 0 ? (
           <NavigatorEmptyState />
-        ) : reviewMode === "linear" ? (
-          <LinearOutline
-            paragraphs={searchFilteredNumbered}
-            selectedParaId={selectedParaId}
-            maxSeverity={maxSeverity}
-            isReviewed={isReviewed}
-            onJump={handleJump}
-          />
-        ) : reviewMode === "by-risk" ? (
-          <ByRiskOutline
-            paragraphs={contentParas}
-            risksByPara={risksByPara}
-            selectedParaId={selectedParaId}
-            isReviewed={isReviewed}
-            onJump={handleJump}
+        ) : finalFilteredParas.length === 0 ? (
+          <NavigatorFilterEmptyState
+            hasSearch={!!search.trim()}
+            showRisksOnly={showRisksOnly}
+            showFlagsOnly={showFlagsOnly}
+            onClearFilters={() => { setSearch(""); setSearchTab("all"); setShowRisksOnly(false); setShowFlagsOnly(false); }}
           />
         ) : (
-          <ByCategoryOutline
-            paragraphs={searchFilteredNumbered}
-            sections={sections}
+          <LinearOutline
+            paragraphs={finalFilteredParas}
             selectedParaId={selectedParaId}
             maxSeverity={maxSeverity}
             isReviewed={isReviewed}
-            collapsedCategories={collapsedCategories}
-            toggleCategory={toggleCategory}
             onJump={handleJump}
+            searchQuery={search.trim() || undefined}
           />
         )}
       </div>
@@ -219,13 +271,17 @@ export function NavigationPanel() {
 
   return (
     <>
-      {/* Reopen tab — fixed left-center, matches sidebar tab style */}
+      {/* Reopen tab — when ghost visible, sits inside ghost panel aligned with header close button */}
       {!navPanelOpen && (
         <button
           onClick={toggleNavPanel}
           onMouseEnter={() => { clearGhostTimeout(); setGhostVisible(true); }}
           onMouseLeave={startGhostHide}
-          className="fixed left-0 top-1/2 z-40 -translate-y-1/2 rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md transition-colors hover:bg-accent"
+          className={`fixed z-40 transition-all duration-200 ease-out ${
+            ghostVisible
+              ? "left-2 top-[64px] rounded bg-accent/80 p-1.5 hover:bg-accent"
+              : "left-0 top-[64px] rounded-r-lg border border-l-0 bg-card px-1.5 py-3 shadow-md hover:bg-accent"
+          }`}
           aria-label="Open navigator"
         >
           <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
@@ -235,28 +291,14 @@ export function NavigationPanel() {
       {/* Ghost slide-in panel (hover preview when closed) */}
       {!navPanelOpen && (
         <div
-          className={`fixed left-0 top-0 bottom-0 z-30 w-[260px] border-r bg-card/95 backdrop-blur-md shadow-xl transition-transform duration-200 ease-out ${
+          className={`fixed left-0 top-14 bottom-0 z-30 border-r bg-muted/80 backdrop-blur-md shadow-xl transition-transform duration-200 ease-out ${
             ghostVisible ? "translate-x-0" : "-translate-x-full"
           }`}
+          style={{ width }}
           onMouseEnter={clearGhostTimeout}
           onMouseLeave={startGhostHide}
         >
           <nav aria-label="Document navigator" className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b px-3 py-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Navigator
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1 px-2 text-[10px] text-muted-foreground"
-                onClick={() => { setGhostVisible(false); toggleNavPanel(); }}
-                title="Dock navigator"
-              >
-                <PanelLeftOpen className="h-3.5 w-3.5" />
-                Dock
-              </Button>
-            </div>
             {navContent}
           </nav>
         </div>
@@ -264,26 +306,10 @@ export function NavigationPanel() {
 
       {/* Docked nav panel with animated width */}
       <div
-        className="shrink-0 overflow-hidden border-r bg-card transition-[width] duration-200 ease-out"
-        style={{ width: navPanelOpen ? 260 : 0 }}
+        className="shrink-0 overflow-hidden border-r bg-muted/70"
+        style={{ width: navPanelOpen ? width : 0 }}
       >
-        <nav aria-label="Document navigator" className="flex h-full w-[260px] flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b px-3 py-3">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Navigator
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 px-2 text-[10px] text-muted-foreground"
-              onClick={toggleNavPanel}
-              title="Hide navigator"
-            >
-              <PanelLeftClose className="h-3.5 w-3.5" />
-              Hide
-            </Button>
-          </div>
+        <nav aria-label="Document navigator" className="flex h-full flex-col" style={{ width }}>
           {navContent}
         </nav>
       </div>
@@ -299,12 +325,14 @@ function LinearOutline({
   maxSeverity,
   isReviewed,
   onJump,
+  searchQuery,
 }: {
   paragraphs: Paragraph[];
   selectedParaId: string | null;
   maxSeverity: (id: string) => Severity | null;
   isReviewed: (id: string) => boolean;
   onJump: (id: string) => void;
+  searchQuery?: string;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
@@ -372,8 +400,8 @@ function LinearOutline({
               severity={maxSeverity(para.id)}
               reviewed={isReviewed(para.id)}
               selected={para.id === selectedParaId}
-              level={0}
               onJump={onJump}
+              searchQuery={searchQuery}
             />
           </div>
         </div>
@@ -389,158 +417,6 @@ function LinearOutline({
   );
 }
 
-function ByRiskOutline({
-  paragraphs,
-  risksByPara,
-  selectedParaId,
-  isReviewed,
-  onJump,
-}: {
-  paragraphs: Paragraph[];
-  risksByPara: Map<string, Risk[]>;
-  selectedParaId: string | null;
-  isReviewed: (id: string) => boolean;
-  onJump: (id: string) => void;
-}) {
-  const groups: { label: string; severity: Severity; paras: Paragraph[] }[] = [
-    { label: "Critical", severity: "critical", paras: [] },
-    { label: "High", severity: "high", paras: [] },
-    { label: "Medium", severity: "medium", paras: [] },
-    { label: "Low", severity: "low", paras: [] },
-  ];
-
-  for (const para of paragraphs) {
-    const paraRisks = risksByPara.get(para.id);
-    if (!paraRisks?.length) continue;
-    const maxSev = paraRisks.reduce<Severity>((acc, r) => {
-      const order: Severity[] = ["critical", "high", "medium", "low", "info"];
-      return order.indexOf(r.severity) < order.indexOf(acc) ? r.severity : acc;
-    }, "info");
-    const group = groups.find((g) => g.severity === maxSev);
-    if (group) group.paras.push(para);
-  }
-
-  return (
-    <div className="space-y-3 py-1">
-      {groups
-        .filter((g) => g.paras.length > 0)
-        .map((group) => (
-          <div key={group.severity}>
-            <div className="mb-1 flex items-center gap-2 px-2">
-              <SeverityDot severity={group.severity} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {group.label} ({group.paras.length})
-              </span>
-            </div>
-            <div className="space-y-px">
-              {group.paras.slice(0, 10).map((para) => (
-                <OutlineItem
-                  key={para.id}
-                  paraId={para.id}
-                  sectionRef={para.section_ref}
-                  caption={para.caption || para.text?.slice(0, 40)}
-                  severity={group.severity}
-                  reviewed={isReviewed(para.id)}
-                  selected={para.id === selectedParaId}
-                  level={0}
-                  onJump={onJump}
-                />
-              ))}
-              {group.paras.length > 10 && (
-                <div className="px-2 py-1 text-[10px] text-muted-foreground">
-                  +{group.paras.length - 10} more
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-    </div>
-  );
-}
-
-function ByCategoryOutline({
-  paragraphs,
-  sections,
-  selectedParaId,
-  maxSeverity,
-  isReviewed,
-  collapsedCategories,
-  toggleCategory,
-  onJump,
-}: {
-  paragraphs: Paragraph[];
-  sections: { id: string; number: string; caption: string; level: number }[];
-  selectedParaId: string | null;
-  maxSeverity: (id: string) => Severity | null;
-  isReviewed: (id: string) => boolean;
-  collapsedCategories: Set<string>;
-  toggleCategory: (cat: string) => void;
-  onJump: (id: string) => void;
-}) {
-  // Group by top-level section
-  const topSections = sections.filter((s) => s.level === 0 || s.level === 1);
-  const groups = new Map<string, { caption: string; paras: Paragraph[] }>();
-
-  for (const para of paragraphs) {
-    // Extract top-level number: "1.2.3" -> "1", "Article I" -> "Article I"
-    const match = para.section_ref?.match(/^(\d+)/);
-    const topNum = match ? match[1] : (para.section_ref?.split(".")[0] || "other");
-    if (!groups.has(topNum)) {
-      const sec = topSections.find((s) => s.number?.startsWith(topNum));
-      groups.set(topNum, {
-        caption: sec?.caption || `Section ${topNum}`,
-        paras: [],
-      });
-    }
-    groups.get(topNum)!.paras.push(para);
-  }
-
-  return (
-    <div className="space-y-1 py-1">
-      {Array.from(groups.entries()).map(([key, { caption, paras }]) => {
-        const collapsed = collapsedCategories.has(key);
-        return (
-          <div key={key}>
-            <button
-              onClick={() => toggleCategory(key)}
-              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-accent"
-            >
-              <span
-                className={`text-[10px] transition-transform ${collapsed ? "-rotate-90" : ""}`}
-              >
-                ▼
-              </span>
-              <span className="truncate">
-                {key}. {caption}
-              </span>
-              <span className="ml-auto text-[10px] tabular-nums">
-                {paras.length}
-              </span>
-            </button>
-            {!collapsed && (
-              <div className="space-y-px pl-2">
-                {paras.map((para) => (
-                  <OutlineItem
-                    key={para.id}
-                    paraId={para.id}
-                    sectionRef={para.section_ref}
-                    caption={para.caption || para.text?.slice(0, 40)}
-                    severity={maxSeverity(para.id)}
-                    reviewed={isReviewed(para.id)}
-                    selected={para.id === selectedParaId}
-                    level={0}
-                    onJump={onJump}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function OutlineItem({
   paraId,
   sectionRef,
@@ -548,8 +424,8 @@ function OutlineItem({
   severity,
   reviewed,
   selected,
-  level,
   onJump,
+  searchQuery,
 }: {
   paraId: string;
   sectionRef: string;
@@ -557,8 +433,8 @@ function OutlineItem({
   severity: Severity | null;
   reviewed: boolean;
   selected: boolean;
-  level: number;
   onJump: (id: string) => void;
+  searchQuery?: string;
 }) {
   const severityBorderClass = severity
     ? {
@@ -582,7 +458,7 @@ function OutlineItem({
       <span className="shrink-0 pr-1.5 font-semibold tabular-nums text-muted-foreground text-[10px]">
         {sectionRef || "—"}
       </span>
-      <span className="flex-1 truncate">{caption}</span>
+      <span className="flex-1 truncate">{searchQuery ? highlightMatch(caption, searchQuery) : caption}</span>
       {reviewed && (
         <Check className="ml-auto h-3 w-3 shrink-0 text-green-500" />
       )}
@@ -601,6 +477,31 @@ function NavigatorEmptyState() {
   );
 }
 
+function NavigatorFilterEmptyState({
+  hasSearch,
+  onClearFilters,
+}: {
+  hasSearch: boolean;
+  showRisksOnly: boolean;
+  showFlagsOnly: boolean;
+  onClearFilters: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+      <SearchX className="h-5 w-5 text-muted-foreground/60" />
+      <p className="max-w-[200px] text-xs text-muted-foreground">
+        No clauses match the current filters{hasSearch ? " and search term" : ""}.
+      </p>
+      <button
+        onClick={onClearFilters}
+        className="text-xs text-primary hover:underline"
+      >
+        Clear all filters
+      </button>
+    </div>
+  );
+}
+
 export function NavigatorSkeleton() {
   return (
     <div className="space-y-1.5 p-3">
@@ -611,16 +512,4 @@ export function NavigatorSkeleton() {
       <Skeleton className="h-4 w-4/5" />
     </div>
   );
-}
-
-function SeverityDot({ severity }: { severity: Severity }) {
-  const colorClass = {
-    critical: "bg-severity-critical",
-    high: "bg-severity-high",
-    medium: "bg-severity-medium",
-    low: "bg-severity-low",
-    info: "bg-severity-info",
-  }[severity];
-
-  return <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />;
 }
