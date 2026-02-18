@@ -13,12 +13,12 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 
 ## Current Milestone
 
-**v1.1 -- Cloud Deployment**
+**v1.1 -- Users and Deployment**
 
-Phase: 9 of 13 (Containerization)
-Plan: --
-Status: Ready to plan
-Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-18 — Milestone v1.1 redefined (Users and Deployment)
 
 ## Previous Milestone (v1.0)
 
@@ -87,7 +87,7 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 ## Session Continuity
 
 Last session: 2026-02-18
-Last activity: 2026-02-18 - Completed quick task 8: Breadcrumb bar with back/forward history + Risk Report print overlay
+Last activity: 2026-02-18 — Milestone v1.1 redefined as Users and Deployment; research starting
 Resume file: None
 
 ---
