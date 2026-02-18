@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
-import { listSavedSessions, loadSession } from "@/lib/api";
+import { listSavedSessions, loadSession, loadTestSession } from "@/lib/api";
 import type { SavedSessionListItem, SessionStatus } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DeleteProjectDialog } from "@/components/dialogs/delete-project-dialog";
-import { FileText, Clock, Loader2, Trash2 } from "lucide-react";
+import { FileText, Clock, Loader2, Trash2, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 
 function formatRelativeDate(isoString: string): string {
@@ -78,6 +78,7 @@ export function RecentProjects() {
     useAppStore();
   const [loading, setLoading] = useState(true);
   const [resuming, setResuming] = useState<string | null>(null);
+  const [loadingTest, setLoadingTest] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     sessionId: string;
     filename: string;
@@ -103,6 +104,31 @@ export function RecentProjects() {
       })
       .finally(() => setLoading(false));
   }, [setSavedSessions]);
+
+  const handleLoadTestData = async () => {
+    setLoadingTest(true);
+    try {
+      const result = await loadTestSession();
+      toast.success(`Loaded sample PSA (${result.risks_count} risks)`);
+
+      setSession({
+        sessionId: result.session_id,
+        status: "analyzed",
+        targetFilename: result.target_filename || "Sample PSA - Seller Side.docx",
+        contractType: "psa",
+        representation: "buyer",
+      });
+      setView("review");
+
+      router.push(`/review/${result.session_id}`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to load test data"
+      );
+    } finally {
+      setLoadingTest(false);
+    }
+  };
 
   const handleResume = async (session: SavedSessionListItem) => {
     setResuming(session.session_id);
@@ -147,9 +173,25 @@ export function RecentProjects() {
     <div className="space-y-3">
       <SectionHeader />
       {visible.length === 0 ? (
-        <p className="py-4 text-center text-sm italic text-muted-foreground">
-          No saved projects yet
-        </p>
+        <div className="py-4 text-center space-y-3">
+          <p className="text-sm italic text-muted-foreground">
+            No saved projects yet
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLoadTestData}
+            disabled={loadingTest}
+            className="gap-2"
+          >
+            {loadingTest ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FlaskConical className="h-3.5 w-3.5" />
+            )}
+            Load Sample PSA
+          </Button>
+        </div>
       ) : (
         <div className="space-y-1">
           {visible.map((session) => (

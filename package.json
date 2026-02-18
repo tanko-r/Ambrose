@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail -n flask,next -c blue,green \"python run.py\" \"npm.cmd run dev --prefix frontend\"",
+    "dev": "concurrently --kill-others-on-fail -n flask,next -c blue,green \"python run.py\" \"npm run dev --prefix frontend\"",
     "dev:flask": "python run.py",
-    "dev:next": "npm.cmd run dev --prefix frontend",
-    "kill": "powershell -NoProfile -Command \"Get-NetTCPConnection -LocalPort 3000,5000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Remove-Item frontend/.next/dev/lock -Force -ErrorAction SilentlyContinue; exit 0\"",
-    "restart": "npm.cmd run kill && npm.cmd run dev",
-    "build": "npm.cmd run build --prefix frontend",
+    "dev:next": "npm run dev --prefix frontend",
+    "kill": "lsof -ti:3000,5000 | xargs -r kill -9; rm -f frontend/.next/dev/lock",
+    "restart": "npm run kill && npm run dev",
+    "build": "npm run build --prefix frontend",
     "test": "echo \"See pytest for backend tests\""
   },
   "devDependencies": {

@@ -498,6 +498,7 @@ export interface SessionInfoResponse {
 export interface TestSessionResponse {
   session_id: string;
   message: string;
+  target_filename?: string;
   risks_count: number;
   paragraphs_count: number;
 }
