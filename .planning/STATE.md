@@ -82,12 +82,13 @@ Last activity: 2026-02-11 -- Roadmap created for v1.1 milestone
 | 5 | Stop clause generation button for revision sidebar | 2026-02-13 | a32fdab |
 | 6 | Fix Critical/High QA items from Phase 7 regression | 2026-02-13 | b2e31f5, 41696b1 |
 | 7 | Implement Tier 2 UI refinements from ui-refinements.md (items 1-14) | 2026-02-16 | 58171d1 |
+| 8 | Breadcrumb bar with back/forward history + Risk Report print overlay | 2026-02-18 | 86ed7bd, c98751c |
 
 ## Session Continuity
 
-Last session: 2026-02-16
-Last activity: 2026-02-16 - Completed quick task 7: Implement Tier 2 UI refinements (items 1-14)
+Last session: 2026-02-18
+Last activity: 2026-02-18 - Completed quick task 8: Breadcrumb bar with back/forward history + Risk Report print overlay
 Resume file: None
 
 ---
-*State updated: 2026-02-16*
+*State updated: 2026-02-18*
