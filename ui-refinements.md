@@ -4,7 +4,7 @@ Sorted easiest → hardest. Items fully implemented have been removed.
 
 Legend: `🔧 Partial` `🆕 New`
 
-**Last updated:** 2026-02-16 (Quick Task 7 complete — all Tier 2 items implemented)
+**Last updated:** 2026-02-18 (Issue triage — closed 4 issues, commented on 13, consolidated duplicates)
 
 ---
 
@@ -37,11 +37,7 @@ Legend: `🔧 Partial` `🆕 New`
 - "+New" wipes store's `sessions` array
 - Fix: exclude `sessions` from reset scope, or re-fetch after reset
 
-### 3. Nav search improvements (#9) `🔧 Partial — caption + full-text search exists`
-- Existing: caption search and full-text search both work
-- Missing: highlight matching text in results, tabbed results view
-
-### 4. Empty/loading states (#49) `🆕`
+### 3. Empty/loading states (#49) `🆕`
 - No skeleton loading for document area
 - No "no results" state for filtered navigation
 - No filter direction clarity ("Hide risks" vs "Show risks")
@@ -57,16 +53,7 @@ Legend: `🔧 Partial` `🆕 New`
 - DOM mutations from `updateParagraphStates` collapse selection
 - Fix: defer mutations or save/restore selection range
 
-### 7. Finalize: review dismissed/unaddressed risks (#25) `🔧 Partial — unreviewed count shown`
-- Existing: unreviewed count statistic exists
-- Missing: expandable list of dismissed risks, severity highlighting, "last chance" to go back
-
-### 8. User focus history / back-forward (#13) `🆕`
-- Back/forward navigation (Alt+Left/Right) through clause history
-- History dropdown showing last 15-20 viewed clauses
-- Circular buffer in store, position indicator
-
-### 9. Revision font doesn't inherit from source (#38) `🆕`
+### 7. Revision font doesn't inherit from source (#38) `🆕`
 - RevisionSheet uses generic styles regardless of source paragraph formatting
 - Need to extract computed styles or use CSS class categories from source
 - Files: `revision-sheet.tsx`, `track-changes-editor.tsx`, `globals.css`
@@ -75,27 +62,30 @@ Legend: `🔧 Partial` `🆕 New`
 
 ## Tier 4: Large (3–8 hrs each)
 
-### 1. Show revision options before calling agent (#4) `🆕`
-- Currently: click "Generate Revision" → immediately calls agent
+### 1. Show revision options before calling agent (#4) `🔧 Partial`
+- Currently: click "Generate Revision" → immediately calls agent; `model_instructions` field guides revision
 - Needed: show description of how risk could be addressed, present 2+ options (add qualifier, add threshold, delete provision)
 - User selects approach → agent called with specific instructions
 - Pass full clause text + related language (definitions, interconnecting clauses)
 - Requires new UI component + prompt engineering
+- **Status (2026-02-18):** Commented on issue — revision workflow exists but no multi-approach selector
 
-### 2. Bookmark clauses / breadcrumbs bar (#16) `🆕`
+### 2. Bookmark clauses / breadcrumbs bar (#16) `🔧 Partial`
 - Bookmark any clause with single click + optional label
 - Persistent breadcrumbs bar (§4.2, Article VII(b))
 - Drag-and-drop reorder, category grouping, keyboard shortcuts
 - Persist in session/localStorage
+- **Status (2026-02-18):** Flag system covers mark+navigate; breadcrumb bar UX not built
 
-### 3. Document numbering & fidelity (#2, #23, #40) `🆕`
+### 3. Document numbering & fidelity (#2, #23, #40) `🔧 Partial`
 - MS Word automatic numbering not rendering (1.3, (iv), Section 2.1)
 - Multi-level numbering (1.1.1, a.i.α) not handled
 - Root cause: `html_renderer.py` doesn't inject extracted numbering into HTML
 - Touches backend (`html_renderer.py`, `document_service.py`) and frontend (document viewer, navigation panel)
 - Needs testing with real PSA and lease documents
+- **Status (2026-02-18):** Backend extraction (NumberingResolver, SectionTracker) works; frontend rendering doesn't use it. #2 and #23 consolidated into #40
 
-### 4. Print/export complete risk analysis (#14, #34) `🆕`
+### 4. Print/export complete risk analysis (#14) `🆕`
 - Full document with inline risk annotations (highlights, margin notes)
 - Severity markers, category labels, summary table
 - Output formats: HTML, PDF, Word
@@ -142,6 +132,12 @@ These were on the original list but are confirmed working in the codebase:
 - ~~Resizable nav/sidebar panes~~ — drag handles with `← →` arrows on hover, clamped ranges
 - ~~Stop generation button~~ — square inside spinning circle, static "Generating..." text, no rotating verbs
 
+### Issue triage (2026-02-18)
+- ~~Nav search improvements (#9)~~ — tabbed search (all/caption/content), `highlightMatch()`, risk/flag filter toggles
+- ~~User focus history / back-forward (#13)~~ — `focusHistory` circular buffer (max 20), `goBackInHistory`/`goForwardInHistory` in store
+- ~~Finalize: review dismissed/unaddressed risks (#25)~~ — `unreviewedRisks` with severity sort, expandable accordion, "Go to" navigation
+- ~~Risk analysis print/export (#34)~~ — closed as duplicate of #14
+
 ### Earlier implementations
 - ~~Grammar: "1 revisions approved" (#47 L4)~~ — singular/plural ternary added
 - ~~Header missing role="banner" (#49)~~ — added to header.tsx
@@ -167,8 +163,31 @@ These were on the original list but are confirmed working in the codebase:
 
 ## Deferred / Out of Scope for Now
 
-- Configurable flag audiences with routed transmittals (#46)
-- Session diff / "What did I change?" (#43)
-- Clause-level attorney notes (#41)
-- Cross-reference map / ripple effect view (#42)
-- Revisions cheatsheet (#26)
+- Configurable flag audiences with routed transmittals (#46) — still hard-coded binary `client`/`attorney` toggle; major refactor needed
+- Session diff / "What did I change?" (#43) — store tracks data, but no dedicated panel, no pattern detection, no mid-review summary
+- Clause-level attorney notes (#41) — partially covered by attorney flags; superseded by #46 audience system
+- Cross-reference map / ripple effect view (#42) — not started
+- Revisions cheatsheet (#26) — not started
+- Track changes per-run formatting (#27) — export works but per-word formatting not preserved through diff pipeline
+- Performance diagnostics (#37) — works but no timing breakdown or optimization
+
+## Issues Commented On (2026-02-18)
+
+Summary of GitHub issue status updates made during triage:
+
+| Issue | Status | Key Note |
+|-------|--------|----------|
+| #1 | Partial | Frontend highlighting logic exists; backend field mapping needed |
+| #2 | Consolidated | → #40 |
+| #4 | Partial | No multi-approach selector before revision generation |
+| #16 | Partial | Flags serve as bookmarks; no breadcrumb bar |
+| #23 | Consolidated | → #40 |
+| #24 | Partial | Flat revision list, not grouped by document section hierarchy |
+| #27 | Partial | Export works; per-run formatting not preserved |
+| #37 | Partial | No timing diagnostics or batch optimization |
+| #40 | Partial | Backend numbering extraction works; frontend doesn't render it |
+| #43 | Partial | Data tracked in store; no dedicated summary panel |
+| #46 | Not started | Hard-coded binary toggle; audience system not built |
+| #47 | 11/32 fixed | H1,H2,H6,M2-M6,M9,L1-L3,L5-L7,O1-O6 still open |
+| #49 | ~8/20 fixed | Empty/loading states and remaining items still open |
+| #52 | 5 items fixed | Remaining regression items still open |
