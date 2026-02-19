@@ -34,6 +34,16 @@ def create_app():
     app.config['UPLOAD_FOLDER'].mkdir(parents=True, exist_ok=True)
     app.config['SESSION_FOLDER'].mkdir(parents=True, exist_ok=True)
 
+    # Database — SQLite in dev, PostgreSQL on Railway (via DATABASE_URL env var)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'DATABASE_URL', 'sqlite:///dev.db'
+    )
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    from app.models import db, migrate
+    db.init_app(app)
+    migrate.init_app(app, db)
+
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix='/api')
 
