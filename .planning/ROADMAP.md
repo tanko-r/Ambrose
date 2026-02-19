@@ -166,7 +166,7 @@ Plans:
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 9 | Database + Async Analysis | PostgreSQL sessions + non-blocking analysis | DB-01..04, ASYNC-01..02 | Not started |
+| 9 | 1/2 | In Progress|  | Not started |
 | 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Not started |
 | 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Not started |
 | 12 | Workspace Isolation | Per-user sessions, file paths, storage config | WORK-01..04, CONF-02 | Not started |
@@ -189,7 +189,7 @@ Plans:
   3. A 50+ page document completes analysis without being killed by an HTTP timeout
   4. Database schema can be upgraded via `flask db upgrade` without data loss
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 09-01-PLAN.md -- Database foundation: SQLAlchemy/Migrate setup, SessionRecord model, updated get/save_session with DB persistence

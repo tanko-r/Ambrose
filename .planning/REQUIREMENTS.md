@@ -69,10 +69,10 @@
 
 ### Database (DB)
 
-- [ ] **DB-01**: PostgreSQL stores user accounts and session metadata
-- [ ] **DB-02**: Session metadata persists across server restarts (not in-memory only)
-- [ ] **DB-03**: Large analysis/document blobs stored on filesystem, not in database
-- [ ] **DB-04**: Database schema managed via migrations (Flask-Migrate/Alembic)
+- [x] **DB-01**: PostgreSQL stores user accounts and session metadata
+- [x] **DB-02**: Session metadata persists across server restarts (not in-memory only)
+- [x] **DB-03**: Large analysis/document blobs stored on filesystem, not in database
+- [x] **DB-04**: Database schema managed via migrations (Flask-Migrate/Alembic)
 
 ### Containerization (DOCK)
 
@@ -157,10 +157,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PREC-01..04 | v1.0 Phase 5 | Complete |
 | NEW-01..04 | v1.0 Phase 6 | In Progress |
 | RENDER-01..04 | v1.0 Phase A | Complete |
-| DB-01 | v1.1 Phase 9 | Pending |
-| DB-02 | v1.1 Phase 9 | Pending |
-| DB-03 | v1.1 Phase 9 | Pending |
-| DB-04 | v1.1 Phase 9 | Pending |
+| DB-01 | v1.1 Phase 9 | Complete |
+| DB-02 | v1.1 Phase 9 | Complete |
+| DB-03 | v1.1 Phase 9 | Complete |
+| DB-04 | v1.1 Phase 9 | Complete |
 | ASYNC-01 | v1.1 Phase 9 | Pending |
 | ASYNC-02 | v1.1 Phase 9 | Pending |
 | AUTH-01 | v1.1 Phase 10 | Pending |
