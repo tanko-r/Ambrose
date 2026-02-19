@@ -51,23 +51,134 @@ sessions = {}
 
 
 def get_session(session_id):
-    """Get session data or return error."""
-    if session_id not in sessions:
+    """
+    Get session data using 3-tier lookup: memory -> disk -> DB.
+
+    Tier 1: In-memory cache (fastest, no I/O).
+    Tier 2: Disk JSON file (survives in-process restart).
+    Tier 3: DB metadata row (survives server restart; attempts disk merge).
+
+    Returns None if session is not found in any tier.
+    """
+    # Tier 1: in-memory cache
+    if session_id in sessions:
+        return sessions[session_id]
+
+    # Tier 2: disk fallback — load JSON written by save_session()
+    session_folder = current_app.config['SESSION_FOLDER']
+    session_path = session_folder / f'{session_id}.json'
+    if session_path.exists():
+        try:
+            with open(session_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            # Restore parsed_doc from parsed_doc_path if available
+            parsed_doc_path = _normalize_path(data.get('parsed_doc_path'))
+            if parsed_doc_path and Path(parsed_doc_path).exists():
+                with open(parsed_doc_path, 'r', encoding='utf-8') as f:
+                    data['parsed_doc'] = json.load(f)
+            sessions[session_id] = data
+            return data
+        except (json.JSONDecodeError, IOError):
+            pass  # fall through to DB tier
+
+    # Tier 3: DB metadata fallback — reconstruct minimal session from DB row
+    try:
+        from app.models.session import SessionRecord
+        from app.models import db as _db
+        record = _db.session.get(SessionRecord, session_id)
+        if record is None:
+            return None
+
+        # Build a minimal dict from the DB columns
+        data = {
+            'session_id': record.session_id,
+            'created_at': record.created_at.isoformat() if record.created_at else None,
+            'status': record.status,
+            'contract_type': record.contract_type,
+            'representation': record.representation,
+            'approach': record.approach,
+            'aggressiveness': record.aggressiveness,
+            'target_filename': record.target_filename,
+            'target_path': _normalize_path(record.target_path),
+            'parsed_doc_path': _normalize_path(record.parsed_doc_path),
+            'precedent_path': _normalize_path(record.precedent_path),
+            'revisions': {},
+            'flags': [],
+            'is_test_session': record.is_test_session,
+        }
+
+        # Always attempt to merge the full disk JSON — it has parsed_doc, analysis, etc.
+        if session_path.exists():
+            try:
+                with open(session_path, 'r', encoding='utf-8') as f:
+                    disk_data = json.load(f)
+                data.update(disk_data)
+            except (json.JSONDecodeError, IOError):
+                pass
+
+        # If parsed_doc still missing and we have a path, attempt to load it
+        if 'parsed_doc' not in data or not data.get('parsed_doc'):
+            parsed_doc_path = _normalize_path(data.get('parsed_doc_path'))
+            if parsed_doc_path and Path(parsed_doc_path).exists():
+                try:
+                    with open(parsed_doc_path, 'r', encoding='utf-8') as f:
+                        data['parsed_doc'] = json.load(f)
+                except (json.JSONDecodeError, IOError):
+                    pass
+
+        # If parsed_doc is still missing return None (downstream endpoints need it)
+        if not data.get('parsed_doc'):
+            return None
+
+        sessions[session_id] = data
+        return data
+
+    except Exception:
         return None
-    return sessions[session_id]
 
 
 def save_session(session_id, data):
-    """Save session data."""
+    """
+    Save session data to memory, disk, and DB (3-tier write).
+
+    - Memory: always (in-process cache)
+    - Disk: JSON file excluding large blobs (parsed_doc stored by path reference)
+    - DB: upsert metadata-only row; wrapped in try/except for graceful degradation
+    """
     sessions[session_id] = data
-    # Also persist to disk
+
+    # Disk write — exclude large blobs, store only path references
     session_path = current_app.config['SESSION_FOLDER'] / f'{session_id}.json'
     with open(session_path, 'w', encoding='utf-8') as f:
-        # Convert non-serializable objects
         serializable = {k: v for k, v in data.items() if k != 'parsed_doc'}
         if 'parsed_doc' in data:
             serializable['parsed_doc_path'] = str(data.get('parsed_doc_path', ''))
         json.dump(serializable, f, indent=2, default=str)
+
+    # DB upsert — metadata columns only (DB-03: no blobs)
+    try:
+        from app.models.session import SessionRecord
+        from app.models import db as _db
+        record = _db.session.get(SessionRecord, session_id)
+        if record is None:
+            record = SessionRecord(session_id=session_id)
+            _db.session.add(record)
+        record.status = data.get('status', 'initialized')
+        record.contract_type = data.get('contract_type')
+        record.representation = data.get('representation')
+        record.approach = data.get('approach')
+        record.aggressiveness = data.get('aggressiveness')
+        record.target_filename = data.get('target_filename')
+        record.target_path = data.get('target_path')
+        record.parsed_doc_path = str(data.get('parsed_doc_path', ''))
+        record.precedent_path = data.get('precedent_path')
+        record.revisions_count = len(data.get('revisions', {}))
+        record.flags_count = len(data.get('flags', []))
+        record.is_test_session = data.get('is_test_session', False)
+        _db.session.commit()
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning('DB upsert failed for session %s: %s', session_id, exc)
 
 
 @api_bp.route('/load-test-session', methods=['POST'])
@@ -128,13 +239,14 @@ def load_test_session():
         'target_filename': session_meta.get('target_filename', 'Sample PSA - Seller Side.docx'),
         'target_path': str(target_docx) if target_docx.exists() else None,
         'parsed_doc': document,
+        'parsed_doc_path': str(doc_path),
         'analysis': analysis,
         'revisions': {},
         'flags': [],
         'is_test_session': True
     }
 
-    sessions[session_id] = session
+    save_session(session_id, session)
 
     return jsonify({
         'session_id': session_id,
@@ -1376,17 +1488,24 @@ def get_transmittal(session_id):
 
 @api_bp.route('/sessions', methods=['GET'])
 def list_sessions():
-    """List all active sessions (in-memory only)."""
-    session_list = []
-    for sid, data in sessions.items():
-        session_list.append({
-            'session_id': sid,
-            'created_at': data.get('created_at'),
-            'status': data.get('status'),
-            'contract_type': data.get('contract_type'),
-            'representation': data.get('representation')
-        })
-    return jsonify({'sessions': session_list})
+    """
+    List all sessions from the database ordered by most recently updated.
+
+    TODO: Phase 12 — add user filtering (currently returns ALL sessions).
+    """
+    from app.models.session import SessionRecord
+    records = SessionRecord.query.order_by(SessionRecord.updated_at.desc()).all()
+    return jsonify([{
+        'session_id': r.session_id,
+        'status': r.status,
+        'contract_type': r.contract_type,
+        'representation': r.representation,
+        'target_filename': r.target_filename,
+        'created_at': r.created_at.isoformat() if r.created_at else None,
+        'updated_at': r.updated_at.isoformat() if r.updated_at else None,
+        'revisions_count': r.revisions_count,
+        'flags_count': r.flags_count,
+    } for r in records])
 
 
 @api_bp.route('/sessions/saved', methods=['GET'])
