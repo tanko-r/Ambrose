@@ -1,26 +1,26 @@
 # Project State
 
 **Project:** Ambrose (Contract Redlining)
-**Branch:** ui-refinement
-**Last Updated:** 2026-02-18
+**Branch:** deployment-refactor
+**Last Updated:** 2026-02-19
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** v1.1 Users and Deployment — roadmap defined, ready to plan Phase 9
+**Current focus:** v1.1 Users and Deployment — Phase 9 complete (DB + Async Analysis)
 
 ## Current Milestone
 
 **v1.1 -- Users and Deployment**
 
-Phase: 9 of 5 v1.1 phases (DB + Async Analysis)
-Plan: 09-01 complete, 09-02 pending
-Status: In Progress
-Last activity: 2026-02-19 — 09-01 complete (SQLAlchemy + SessionRecord + 3-tier persistence)
+Phase: 9 of 5 v1.1 phases (DB + Async Analysis) — COMPLETE
+Plan: 09-01 complete, 09-02 complete
+Status: In Progress (Phase 9 done, Phase 10+ pending)
+Last activity: 2026-02-19 — 09-02 complete (async analysis endpoints + non-blocking frontend hook)
 
-Progress: [█░░░░░░░░░] 10% (v1.1)
+Progress: [██░░░░░░░░] 20% (v1.1)
 
 ## Previous Milestone (v1.0)
 
@@ -54,15 +54,17 @@ Progress: [█░░░░░░░░░] 10% (v1.1)
 | v1.1 | Phases 9+10 parallel, then 11→12→13 | DB and frontend auth are independent; middleware needs both; isolation needs all |
 | v1.1 | Railway Volume (not Buckets) for files | Simpler (no boto3); S3-compatible Buckets deferred until scaling needed |
 | v1.1 | Gunicorn gthread (not gevent) | asyncio.run() conflicts with gevent monkey-patching |
+| 09-02 | threading.Thread (not Celery/RQ) | No extra infrastructure at this scale; GIL provides adequate dict protection |
+| 09-02 | Regex fallback runs in background thread | Preserves degraded-quality result path; user gets something rather than nothing on LLM failure |
+| 09-02 | _build_concept_and_risk_maps() extracted | Eliminates code duplication between sync (old) and async (new) analysis paths |
 | 8 | Archive old frontend to _archived/ (not delete) | Preserves history for reference |
 | 7 | next-themes with attribute=class, defaultTheme=system | Standard pattern for Tailwind CSS dark mode |
 
 ### Blockers/Concerns
 
-- **Phase 9 (Alembic on existing project):** Use `alembic stamp head` to baseline before first migration. Review every auto-generated migration before applying.
 - **Phase 11 (PyJWT + Clerk JWKS):** Validate azp claim; specify RS256 not HS256; cache PyJWKClient at module load.
 - **Phase 12 (get_session refactor):** Touches all 30+ call sites in routes.py — code review every call site after change.
-- **Railway HTTP timeout:** Confirmed hard 5-minute limit at network layer; Phase 9 async fix is an absolute deploy blocker.
+- ~~**Railway HTTP timeout:** Confirmed hard 5-minute limit at network layer; Phase 9 async fix is an absolute deploy blocker.~~ **RESOLVED by 09-02**
 
 ### Quick Tasks Completed
 
@@ -74,7 +76,7 @@ Progress: [█░░░░░░░░░] 10% (v1.1)
 ## Session Continuity
 
 Last session: 2026-02-19
-Last activity: 2026-02-19 — Completed 09-01-PLAN.md (SQLAlchemy + SessionRecord + 3-tier session persistence)
+Last activity: 2026-02-19 — Completed 09-02-PLAN.md (async analysis endpoints, non-blocking frontend hook, Railway timeout immunity)
 Resume file: None
 
 ---

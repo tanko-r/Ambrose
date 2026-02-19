@@ -90,8 +90,8 @@
 
 ### Async Analysis (ASYNC)
 
-- [ ] **ASYNC-01**: Analysis endpoints return immediately with job ID (no blocking HTTP connection)
-- [ ] **ASYNC-02**: Analysis runs in background thread with progress polling via existing UI
+- [x] **ASYNC-01**: Analysis endpoints return immediately with job ID (no blocking HTTP connection)
+- [x] **ASYNC-02**: Analysis runs in background thread with progress polling via existing UI
 
 ### Railway Deployment (RAIL)
 
@@ -161,8 +161,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DB-02 | v1.1 Phase 9 | Complete |
 | DB-03 | v1.1 Phase 9 | Complete |
 | DB-04 | v1.1 Phase 9 | Complete |
-| ASYNC-01 | v1.1 Phase 9 | Pending |
-| ASYNC-02 | v1.1 Phase 9 | Pending |
+| ASYNC-01 | v1.1 Phase 9 | Complete |
+| ASYNC-02 | v1.1 Phase 9 | Complete |
 | AUTH-01 | v1.1 Phase 10 | Pending |
 | AUTH-02 | v1.1 Phase 10 | Pending |
 | AUTH-03 | v1.1 Phase 10 | Pending |
