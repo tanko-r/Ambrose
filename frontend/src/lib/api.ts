@@ -196,6 +196,14 @@ export async function getAnalysis(sessionId: string): Promise<AnalysisResponse> 
   return request(`/api/analysis/${sessionId}`);
 }
 
+export async function startAnalysisJob(sessionId: string): Promise<{
+  job_id?: string;
+  status: string;
+  session_id: string;
+}> {
+  return request(`/api/analysis/${sessionId}/start`, { method: 'POST' });
+}
+
 export async function getAnalysisProgress(
   sessionId: string,
   options?: { includeRisks?: boolean; lastApiCallId?: number }
