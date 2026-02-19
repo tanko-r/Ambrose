@@ -15,6 +15,7 @@ Endpoints:
 
 import json
 import uuid
+import threading as _threading
 from datetime import datetime
 from pathlib import Path
 from flask import Blueprint, request, jsonify, current_app, send_file, Response
@@ -48,6 +49,11 @@ def _normalize_path(p: str | None) -> str | None:
 
 # Session storage (in-memory for now, could use Redis/DB for production)
 sessions = {}
+
+# Async analysis job registry
+# Keyed by job_id: {"job_id": str, "session_id": str, "status": "running"|"complete"|"failed", "error": str|None}
+_analysis_jobs = {}
+_analysis_jobs_lock = _threading.Lock()
 
 
 def get_session(session_id):
@@ -502,25 +508,236 @@ def serve_precedent_html(session_id):
         return jsonify({'error': f'HTML rendering failed: {str(e)}'}), 500
 
 
-@api_bp.route('/analysis/<session_id>', methods=['GET'])
-def get_analysis(session_id):
+def _build_concept_and_risk_maps(analysis, session, session_id):
     """
-    Get full risk/opportunity analysis.
+    Build ConceptMap and RiskMap from analysis results, enrich paragraph captions,
+    and store everything in the session. Returns (concept_map, risk_map).
 
-    If analysis hasn't been performed yet, triggers analysis.
-    Uses Claude Opus 4.5 for deep legal analysis.
-    Returns comprehensive risk map with per-clause breakdown.
-
-    After analysis, builds and stores ConceptMap and RiskMap objects
-    in the session for use during revision generation.
+    Extracted to avoid duplication between synchronous and async code paths.
     """
     from app.models import ConceptMap, RiskMap
 
+    # Build ConceptMap from analysis
+    concept_map = ConceptMap()
+    if 'concept_map' in analysis:
+        for category, provisions in analysis['concept_map'].items():
+            if isinstance(provisions, dict):
+                for key, details in provisions.items():
+                    if isinstance(details, dict):
+                        concept_map.add_provision(
+                            category=category,
+                            key=key,
+                            value=details.get('value', ''),
+                            section=details.get('section', ''),
+                            **{k: v for k, v in details.items() if k not in ('value', 'section')}
+                        )
+                    else:
+                        # Handle case where details is a simple value
+                        concept_map.add_provision(
+                            category=category,
+                            key=key,
+                            value=str(details),
+                            section=''
+                        )
+
+    # Build RiskMap from analysis
+    risk_map = RiskMap()
+    for risk in analysis.get('risk_inventory', []):
+        rm_risk = risk_map.add_risk(
+            risk_id=risk.get('risk_id', ''),
+            clause=risk.get('section_ref', risk.get('para_id', '')),
+            para_id=risk.get('para_id', ''),
+            title=risk.get('title', ''),
+            description=risk.get('description', ''),
+            base_severity=risk.get('severity', 'medium')
+        )
+        # Add relationships
+        for m in risk.get('mitigated_by', []):
+            if isinstance(m, dict):
+                rm_risk.add_mitigator(m.get('ref', ''), m.get('effect', ''))
+        for a in risk.get('amplified_by', []):
+            if isinstance(a, dict):
+                rm_risk.add_amplifier(a.get('ref', ''), a.get('effect', ''))
+        for t in risk.get('triggers', []):
+            rm_risk.add_trigger(t)
+
+    # Recalculate effective severities based on relationships
+    risk_map.recalculate_all_severities()
+
+    # Enrich paragraph captions from LLM-generated paragraph_map
+    paragraph_map = analysis.get('paragraph_map') or {}
+    if not paragraph_map:
+        # Try loading from stored initial_context (progress data)
+        progress = session.get('progress', {})
+        initial_ctx = progress.get('initial_context', {})
+        paragraph_map = initial_ctx.get('paragraph_map', {})
+
+    if paragraph_map and session.get('parsed_doc'):
+        for para in session['parsed_doc'].get('content', []):
+            para_id = para.get('id', '')
+            llm_info = paragraph_map.get(para_id, {})
+            llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
+            if llm_caption:
+                words = llm_caption.split()
+                para['caption'] = ' '.join(words[:7])
+
+    # Store analysis and maps in session
+    session['analysis'] = analysis
+    session['concept_map'] = concept_map.to_dict()
+    session['risk_map'] = risk_map.to_dict()
+    session['status'] = 'analyzed'
+    save_session(session_id, session)
+
+    return concept_map, risk_map
+
+
+@api_bp.route('/analysis/<session_id>/start', methods=['POST'])
+def start_analysis(session_id):
+    """
+    Start analysis asynchronously — returns HTTP 202 immediately with a job_id.
+
+    Analysis runs in a background thread with app.app_context() pushed so it
+    can access Flask config, DB, and services without holding an HTTP connection.
+
+    This prevents Railway's hard 5-minute HTTP timeout from killing long analyses.
+    """
     session = get_session(session_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
-    # Check if analysis already exists
+    # If analysis is already complete, return immediately
+    if session.get('analysis'):
+        return jsonify({'status': 'already_complete', 'session_id': session_id}), 200
+
+    # Check if a job is already running for this session
+    with _analysis_jobs_lock:
+        for job_id, job in _analysis_jobs.items():
+            if job['session_id'] == session_id and job['status'] == 'running':
+                return jsonify({
+                    'job_id': job_id,
+                    'status': 'already_running',
+                    'session_id': session_id
+                }), 200
+
+        job_id = str(uuid.uuid4())
+        _analysis_jobs[job_id] = {
+            'job_id': job_id,
+            'session_id': session_id,
+            'status': 'running',
+            'error': None,
+        }
+
+    # CRITICAL: get the real app object before spawning — current_app proxy is thread-local
+    app = current_app._get_current_object()
+
+    def _run_analysis(app, session_id, job_id):
+        """Background thread: runs analysis with app context, updates job registry."""
+        with app.app_context():
+            try:
+                # Re-fetch session inside app context (needed for thread-safe access)
+                session = get_session(session_id)
+                if not session:
+                    with _analysis_jobs_lock:
+                        _analysis_jobs[job_id]['status'] = 'failed'
+                        _analysis_jobs[job_id]['error'] = 'Session not found in background thread'
+                    return
+
+                from app.services.claude_service import analyze_document_with_llm, clear_progress
+
+                analysis = analyze_document_with_llm(
+                    parsed_doc=session.get('parsed_doc'),
+                    contract_type=session.get('contract_type', 'general'),
+                    representation=session.get('representation', 'seller'),
+                    aggressiveness=session.get('aggressiveness', 3),
+                    batch_size=5,
+                    session_id=session_id,
+                    include_exhibits=session.get('include_exhibits', False)
+                )
+
+                clear_progress(session_id)
+
+                _build_concept_and_risk_maps(analysis, session, session_id)
+
+                with _analysis_jobs_lock:
+                    _analysis_jobs[job_id]['status'] = 'complete'
+
+            except Exception as llm_error:
+                # LLM failed — attempt regex fallback before marking as failed
+                try:
+                    from app.services.claude_service import clear_progress as _clear
+                    _clear(session_id)
+                except Exception:
+                    pass
+
+                try:
+                    session = get_session(session_id)
+                    from app.services.analysis_service import analyze_document
+                    analysis = analyze_document(
+                        parsed_doc=session.get('parsed_doc'),
+                        parsed_precedent=session.get('parsed_precedent'),
+                        contract_type=session.get('contract_type', 'general'),
+                        representation=session.get('representation', 'seller'),
+                        aggressiveness=session.get('aggressiveness', 3)
+                    )
+                    analysis['analysis_method'] = 'regex_fallback'
+                    analysis['fallback_reason'] = str(llm_error)
+
+                    _build_concept_and_risk_maps(analysis, session, session_id)
+
+                    with _analysis_jobs_lock:
+                        _analysis_jobs[job_id]['status'] = 'complete'
+
+                except Exception as fallback_error:
+                    with _analysis_jobs_lock:
+                        _analysis_jobs[job_id]['status'] = 'failed'
+                        _analysis_jobs[job_id]['error'] = (
+                            f'LLM failed: {llm_error}. Fallback also failed: {fallback_error}'
+                        )
+
+    _threading.Thread(
+        target=_run_analysis,
+        args=(app, session_id, job_id),
+        daemon=True
+    ).start()
+
+    return jsonify({
+        'job_id': job_id,
+        'status': 'started',
+        'session_id': session_id,
+    }), 202
+
+
+@api_bp.route('/analysis/jobs/<job_id>', methods=['GET'])
+def get_analysis_job(job_id):
+    """
+    Get the status of an async analysis job by job_id.
+
+    Returns: {job_id, session_id, status: "running"|"complete"|"failed", error?}
+    """
+    with _analysis_jobs_lock:
+        job = _analysis_jobs.get(job_id)
+    if not job:
+        return jsonify({'error': 'Job not found'}), 404
+    return jsonify(job)
+
+
+@api_bp.route('/analysis/<session_id>', methods=['GET'])
+def get_analysis(session_id):
+    """
+    Get full risk/opportunity analysis (non-blocking).
+
+    If analysis is complete, returns the cached result immediately.
+    If analysis has not been started or is still running, returns HTTP 202
+    with instructions to use POST /start.
+
+    NOTE: Analysis is no longer triggered by this endpoint. Use
+    POST /api/analysis/{session_id}/start to begin analysis.
+    """
+    session = get_session(session_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
+    # Check if analysis already exists — return cached result
     if session.get('analysis'):
         # Include stored maps in response if they exist
         response = dict(session['analysis'])
@@ -530,124 +747,11 @@ def get_analysis(session_id):
             response['risk_map'] = session['risk_map']
         return jsonify(response)
 
-    # Perform LLM-based analysis using Claude
-    try:
-        from app.services.claude_service import analyze_document_with_llm, clear_progress
-
-        analysis = analyze_document_with_llm(
-            parsed_doc=session.get('parsed_doc'),
-            contract_type=session.get('contract_type', 'general'),
-            representation=session.get('representation', 'seller'),
-            aggressiveness=session.get('aggressiveness', 3),
-            batch_size=5,  # Analyze 5 clauses per API call
-            session_id=session_id,  # Pass session_id for progress tracking
-            include_exhibits=session.get('include_exhibits', False)  # Pass include_exhibits setting from intake
-        )
-
-        # Clear progress tracking
-        clear_progress(session_id)
-
-        # Build ConceptMap from analysis
-        concept_map = ConceptMap()
-        if 'concept_map' in analysis:
-            for category, provisions in analysis['concept_map'].items():
-                if isinstance(provisions, dict):
-                    for key, details in provisions.items():
-                        if isinstance(details, dict):
-                            concept_map.add_provision(
-                                category=category,
-                                key=key,
-                                value=details.get('value', ''),
-                                section=details.get('section', ''),
-                                **{k: v for k, v in details.items() if k not in ('value', 'section')}
-                            )
-                        else:
-                            # Handle case where details is a simple value
-                            concept_map.add_provision(
-                                category=category,
-                                key=key,
-                                value=str(details),
-                                section=''
-                            )
-
-        # Build RiskMap from analysis
-        risk_map = RiskMap()
-        for risk in analysis.get('risk_inventory', []):
-            rm_risk = risk_map.add_risk(
-                risk_id=risk.get('risk_id', ''),
-                clause=risk.get('section_ref', risk.get('para_id', '')),
-                para_id=risk.get('para_id', ''),
-                title=risk.get('title', ''),
-                description=risk.get('description', ''),
-                base_severity=risk.get('severity', 'medium')
-            )
-            # Add relationships
-            for m in risk.get('mitigated_by', []):
-                if isinstance(m, dict):
-                    rm_risk.add_mitigator(m.get('ref', ''), m.get('effect', ''))
-            for a in risk.get('amplified_by', []):
-                if isinstance(a, dict):
-                    rm_risk.add_amplifier(a.get('ref', ''), a.get('effect', ''))
-            for t in risk.get('triggers', []):
-                rm_risk.add_trigger(t)
-
-        # Recalculate effective severities based on relationships
-        risk_map.recalculate_all_severities()
-
-        # Enrich paragraph captions from LLM-generated paragraph_map
-        paragraph_map = analysis.get('paragraph_map') or {}
-        if not paragraph_map:
-            # Try loading from stored initial_context (progress data)
-            progress = session.get('progress', {})
-            initial_ctx = progress.get('initial_context', {})
-            paragraph_map = initial_ctx.get('paragraph_map', {})
-
-        if paragraph_map and session.get('parsed_doc'):
-            for para in session['parsed_doc'].get('content', []):
-                para_id = para.get('id', '')
-                llm_info = paragraph_map.get(para_id, {})
-                llm_caption = llm_info.get('caption', '') if isinstance(llm_info, dict) else ''
-                if llm_caption:
-                    words = llm_caption.split()
-                    para['caption'] = ' '.join(words[:7])
-
-        # Store analysis and maps in session
-        session['analysis'] = analysis
-        session['concept_map'] = concept_map.to_dict()
-        session['risk_map'] = risk_map.to_dict()
-        session['status'] = 'analyzed'
-        save_session(session_id, session)
-
-        # Include maps in response
-        response = dict(analysis)
-        response['concept_map'] = concept_map.to_dict()
-        response['risk_map'] = risk_map.to_dict()
-
-        return jsonify(response)
-    except Exception as e:
-        from app.services.claude_service import clear_progress
-        clear_progress(session_id)
-
-        # Fall back to regex-based analysis if Claude fails
-        try:
-            from app.services.analysis_service import analyze_document
-            analysis = analyze_document(
-                parsed_doc=session.get('parsed_doc'),
-                parsed_precedent=session.get('parsed_precedent'),
-                contract_type=session.get('contract_type', 'general'),
-                representation=session.get('representation', 'seller'),
-                aggressiveness=session.get('aggressiveness', 3)
-            )
-            analysis['analysis_method'] = 'regex_fallback'
-            analysis['fallback_reason'] = str(e)
-
-            session['analysis'] = analysis
-            session['status'] = 'analyzed'
-            save_session(session_id, session)
-
-            return jsonify(analysis)
-        except Exception as fallback_error:
-            return jsonify({'error': f'Analysis failed: {str(e)}. Fallback also failed: {str(fallback_error)}'}), 500
+    # Analysis not complete — never block; tell client to use the async endpoint
+    return jsonify({
+        'status': 'not_started',
+        'message': f'Use POST /api/analysis/{session_id}/start to begin analysis',
+    }), 202
 
 
 @api_bp.route('/analysis/<session_id>/progress', methods=['GET'])
