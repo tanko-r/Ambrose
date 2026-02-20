@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-18
+**Updated:** 2026-02-19
 **Branch:** `nextjs-migration`
 
 ## Milestones
@@ -166,7 +166,7 @@ Plans:
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 9 | 2/2 | Complete    | 2026-02-19 | Not started |
+| 9 | DB + Async Analysis | PostgreSQL persistence, non-blocking analysis | DB-01..04, ASYNC-01..02 | Complete |
 | 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Not started |
 | 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Not started |
 | 12 | Workspace Isolation | Per-user sessions, file paths, storage config | WORK-01..04, CONF-02 | Not started |
@@ -181,6 +181,8 @@ Plans:
 **Goal**: Sessions persist in PostgreSQL across server restarts, and analysis runs as a non-blocking background job so Railway's HTTP timeout cannot kill it.
 
 **Depends on**: v1.0 complete (Phases 8.1)
+**Status**: Complete
+**Completed**: 2026-02-19
 **Requirements**: DB-01, DB-02, DB-03, DB-04, ASYNC-01, ASYNC-02
 
 **Success Criteria** (what must be TRUE):
@@ -189,11 +191,11 @@ Plans:
   3. A 50+ page document completes analysis without being killed by an HTTP timeout
   4. Database schema can be upgraded via `flask db upgrade` without data loss
 
-**Plans:** 2/2 plans complete
+**Plans:** 2 plans
 
 Plans:
-- [ ] 09-01-PLAN.md -- Database foundation: SQLAlchemy/Migrate setup, SessionRecord model, updated get/save_session with DB persistence
-- [ ] 09-02-PLAN.md -- Async analysis: POST /start endpoint, background thread, frontend POST+poll pattern
+- [x] 09-01-PLAN.md -- Database foundation: SQLAlchemy/Migrate setup, SessionRecord model, updated get/save_session with DB persistence
+- [x] 09-02-PLAN.md -- Async analysis: POST /start endpoint, background thread, frontend POST+poll pattern
 
 ---
 
@@ -211,7 +213,11 @@ Plans:
   4. User can log out and all browser sessions are terminated
   5. Unauthenticated users who visit any app URL are redirected to the sign-in page
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 10-01-PLAN.md -- Install Clerk SDK, create proxy.ts middleware, ClerkProvider in layout, sign-in page
+- [ ] 10-02-PLAN.md -- Replace header user dropdown with Clerk UserButton, end-to-end verification
 
 ---
 
@@ -327,8 +333,8 @@ Plans:
 | 7. Polish | v1.0 | 0/5 | Not started | - |
 | 8. Cleanup | v1.0 | 2/2 | Complete | 2026-02-13 |
 | 8.1 Doc Sync + Verify | v1.0 | 0/3 | Not started | - |
-| 9. DB + Async Analysis | v1.1 | 0/? | Not started | - |
-| 10. Clerk Frontend Auth | v1.1 | 0/? | Not started | - |
+| 9. DB + Async Analysis | v1.1 | 2/2 | Complete | 2026-02-19 |
+| 10. Clerk Frontend Auth | v1.1 | 0/2 | Not started | - |
 | 11. Flask Auth Middleware | v1.1 | 0/? | Not started | - |
 | 12. Workspace Isolation | v1.1 | 0/? | Not started | - |
 | 13. Containerization + Railway | v1.1 | 0/? | Not started | - |
