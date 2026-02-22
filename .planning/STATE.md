@@ -2,25 +2,25 @@
 
 **Project:** Ambrose (Contract Redlining)
 **Branch:** deployment-refactor
-**Last Updated:** 2026-02-21
+**Last Updated:** 2026-02-22
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** v1.1 Users and Deployment — Phase 11 complete (Flask Auth Middleware)
+**Current focus:** v1.1 Users and Deployment — Phase 12 in progress (Workspace Isolation)
 
 ## Current Milestone
 
 **v1.1 -- Users and Deployment**
 
-Phase: 11 of 5 v1.1 phases (Flask Auth Middleware) — COMPLETE
-Plan: 11-01 complete, 11-02 complete
-Status: In Progress (Phase 9+10+11 done, Phase 12+ pending)
-Last activity: 2026-02-21 — Phase 11 complete (JWT guard, token injection, env-var CORS + backend URL)
+Phase: 12 (Workspace Isolation + Storage Config) — In Progress
+Plan: 12-01 complete (DATA_DIR config, user_id/deleted_at migration, ownership enforcement)
+Status: In Progress (Phase 9+10+11+12-01 done, 12-02+ pending)
+Last activity: 2026-02-22 — Phase 12-01 complete (DATA_DIR env var, user_id column, all 24 get_session call sites secured)
 
-Progress: [██████░░░░] 60% (v1.1)
+Progress: [███████░░░] 70% (v1.1)
 
 ## Previous Milestone (v1.0)
 
@@ -59,11 +59,13 @@ Progress: [██████░░░░] 60% (v1.1)
 | 09-02 | _build_concept_and_risk_maps() extracted | Eliminates code duplication between sync (old) and async (new) analysis paths |
 | 8 | Archive old frontend to _archived/ (not delete) | Preserves history for reference |
 | 7 | next-themes with attribute=class, defaultTheme=system | Standard pattern for Tailwind CSS dark mode |
+| 12-01 | Return 404 (not 403) on ownership mismatch | Avoids leaking session existence to unauthorized callers |
+| 12-01 | Legacy sessions (user_id=None) accessible to all | Backwards compatibility for pre-Phase-12 sessions |
 
 ### Blockers/Concerns
 
 - ~~**Phase 11 (PyJWT + Clerk JWKS):** Validate azp claim; specify RS256 not HS256; cache PyJWKClient at module load.~~ **RESOLVED by 11-01 (azp validation deferred as optional; RS256 enforced; singleton cached)**
-- **Phase 12 (get_session refactor):** Touches all 30+ call sites in routes.py — code review every call site after change.
+- ~~**Phase 12 (get_session refactor):** Touches all 30+ call sites in routes.py — code review every call site after change.~~ **RESOLVED by 12-01 (all 24 route-level call sites updated; 2 background thread calls kept bare)**
 - ~~**Railway HTTP timeout:** Confirmed hard 5-minute limit at network layer; Phase 9 async fix is an absolute deploy blocker.~~ **RESOLVED by 09-02**
 
 ### Quick Tasks Completed
@@ -75,9 +77,9 @@ Progress: [██████░░░░] 60% (v1.1)
 
 ## Session Continuity
 
-Last session: 2026-02-21
-Last activity: 2026-02-21 — Completed Phase 11 (Flask Auth Middleware — JWT guard on all /api/* endpoints, token injection in frontend, env-var CORS + backend URL)
+Last session: 2026-02-22
+Last activity: 2026-02-22 — Completed 12-01 (DATA_DIR env var storage config, user_id/deleted_at migration, ownership enforcement at all 24 route-level call sites)
 Resume file: None
 
 ---
-*State updated: 2026-02-21*
+*State updated: 2026-02-22*
