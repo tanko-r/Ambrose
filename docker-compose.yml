@@ -1,0 +1,93 @@
+version: '3.8'
+
+# Local integration testing stack.
+# Sensitive secrets (GEMINI_API_KEY, CLERK_FRONTEND_API_URL, CLERK_JWKS_URL)
+# should be passed via a .env file or shell exports — NOT committed to version control.
+#
+# Usage:
+#   docker compose up --build          # start all three services
+#   docker compose down -v             # stop and remove volumes
+
+services:
+
+  # ------------------------------------------------------------------
+  # PostgreSQL — metadata store
+  # ------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: redlining
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d redlining -t 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # ------------------------------------------------------------------
+  # Flask backend — API server
+  # Set GEMINI_API_KEY, CLERK_FRONTEND_API_URL, CLERK_JWKS_URL via
+  # .env file (create from .env.example) or shell export before running.
+  # ------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/redlining
+      DATA_DIR: /app/data
+      CORS_ORIGINS: http://localhost:3000
+      FLASK_APP: app.server:create_app
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - backend_data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Run migrations before starting gunicorn so the schema is always up to date
+    command: >
+      sh -c "flask db upgrade &&
+             gunicorn
+               --workers=2
+               --threads=4
+               --worker-class=gthread
+               --worker-tmp-dir=/dev/shm
+               --bind=0.0.0.0:5000
+               --log-file=-
+               --timeout=120
+               'app.server:create_app()'"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ------------------------------------------------------------------
+  # Next.js frontend — standalone production server
+  # ------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        BACKEND_URL: http://backend:5000
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  backend_data:
