@@ -62,10 +62,10 @@
 
 ### Workspace Isolation (WORK)
 
-- [ ] **WORK-01**: User can only see and access their own sessions/projects
-- [ ] **WORK-02**: Session lookup requires both session_id and authenticated user_id
-- [ ] **WORK-03**: Uploaded documents stored in user-scoped file paths ({user_id}/{session_id}/)
-- [ ] **WORK-04**: Deleting a session removes associated files from disk
+- [x] **WORK-01**: User can only see and access their own sessions/projects
+- [x] **WORK-02**: Session lookup requires both session_id and authenticated user_id
+- [x] **WORK-03**: Uploaded documents stored in user-scoped file paths ({user_id}/{session_id}/)
+- [x] **WORK-04**: Deleting a session removes associated files from disk
 
 ### Database (DB)
 
@@ -84,7 +84,7 @@
 ### Configuration (CONF)
 
 - [ ] **CONF-01**: CORS origins configurable via CORS_ORIGINS env var (falls back to localhost for dev)
-- [ ] **CONF-02**: Data directory configurable via DATA_DIR env var (falls back to app/data/ for dev)
+- [x] **CONF-02**: Data directory configurable via DATA_DIR env var (falls back to app/data/ for dev)
 - [ ] **CONF-03**: Backend URL configurable in frontend via env var (no hardcoded localhost)
 - [ ] **CONF-04**: Local development workflow (python run.py + npm run dev) works unchanged
 
@@ -176,11 +176,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROT-03 | v1.1 Phase 11 | Pending |
 | CONF-01 | v1.1 Phase 11 | Pending |
 | CONF-03 | v1.1 Phase 11 | Pending |
-| WORK-01 | v1.1 Phase 12 | Pending |
-| WORK-02 | v1.1 Phase 12 | Pending |
-| WORK-03 | v1.1 Phase 12 | Pending |
-| WORK-04 | v1.1 Phase 12 | Pending |
-| CONF-02 | v1.1 Phase 12 | Pending |
+| WORK-01 | v1.1 Phase 12 | Complete |
+| WORK-02 | v1.1 Phase 12 | Complete |
+| WORK-03 | v1.1 Phase 12 | Complete |
+| WORK-04 | v1.1 Phase 12 | Complete |
+| CONF-02 | v1.1 Phase 12 | Complete |
 | DOCK-01 | v1.1 Phase 13 | Pending |
 | DOCK-02 | v1.1 Phase 13 | Pending |
 | DOCK-03 | v1.1 Phase 13 | Pending |

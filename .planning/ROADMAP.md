@@ -169,7 +169,7 @@ Plans:
 | 9 | DB + Async Analysis | PostgreSQL persistence, non-blocking analysis | DB-01..04, ASYNC-01..02 | Complete |
 | 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Complete |
 | 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Complete |
-| 12 | Workspace Isolation + Storage Config | User-scoped sessions/files, trash system | WORK-01..04, CONF-02 | Complete |
+| 12 | Workspace Isolation + Storage Config | Complete    | 2026-02-22 | Complete |
 | 13 | Containerization + Railway | Docker, env-var config, Railway deployment | DOCK-01..04, CONF-04, RAIL-01..04 | Not started |
 
 **Execution Order:** 9 and 10 can run in parallel. 11 requires both 9 and 10. 12 requires 9, 10, and 11. 13 requires all prior phases.
