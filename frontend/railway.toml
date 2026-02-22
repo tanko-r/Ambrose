@@ -1,0 +1,26 @@
+# Frontend Railway Service Configuration
+# =======================================
+#
+# DEPLOY ORDER: The backend Railway service MUST be created and deployed first
+# so its Railway private domain is known. Then set the BACKEND_URL build arg
+# to http://<backend-private-domain>:5000 before building/deploying this
+# frontend service. BACKEND_URL is baked into the image at build time and
+# cannot be changed at runtime without a rebuild.
+#
+# REQUIRED SERVICE VARIABLES (set in Railway dashboard → Frontend service → Variables):
+#
+#   BACKEND_URL                     Set to http://<backend-private-domain>:5000
+#                                   This is a build arg — baked into the image at build time.
+#                                   Deploy backend first to get its private domain.
+#   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY  From Clerk dashboard
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.frontend"
+
+[deploy]
+startCommand = "node server.js"
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

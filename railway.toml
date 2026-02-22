@@ -1,0 +1,35 @@
+# Backend Railway Service Configuration
+# =====================================
+# This file configures the Flask/Gunicorn backend service on Railway.
+#
+# REQUIRED SERVICE VARIABLES (set in Railway dashboard → Backend service → Variables):
+#
+#   DATABASE_URL        Auto-injected by Railway PostgreSQL plugin (RAIL-04)
+#   DATA_DIR            Set to the Railway Volume mount path (e.g. /app/data)
+#                       Volume is created and mounted via Railway dashboard (RAIL-02)
+#   FLASK_APP           app.server:create_app
+#   GIT_BRANCH          ${{RAILWAY_GIT_BRANCH}}
+#   GIT_COMMIT          ${{RAILWAY_GIT_COMMIT_SHA}}
+#   CORS_ORIGINS        The frontend Railway public domain (e.g. https://your-app.up.railway.app)
+#   GEMINI_API_KEY      From user's Gemini dashboard
+#   CLERK_FRONTEND_API_URL  From Clerk dashboard
+#   CLERK_JWKS_URL      From Clerk dashboard
+#
+# PRE-DEPLOY COMMAND (set in Railway dashboard → Backend service → Settings → Deploy):
+#   flask db upgrade
+#   (FLASK_APP env var must be set to app.server:create_app for this to work)
+#
+# PERSISTENT VOLUME (configure in Railway dashboard → Backend service → Volumes):
+#   Mount path: /app/data  (or whatever you set DATA_DIR to)
+#   The volume persists uploaded documents and analysis files between deploys.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.backend"
+
+[deploy]
+startCommand = "gunicorn --workers=2 --threads=4 --worker-class=gthread --worker-tmp-dir=/dev/shm --bind=0.0.0.0:${PORT} --log-file=- --timeout=120 'app.server:create_app()'"
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
