@@ -18,10 +18,30 @@ import uuid
 import threading as _threading
 from datetime import datetime
 from pathlib import Path
-from flask import Blueprint, request, jsonify, current_app, send_file, Response
+from flask import Blueprint, request, jsonify, current_app, send_file, Response, g
 from app.services.html_renderer import render_document_html, render_precedent_html
 
 api_bp = Blueprint('api', __name__)
+
+
+@api_bp.before_request
+def check_auth():
+    """Require valid Clerk JWT for all API endpoints."""
+    # Pass OPTIONS through — flask-cors handles preflight
+    if request.method == 'OPTIONS':
+        return None
+
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Authentication required'}), 401
+
+    token = auth_header[7:]  # strip "Bearer "
+    try:
+        from app.auth import verify_clerk_token
+        payload = verify_clerk_token(token)
+        g.clerk_user_id = payload.get('sub')  # available to all routes
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 401
 
 # Detect WSL without platform.uname() which can hang on Windows
 import os as _os
@@ -56,7 +76,7 @@ _analysis_jobs = {}
 _analysis_jobs_lock = _threading.Lock()
 
 
-def get_session(session_id):
+def get_session(session_id, user_id=None):
     """
     Get session data using 3-tier lookup: memory -> disk -> DB.
 
@@ -64,11 +84,25 @@ def get_session(session_id):
     Tier 2: Disk JSON file (survives in-process restart).
     Tier 3: DB metadata row (survives server restart; attempts disk merge).
 
-    Returns None if session is not found in any tier.
+    If user_id is provided, ownership is enforced at each tier:
+    - Sessions owned by a different user return None (produces 404, not 403,
+      to avoid leaking session existence to unauthorized callers).
+    - Trashed sessions (deleted_at is not None) are invisible to normal lookups.
+
+    Background analysis threads pass user_id=None to bypass the check
+    (they were spawned from an already-authenticated request).
+
+    Returns None if session is not found in any tier or if ownership fails.
     """
     # Tier 1: in-memory cache
     if session_id in sessions:
-        return sessions[session_id]
+        data = sessions[session_id]
+        # Enforce ownership: if caller specifies a user_id, the session's user_id
+        # must match (existing sessions with no user_id are accessible to all —
+        # legacy pre-Phase-12 sessions).
+        if user_id and data.get('user_id') and data['user_id'] != user_id:
+            return None
+        return data
 
     # Tier 2: disk fallback — load JSON written by save_session()
     session_folder = current_app.config['SESSION_FOLDER']
@@ -77,6 +111,9 @@ def get_session(session_id):
         try:
             with open(session_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+            # Ownership check on disk data
+            if user_id and data.get('user_id') and data['user_id'] != user_id:
+                return None
             # Restore parsed_doc from parsed_doc_path if available
             parsed_doc_path = _normalize_path(data.get('parsed_doc_path'))
             if parsed_doc_path and Path(parsed_doc_path).exists():
@@ -95,9 +132,18 @@ def get_session(session_id):
         if record is None:
             return None
 
+        # Trashed sessions are invisible to normal lookups
+        if record.deleted_at is not None:
+            return None
+
+        # Ownership check on DB row
+        if user_id and record.user_id and record.user_id != user_id:
+            return None
+
         # Build a minimal dict from the DB columns
         data = {
             'session_id': record.session_id,
+            'user_id': record.user_id,
             'created_at': record.created_at.isoformat() if record.created_at else None,
             'status': record.status,
             'contract_type': record.contract_type,
@@ -181,6 +227,7 @@ def save_session(session_id, data):
         record.revisions_count = len(data.get('revisions', {}))
         record.flags_count = len(data.get('flags', []))
         record.is_test_session = data.get('is_test_session', False)
+        record.user_id = data.get('user_id')
         _db.session.commit()
     except Exception as exc:
         import logging
@@ -235,6 +282,7 @@ def load_test_session():
 
     session = {
         'session_id': session_id,
+        'user_id': g.clerk_user_id,
         'created_at': datetime.now().isoformat(),
         'status': 'analyzed',
         'representation': session_meta.get('representation', analysis.get('representation', 'buyer')),
@@ -289,8 +337,9 @@ def intake():
     aggressiveness = int(request.form.get('aggressiveness', 3))
     include_exhibits = request.form.get('include_exhibits', 'false').lower() == 'true'
 
-    # Handle file uploads
-    upload_folder = current_app.config['UPLOAD_FOLDER'] / session_id
+    # Handle file uploads — scoped under users/{clerk_user_id}/{session_id}/
+    user_id = g.clerk_user_id
+    upload_folder = current_app.config['UPLOAD_FOLDER'] / user_id / session_id
     upload_folder.mkdir(parents=True, exist_ok=True)
 
     target_file = request.files.get('target_file')
@@ -328,6 +377,7 @@ def intake():
     # Store session data
     session_data = {
         'session_id': session_id,
+        'user_id': user_id,
         'created_at': datetime.now().isoformat(),
         'representation': representation,
         'deal_context': deal_context,
@@ -399,7 +449,7 @@ def get_document(session_id):
     Returns the full document content with section hierarchy,
     ready for rendering in the UI.
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -457,7 +507,7 @@ def serve_document_html(session_id):
     automatic numbering, indentation, fonts, and styles.
     RENDER-01, RENDER-02, RENDER-03: High-fidelity document preview
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -486,7 +536,7 @@ def serve_precedent_html(session_id):
 
     RENDER-04: Same rendering engine for both panels
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -601,7 +651,7 @@ def start_analysis(session_id):
 
     This prevents Railway's hard 5-minute HTTP timeout from killing long analyses.
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -733,7 +783,7 @@ def get_analysis(session_id):
     NOTE: Analysis is no longer triggered by this endpoint. Use
     POST /api/analysis/{session_id}/start to begin analysis.
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -768,7 +818,7 @@ def get_analysis_progress(session_id):
     progress = get_progress(session_id)
     if not progress:
         # No active analysis - check if already complete
-        session = get_session(session_id)
+        session = get_session(session_id, user_id=g.clerk_user_id)
         if session and session.get('analysis'):
             return jsonify({
                 'status': 'complete',
@@ -864,7 +914,7 @@ def revise():
     include_related_ids = data.get('include_related_ids', [])
     custom_instruction = data.get('custom_instruction', '')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -967,7 +1017,7 @@ def accept_revision():
     session_id = data.get('session_id')
     para_id = data.get('para_id')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1029,7 +1079,7 @@ def unaccept_revision():
     session_id = data.get('session_id')
     para_id = data.get('para_id')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1053,7 +1103,7 @@ def reject_revision():
     session_id = data.get('session_id')
     para_id = data.get('para_id')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1082,7 +1132,7 @@ def reanalyze_clause():
     session_id = data.get('session_id')
     para_id = data.get('para_id')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1177,7 +1227,7 @@ def flag_item():
     category = data.get('category')  # business-decision, risk-alert, for-discussion, fyi (None for attorney flags)
     text_excerpt = data.get('text_excerpt')  # Optional: user-selected text snippet
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1224,7 +1274,7 @@ def update_flag():
     category = data.get('category')
     flag_type = data.get('flag_type')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1256,7 +1306,7 @@ def unflag_item():
     session_id = data.get('session_id')
     flag_id = data.get('flag_id')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1289,7 +1339,7 @@ def finalize():
     session_id = data.get('session_id')
     author_name = data.get('author_name', 'Contract Review Tool')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1336,7 +1386,7 @@ def finalize_preview():
     data = request.get_json()
     session_id = data.get('session_id')
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1377,7 +1427,7 @@ def finalize_preview():
 @api_bp.route('/download/<session_id>/<file_type>', methods=['GET'])
 def download(session_id, file_type):
     """Download generated files."""
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1421,7 +1471,7 @@ def get_suggestions(session_id):
     """
     from app.services.analysis_service import generate_suggestions
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1476,7 +1526,7 @@ def get_transmittal(session_id):
     TRANS-02: Transmittal includes high-level summary of key revisions made
     TRANS-03: Transmittal includes all paragraphs flagged for client review with notes
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1593,12 +1643,17 @@ def get_transmittal(session_id):
 @api_bp.route('/sessions', methods=['GET'])
 def list_sessions():
     """
-    List all sessions from the database ordered by most recently updated.
+    List sessions belonging to the authenticated user, ordered by most recently updated.
 
-    TODO: Phase 12 — add user filtering (currently returns ALL sessions).
+    Excludes deleted (soft-deleted) sessions. Only returns sessions owned by
+    the current user — enforced at the DB query level.
     """
     from app.models.session import SessionRecord
-    records = SessionRecord.query.order_by(SessionRecord.updated_at.desc()).all()
+    records = (SessionRecord.query
+               .filter(SessionRecord.user_id == g.clerk_user_id)
+               .filter(SessionRecord.deleted_at.is_(None))
+               .order_by(SessionRecord.updated_at.desc())
+               .all())
     return jsonify([{
         'session_id': r.session_id,
         'status': r.status,
@@ -1615,18 +1670,26 @@ def list_sessions():
 @api_bp.route('/sessions/saved', methods=['GET'])
 def list_saved_sessions():
     """
-    List all saved sessions from disk (NEW-04).
+    List saved sessions from disk belonging to the authenticated user (NEW-04).
 
     Returns sessions sorted by last modified date (most recent first).
+    Only includes sessions owned by the current user (or legacy sessions
+    that have no stored user_id, for backwards compatibility).
     """
     session_folder = current_app.config['SESSION_FOLDER']
     saved_sessions = []
+    caller_user_id = g.clerk_user_id
 
     if session_folder.exists():
         for session_file in session_folder.glob('*.json'):
             try:
                 with open(session_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
+                    # Filter by user_id: include if session has no user_id (legacy)
+                    # or if it matches the authenticated user
+                    stored_user_id = data.get('user_id')
+                    if stored_user_id and stored_user_id != caller_user_id:
+                        continue
                     # Get file modification time
                     mtime = session_file.stat().st_mtime
                     saved_sessions.append({
@@ -1658,7 +1721,7 @@ def save_session_endpoint(session_id):
     This persists the full session including document, analysis,
     revisions, and flags for later retrieval.
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1681,8 +1744,14 @@ def discard_session(session_id):
     Discard a session, removing from memory and disk (NEW-01).
 
     Removes session from memory and deletes the saved JSON file
-    from disk if it exists.
+    from disk if it exists. Enforces ownership — a user cannot discard
+    another user's session.
     """
+    # Ownership check before deletion
+    session = get_session(session_id, user_id=g.clerk_user_id)
+    if not session:
+        return jsonify({'error': 'Session not found'}), 404
+
     found = session_id in sessions
     if found:
         del sessions[session_id]
@@ -1709,7 +1778,8 @@ def load_saved_session(session_id):
     """
     Load a previously saved session from disk (NEW-04).
 
-    Restores session to memory for continued work.
+    Restores session to memory for continued work. Enforces ownership —
+    a user cannot load another user's session.
     """
     session_folder = current_app.config['SESSION_FOLDER']
     session_path = session_folder / f'{session_id}.json'
@@ -1720,6 +1790,11 @@ def load_saved_session(session_id):
     try:
         with open(session_path, 'r', encoding='utf-8') as f:
             session_data = json.load(f)
+
+        # Ownership check: session with a stored user_id must match the caller
+        stored_user_id = session_data.get('user_id')
+        if stored_user_id and stored_user_id != g.clerk_user_id:
+            return jsonify({'error': 'Session not found'}), 404
 
         # Normalize Windows<->WSL paths before restoring
         for path_key in ('parsed_doc_path', 'target_path', 'precedent_path'):
@@ -1754,7 +1829,7 @@ def get_session_info(session_id):
 
     Returns summary info without full document/analysis data.
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1797,7 +1872,7 @@ def get_precedent(session_id):
     PREC-01: User can open precedent document in separate panel
     PREC-02: Precedent panel displays full document with navigation
     """
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
@@ -1833,7 +1908,7 @@ def get_related_precedent_clauses(session_id, para_id):
     """
     from app.services.matching_service import find_related_clauses
 
-    session = get_session(session_id)
+    session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
