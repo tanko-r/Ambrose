@@ -8,7 +8,7 @@ parsed_doc JSON and DOCX files remain on the filesystem).
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, Integer, String, Text, Boolean
+from sqlalchemy import DateTime, Index, Integer, String, Text, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
 from . import db
@@ -51,6 +51,16 @@ class SessionRecord(db.Model):
 
     # Dev / QA flag
     is_test_session: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Workspace isolation (Phase 12)
+    # user_id is nullable so pre-Phase-12 sessions don't break
+    user_id: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True, index=True
+    )
+    # deleted_at supports soft delete (Plan 02); None means active
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
 
     def __repr__(self) -> str:
         return f'<SessionRecord {self.session_id} status={self.status}>'

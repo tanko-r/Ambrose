@@ -22,17 +22,30 @@ def create_app():
     """Create and configure the Flask application."""
     app = Flask(__name__)
 
-    # Allow cross-origin requests from Next.js dev server (any localhost port)
-    CORS(app, origins=[r"http://localhost:\d+"])
+    # CORS origins from env var (comma-separated), defaults to Next.js dev server
+    cors_origins_raw = os.environ.get('CORS_ORIGINS', 'http://localhost:3000')
+    cors_origins = [o.strip() for o in cors_origins_raw.split(',') if o.strip()]
+    CORS(app, origins=cors_origins)
 
     # Configuration
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
-    app.config['UPLOAD_FOLDER'] = Path(__file__).parent / 'data' / 'uploads'
-    app.config['SESSION_FOLDER'] = Path(__file__).parent / 'data' / 'sessions'
 
-    # Ensure data directories exist
-    app.config['UPLOAD_FOLDER'].mkdir(parents=True, exist_ok=True)
-    app.config['SESSION_FOLDER'].mkdir(parents=True, exist_ok=True)
+    # DATA_DIR: env var controls all data storage; falls back to app/data/ in dev
+    data_dir_env = os.environ.get('DATA_DIR')
+    if data_dir_env:
+        data_dir = Path(data_dir_env)
+    else:
+        data_dir = Path(__file__).parent / 'data'
+
+    app.config['DATA_DIR']       = data_dir
+    app.config['UPLOAD_FOLDER']  = data_dir / 'users'    # user-scoped subdirs: users/{user_id}/{session_id}/
+    app.config['SESSION_FOLDER'] = data_dir / 'sessions' # flat session JSON files
+    app.config['TRASH_FOLDER']   = data_dir / 'trash'
+
+    # Ensure all data directories exist
+    for folder in [data_dir, app.config['UPLOAD_FOLDER'],
+                   app.config['SESSION_FOLDER'], app.config['TRASH_FOLDER']]:
+        folder.mkdir(parents=True, exist_ok=True)
 
     # Database — SQLite in dev, PostgreSQL on Railway (via DATABASE_URL env var)
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
