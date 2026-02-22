@@ -1,0 +1,52 @@
+# ============================================================
+# Stage 1: Builder — install Python deps into /install prefix
+# ============================================================
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+# Install build-time system deps (gcc needed for some C extensions, libpq for psycopg2)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# ============================================================
+# Stage 2: Runtime — lean image with only what's needed
+# ============================================================
+FROM python:3.12-slim AS runtime
+
+# NOTE: python:3.12-slim (NOT alpine) — alpine lacks glibc which psycopg2-binary
+# and scikit-learn require. slim gives a small image without that constraint.
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
+
+# Copy application source
+COPY app/ ./app/
+COPY migrations/ ./migrations/
+COPY run.py .
+
+# Runtime environment
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=5000
+
+EXPOSE 5000
+
+# gunicorn gthread: asyncio.run() conflicts with gevent monkey-patching;
+# gthread avoids that while still handling concurrent requests.
+# --worker-tmp-dir=/dev/shm avoids disk I/O for heartbeat files.
+CMD ["gunicorn", \
+     "--workers=2", \
+     "--threads=4", \
+     "--worker-class=gthread", \
+     "--worker-tmp-dir=/dev/shm", \
+     "--bind=0.0.0.0:5000", \
+     "--log-file=-", \
+     "--timeout=120", \
+     "app.server:create_app()"]
