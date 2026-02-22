@@ -9,18 +9,18 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** v1.1 Users and Deployment — Phase 12 complete, advancing to Phase 13 (Containerization + Railway)
+**Current focus:** v1.1 Users and Deployment — Phase 13 (Containerization + Railway Deployment)
 
 ## Current Milestone
 
 **v1.1 -- Users and Deployment**
 
-Phase: 12 (Workspace Isolation + Storage Config) — Complete
-Plan: 12-02 complete (trash system: soft-delete endpoints, auto-purge, frontend dialog + trash list) — human-verified
-Status: Phase 12 fully complete (Phase 9+10+11+12-01+12-02 done + human verification approved)
-Last activity: 2026-02-22 — Phase 12 complete (workspace isolation + trash system human-verified)
+Phase: 13 (Containerization + Railway Deployment) — Ready to plan
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-02-22 — Phase 12 complete, transitioning to Phase 13
 
-Progress: [████████░░] 80% (v1.1)
+Progress: [██████████████████░░] 88% (v1.1) — 30/34 plans
 
 ## Previous Milestone (v1.0)
 
@@ -67,9 +67,7 @@ Progress: [████████░░] 80% (v1.1)
 
 ### Blockers/Concerns
 
-- ~~**Phase 11 (PyJWT + Clerk JWKS):** Validate azp claim; specify RS256 not HS256; cache PyJWKClient at module load.~~ **RESOLVED by 11-01 (azp validation deferred as optional; RS256 enforced; singleton cached)**
-- ~~**Phase 12 (get_session refactor):** Touches all 30+ call sites in routes.py — code review every call site after change.~~ **RESOLVED by 12-01 (all 24 route-level call sites updated; 2 background thread calls kept bare)**
-- ~~**Railway HTTP timeout:** Confirmed hard 5-minute limit at network layer; Phase 9 async fix is an absolute deploy blocker.~~ **RESOLVED by 09-02**
+- None currently — all prior blockers resolved through Phases 9-12
 
 ### Quick Tasks Completed
 
@@ -81,7 +79,7 @@ Progress: [████████░░] 80% (v1.1)
 ## Session Continuity
 
 Last session: 2026-02-22
-Last activity: 2026-02-22 — Phase 12 fully complete (human verification approved); ready to start Phase 13
+Stopped at: Phase 12 complete, ready to plan Phase 13
 Resume file: None
 
 ---

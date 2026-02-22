@@ -39,6 +39,10 @@ The tool must analyze contracts intelligently (understanding cross-clause relati
 - ✓ Precedent split view with related clause highlighting — v1.0
 - ✓ Finalize/export Word documents with track changes — v1.0
 - ✓ Flag system with categories and margin icons — v1.0
+- ✓ Per-user workspace isolation with ownership enforcement — v1.1 Phase 12
+- ✓ User-scoped file storage ({user_id}/{session_id}/) — v1.1 Phase 12
+- ✓ Configurable DATA_DIR via env var — v1.1 Phase 12
+- ✓ Soft-delete with 30-day trash and restore — v1.1 Phase 12
 
 ### Active
 
@@ -77,9 +81,11 @@ v1.1 expands the app to multi-user and deploys it to Railway. Two major workstre
 | Email via default client (mailto:) | Simplest cross-platform integration | ✓ Good |
 | Railway over Vercel/Fly.io | PaaS simplicity, persistent volumes, two-service support | — Pending |
 | Gunicorn with 30-min timeout | Analysis takes 5-30+ min; single worker + 4 threads for I/O | — Pending |
-| File-based sessions (not Redis/DB) | Single user, adequate for current scale | ⚠️ Revisit — migrating to PostgreSQL for multi-user |
-| Auth platform over custom auth | Email + OAuth + SSO needs, single dev, pragmatic | — Pending |
-| PostgreSQL for user/session data | Multi-user requires proper database; Railway has managed Postgres | — Pending |
+| File-based sessions (not Redis/DB) | Single user, adequate for current scale | ⚠️ Revisit — migrated to PostgreSQL in Phase 9 |
+| Auth platform over custom auth | Email + OAuth + SSO needs, single dev, pragmatic | ✓ Clerk selected (Phase 10) |
+| PostgreSQL for user/session data | Multi-user requires proper database; Railway has managed Postgres | ✓ Implemented (Phase 9) |
+| 404 on ownership mismatch (not 403) | Avoids leaking session existence to unauthorized callers | ✓ Good (Phase 12) |
+| Soft-delete with 30-day trash | Legal docs are hard to recreate; move-to-trash safer than permanent delete | ✓ Good (Phase 12) |
 
 ---
-*Last updated: 2026-02-18 after v1.1 milestone redefinition (Users and Deployment)*
+*Last updated: 2026-02-22 after Phase 12 (Workspace Isolation + Storage Config)*
