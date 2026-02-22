@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-19
+**Updated:** 2026-02-21
 **Branch:** `nextjs-migration`
 
 ## Milestones
@@ -167,7 +167,7 @@ Plans:
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
 | 9 | DB + Async Analysis | PostgreSQL persistence, non-blocking analysis | DB-01..04, ASYNC-01..02 | Complete |
-| 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Not started |
+| 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Complete |
 | 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Not started |
 | 12 | Workspace Isolation | Per-user sessions, file paths, storage config | WORK-01..04, CONF-02 | Not started |
 | 13 | Containerization + Railway | Docker, env-var config, Railway deployment | DOCK-01..04, CONF-04, RAIL-01..04 | Not started |
@@ -216,8 +216,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Install Clerk SDK, create proxy.ts middleware, ClerkProvider in layout, sign-in page
-- [ ] 10-02-PLAN.md -- Replace header user dropdown with Clerk UserButton, end-to-end verification
+- [x] 10-01-PLAN.md -- Install Clerk SDK, create proxy.ts middleware, ClerkProvider in layout, sign-in page
+- [x] 10-02-PLAN.md -- Replace header user dropdown with Clerk UserButton, end-to-end verification
 
 ---
 
@@ -234,7 +234,11 @@ Plans:
   3. CORS allowed origins are changed by setting an environment variable (no code change or rebuild required)
   4. The backend URL used by the frontend is changed by setting an environment variable (no rebuild required)
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 11-01-PLAN.md -- Backend JWT guard: app/auth.py singleton, Blueprint before_request, env-var CORS
+- [ ] 11-02-PLAN.md -- Frontend token injection: api.ts token provider, AuthTokenProvider component, env-var backend URL
 
 ---
 
@@ -334,8 +338,8 @@ Plans:
 | 8. Cleanup | v1.0 | 2/2 | Complete | 2026-02-13 |
 | 8.1 Doc Sync + Verify | v1.0 | 0/3 | Not started | - |
 | 9. DB + Async Analysis | v1.1 | 2/2 | Complete | 2026-02-19 |
-| 10. Clerk Frontend Auth | v1.1 | 0/2 | Not started | - |
-| 11. Flask Auth Middleware | v1.1 | 0/? | Not started | - |
+| 10. Clerk Frontend Auth | v1.1 | 2/2 | Complete | 2026-02-19 |
+| 11. Flask Auth Middleware | v1.1 | 0/2 | Not started | - |
 | 12. Workspace Isolation | v1.1 | 0/? | Not started | - |
 | 13. Containerization + Railway | v1.1 | 0/? | Not started | - |
 
