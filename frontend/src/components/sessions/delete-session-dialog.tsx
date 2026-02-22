@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { discardSession } from "@/lib/api";
+import { deleteSession } from "@/lib/api";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -9,6 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -18,37 +19,36 @@ import { toast } from "sonner";
 // Props
 // ---------------------------------------------------------------------------
 
-interface DeleteProjectDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface DeleteSessionDialogProps {
   sessionId: string;
-  filename: string;
-  onDeleted?: () => void;
+  sessionName: string;
+  onDeleted: () => void;
+  trigger: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
-// DeleteProjectDialog - Destructive confirmation for project deletion
+// DeleteSessionDialog — Confirmation dialog for soft-deleting a session
 // ---------------------------------------------------------------------------
 
-export function DeleteProjectDialog({
-  open,
-  onOpenChange,
+export function DeleteSessionDialog({
   sessionId,
-  filename,
+  sessionName,
   onDeleted,
-}: DeleteProjectDialogProps) {
+  trigger,
+}: DeleteSessionDialogProps) {
+  const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await discardSession(sessionId);
-      toast.success("Project deleted");
-      onDeleted?.();
-      onOpenChange(false);
+      await deleteSession(sessionId);
+      toast.success("Session moved to trash");
+      setOpen(false);
+      onDeleted();
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to delete project"
+        err instanceof Error ? err.message : "Failed to delete session"
       );
     } finally {
       setDeleting(false);
@@ -56,12 +56,13 @@ export function DeleteProjectDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this session?</AlertDialogTitle>
           <AlertDialogDescription>
-            &ldquo;{filename}&rdquo; will be moved to trash and permanently
+            &ldquo;{sessionName}&rdquo; will be moved to trash and permanently
             deleted after 30 days. You can restore it from trash within that
             window.
           </AlertDialogDescription>
@@ -69,7 +70,7 @@ export function DeleteProjectDialog({
         <AlertDialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => setOpen(false)}
             disabled={deleting}
           >
             Cancel

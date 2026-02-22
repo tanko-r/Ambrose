@@ -5,7 +5,7 @@
 // proxy timeout (Next.js rewrite proxy drops connections after ~30s)
 // =============================================================================
 
-const FLASK_DIRECT = 'http://localhost:5000';
+const FLASK_DIRECT = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
 
 import type {
   IntakeResponse,
@@ -51,6 +51,7 @@ import type {
   Representation,
   Approach,
   Aggressiveness,
+  TrashedSession,
 } from './types';
 
 class ApiClientError extends Error {
@@ -64,8 +65,29 @@ class ApiClientError extends Error {
   }
 }
 
+// Token provider — set once by AuthTokenProvider component
+type TokenProvider = (() => Promise<string | null>) | null;
+let _tokenProvider: TokenProvider = null;
+
+export function setTokenProvider(fn: TokenProvider): void {
+  _tokenProvider = fn;
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!_tokenProvider) return {};
+  const token = await _tokenProvider();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, options);
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options?.headers as Record<string, string>),
+      ...authHeaders,
+    },
+  });
   if (!res.ok) {
     const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
     throw new ApiClientError(res.status, data);
@@ -74,7 +96,14 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 async function requestText(url: string, options?: RequestInit): Promise<string> {
-  const res = await fetch(url, options);
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options?.headers as Record<string, string>),
+      ...authHeaders,
+    },
+  });
   if (!res.ok) {
     const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
     throw new ApiClientError(res.status, data);
@@ -83,7 +112,8 @@ async function requestText(url: string, options?: RequestInit): Promise<string> 
 }
 
 async function requestBlob(url: string): Promise<Blob> {
-  const res = await fetch(url);
+  const authHeaders = await getAuthHeaders();
+  const res = await fetch(url, { headers: authHeaders });
   if (!res.ok) {
     throw new ApiClientError(res.status, { error: `Download failed: HTTP ${res.status}` });
   }
@@ -108,6 +138,18 @@ export async function saveSession(sessionId: string): Promise<SaveSessionRespons
 
 export async function discardSession(sessionId: string): Promise<DiscardSessionResponse> {
   return request(`/api/session/${sessionId}`, { method: 'DELETE' });
+}
+
+export async function deleteSession(sessionId: string): Promise<{ status: string; message: string }> {
+  return request(`/api/session/${sessionId}`, { method: 'DELETE' });
+}
+
+export async function listTrash(): Promise<TrashedSession[]> {
+  return request('/api/sessions/trash');
+}
+
+export async function restoreSession(sessionId: string): Promise<{ status: string; session_id: string }> {
+  return request(`/api/session/${sessionId}/restore`, { method: 'POST' });
 }
 
 export async function loadSession(sessionId: string): Promise<LoadSessionResponse> {

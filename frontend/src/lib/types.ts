@@ -464,9 +464,17 @@ export interface SaveSessionResponse {
 }
 
 export interface DiscardSessionResponse {
-  status: 'discarded';
+  status: 'discarded' | 'trashed';
   session_id: string;
   message: string;
+}
+
+export interface TrashedSession {
+  session_id: string;
+  target_filename: string | null;
+  contract_type: string | null;
+  deleted_at: string;
+  expires_at: string;
 }
 
 export interface LoadSessionResponse {
