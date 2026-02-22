@@ -2056,30 +2056,34 @@ def get_related_precedent_clauses(session_id, para_id):
 
 @api_bp.route('/version', methods=['GET'])
 def get_version():
-    """Get git branch and commit info for display in header."""
-    import subprocess
+    """Get version info from env vars (no .git in container).
 
+    In production (Railway), set these service variables:
+      GIT_BRANCH = ${{RAILWAY_GIT_BRANCH}}
+      GIT_COMMIT = ${{RAILWAY_GIT_COMMIT_SHA}}
+
+    In local dev, falls back to subprocess git if env vars not set.
+    """
+    import os
+    branch = os.environ.get('GIT_BRANCH')
+    commit = os.environ.get('GIT_COMMIT')
+
+    if branch and commit:
+        return jsonify({'branch': branch, 'commit': commit})
+
+    # Fallback: try git subprocess for local development
+    import subprocess
     try:
-        # Get current branch
         branch = subprocess.check_output(
             ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
             cwd=Path(__file__).parent.parent.parent,
             stderr=subprocess.DEVNULL
         ).decode().strip()
-
-        # Get short commit hash
         commit = subprocess.check_output(
             ['git', 'rev-parse', '--short', 'HEAD'],
             cwd=Path(__file__).parent.parent.parent,
             stderr=subprocess.DEVNULL
         ).decode().strip()
-
-        return jsonify({
-            'branch': branch,
-            'commit': commit
-        })
+        return jsonify({'branch': branch, 'commit': commit})
     except Exception:
-        return jsonify({
-            'branch': 'unknown',
-            'commit': 'unknown'
-        })
+        return jsonify({'branch': 'unknown', 'commit': 'unknown'})
