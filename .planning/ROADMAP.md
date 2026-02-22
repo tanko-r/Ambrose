@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-21
+**Updated:** 2026-02-21 (Phase 12 planned)
 **Branch:** `nextjs-migration`
 
 ## Milestones
@@ -168,7 +168,7 @@ Plans:
 |-------|------|------|--------------|--------|
 | 9 | DB + Async Analysis | PostgreSQL persistence, non-blocking analysis | DB-01..04, ASYNC-01..02 | Complete |
 | 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Complete |
-| 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Not started |
+| 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Complete |
 | 12 | Workspace Isolation | Per-user sessions, file paths, storage config | WORK-01..04, CONF-02 | Not started |
 | 13 | Containerization + Railway | Docker, env-var config, Railway deployment | DOCK-01..04, CONF-04, RAIL-01..04 | Not started |
 
@@ -226,6 +226,8 @@ Plans:
 **Goal**: Every Flask API endpoint verifies a Clerk JWT on every request. The Next.js frontend automatically injects auth tokens into API calls. CORS is env-var-driven, not hardcoded.
 
 **Depends on**: Phase 9 (user records storable in PostgreSQL), Phase 10 (Clerk JWT format known)
+**Status**: Complete
+**Completed**: 2026-02-21
 **Requirements**: PROT-01, PROT-03, CONF-01, CONF-03
 
 **Success Criteria** (what must be TRUE):
@@ -237,14 +239,14 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md -- Backend JWT guard: app/auth.py singleton, Blueprint before_request, env-var CORS
-- [ ] 11-02-PLAN.md -- Frontend token injection: api.ts token provider, AuthTokenProvider component, env-var backend URL
+- [x] 11-01-PLAN.md -- Backend JWT guard: app/auth.py singleton, Blueprint before_request, env-var CORS
+- [x] 11-02-PLAN.md -- Frontend token injection: api.ts token provider, AuthTokenProvider component, env-var backend URL
 
 ---
 
 ### Phase 12: Workspace Isolation + Storage Config
 
-**Goal**: Each authenticated user sees only their own sessions and documents. Session lookups filter by user_id. Uploaded files live in user-scoped directories. Data directory is env-var configurable.
+**Goal**: Each authenticated user sees only their own sessions and documents. Session lookups filter by user_id. Uploaded files live in user-scoped directories. Data directory is env-var configurable. Deleted sessions use 30-day trash with restore capability.
 
 **Depends on**: Phase 9 (PostgreSQL session storage), Phase 10 (user identity), Phase 11 (g.clerk_user_id in Flask)
 **Requirements**: WORK-01, WORK-02, WORK-03, WORK-04, CONF-02
@@ -252,10 +254,14 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Logged-in user A cannot access, view, or retrieve any session or document belonging to user B — even by guessing a session ID
   2. Uploaded documents are stored in a path that includes the user's ID, enforcing filesystem-level isolation
-  3. Deleting a session removes both the database record and the associated files from disk
+  3. Deleting a session moves files to trash (30-day retention), with restore capability from UI
   4. The data directory location is changed by setting DATA_DIR environment variable (no code change required)
 
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 12-01-PLAN.md -- Backend isolation: DATA_DIR config, DB migration (user_id + deleted_at), get_session ownership, user-scoped paths, list_sessions filtering
+- [ ] 12-02-PLAN.md -- Trash system: delete/restore/list-trash endpoints, auto-purge, confirmation dialog, trash view UI
 
 ---
 
@@ -321,7 +327,7 @@ Plans:
 
 ## Progress
 
-**Execution Order:** 9 and 10 in parallel → 11 → 12 → 13
+**Execution Order:** 9 and 10 in parallel -> 11 -> 12 -> 13
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -339,8 +345,8 @@ Plans:
 | 8.1 Doc Sync + Verify | v1.0 | 0/3 | Not started | - |
 | 9. DB + Async Analysis | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 10. Clerk Frontend Auth | v1.1 | 2/2 | Complete | 2026-02-19 |
-| 11. Flask Auth Middleware | v1.1 | 0/2 | Not started | - |
-| 12. Workspace Isolation | v1.1 | 0/? | Not started | - |
+| 11. Flask Auth Middleware | v1.1 | 2/2 | Complete | 2026-02-21 |
+| 12. Workspace Isolation | v1.1 | 0/2 | Not started | - |
 | 13. Containerization + Railway | v1.1 | 0/? | Not started | - |
 
 ---
