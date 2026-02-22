@@ -9,18 +9,18 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Analyze contracts intelligently and generate precise, surgical redlines
-**Current focus:** v1.1 Users and Deployment — Phase 12 in progress (Workspace Isolation)
+**Current focus:** v1.1 Users and Deployment — Phase 12 complete, advancing to Phase 13 (Containerization + Railway)
 
 ## Current Milestone
 
 **v1.1 -- Users and Deployment**
 
-Phase: 12 (Workspace Isolation + Storage Config) — In Progress
-Plan: 12-02 complete (trash system: soft-delete endpoints, auto-purge, frontend dialog + trash list)
-Status: In Progress (Phase 9+10+11+12-01+12-02 done, awaiting human verification checkpoint)
-Last activity: 2026-02-21 — Phase 12-02 complete (trash backend + frontend; checkpoint:human-verify pending)
+Phase: 12 (Workspace Isolation + Storage Config) — Complete
+Plan: 12-02 complete (trash system: soft-delete endpoints, auto-purge, frontend dialog + trash list) — human-verified
+Status: Phase 12 fully complete (Phase 9+10+11+12-01+12-02 done + human verification approved)
+Last activity: 2026-02-22 — Phase 12 complete (workspace isolation + trash system human-verified)
 
-Progress: [███████░░░] 70% (v1.1)
+Progress: [████████░░] 80% (v1.1)
 
 ## Previous Milestone (v1.0)
 
@@ -80,8 +80,8 @@ Progress: [███████░░░] 70% (v1.1)
 
 ## Session Continuity
 
-Last session: 2026-02-21
-Last activity: 2026-02-21 — Completed 12-02 (trash system: soft-delete, restore, auto-purge daemon, frontend dialog + trash list); checkpoint:human-verify pending
+Last session: 2026-02-22
+Last activity: 2026-02-22 — Phase 12 fully complete (human verification approved); ready to start Phase 13
 Resume file: None
 
 ---

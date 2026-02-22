@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-21 (Phase 12 planned)
+**Updated:** 2026-02-22 (Phase 12 complete)
 **Branch:** `nextjs-migration`
 
 ## Milestones
@@ -169,7 +169,7 @@ Plans:
 | 9 | DB + Async Analysis | PostgreSQL persistence, non-blocking analysis | DB-01..04, ASYNC-01..02 | Complete |
 | 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Complete |
 | 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Complete |
-| 12 | 2/2 | Complete   | 2026-02-22 | Not started |
+| 12 | Workspace Isolation + Storage Config | User-scoped sessions/files, trash system | WORK-01..04, CONF-02 | Complete |
 | 13 | Containerization + Railway | Docker, env-var config, Railway deployment | DOCK-01..04, CONF-04, RAIL-01..04 | Not started |
 
 **Execution Order:** 9 and 10 can run in parallel. 11 requires both 9 and 10. 12 requires 9, 10, and 11. 13 requires all prior phases.
@@ -260,8 +260,8 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 12-01-PLAN.md -- Backend isolation: DATA_DIR config, DB migration (user_id + deleted_at), get_session ownership, user-scoped paths, list_sessions filtering
-- [ ] 12-02-PLAN.md -- Trash system: delete/restore/list-trash endpoints, auto-purge, confirmation dialog, trash view UI
+- [x] 12-01-PLAN.md -- Backend isolation: DATA_DIR config, DB migration (user_id + deleted_at), get_session ownership, user-scoped paths, list_sessions filtering
+- [x] 12-02-PLAN.md -- Trash system: delete/restore/list-trash endpoints, auto-purge, confirmation dialog, trash view UI
 
 ---
 
@@ -346,7 +346,7 @@ Plans:
 | 9. DB + Async Analysis | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 10. Clerk Frontend Auth | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 11. Flask Auth Middleware | v1.1 | 2/2 | Complete | 2026-02-21 |
-| 12. Workspace Isolation | v1.1 | 0/2 | Not started | - |
+| 12. Workspace Isolation | v1.1 | 2/2 | Complete | 2026-02-22 |
 | 13. Containerization + Railway | v1.1 | 0/? | Not started | - |
 
 ---
