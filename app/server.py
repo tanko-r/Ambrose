@@ -8,6 +8,10 @@ The frontend is served separately by Next.js.
 
 import os
 import sys
+import shutil
+import threading
+import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 # Add project root to path for imports
@@ -63,6 +67,47 @@ def create_app():
     @app.route('/health')
     def health():
         return {'status': 'ok'}
+
+    # ---------------------------------------------------------------------------
+    # Auto-purge: delete trashed sessions older than 30 days
+    # Runs once at startup, then daily via background daemon thread
+    # ---------------------------------------------------------------------------
+
+    def _run_purge(app):
+        """Delete trashed sessions whose deleted_at is older than 30 days."""
+        from app.models.session import SessionRecord
+        from app.models import db
+        cutoff = datetime.utcnow() - timedelta(days=30)
+        expired = (SessionRecord.query
+                   .filter(SessionRecord.deleted_at < cutoff)
+                   .all())
+        for record in expired:
+            trash_dir = app.config['TRASH_FOLDER'] / record.session_id
+            if trash_dir.exists():
+                shutil.rmtree(str(trash_dir), ignore_errors=True)
+            db.session.delete(record)
+        if expired:
+            db.session.commit()
+
+    def _auto_purge_loop(app):
+        """Background daemon that purges expired trash daily."""
+        while True:
+            try:
+                time.sleep(86400)
+                with app.app_context():
+                    _run_purge(app)
+            except Exception:
+                pass
+
+    # Run once at startup to purge any already-expired sessions
+    with app.app_context():
+        try:
+            _run_purge(app)
+        except Exception:
+            pass  # Non-fatal if DB is not yet ready (e.g., first run before migrate)
+
+    purge_thread = threading.Thread(target=_auto_purge_loop, args=(app,), daemon=True)
+    purge_thread.start()
 
     return app
 

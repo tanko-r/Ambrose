@@ -15,8 +15,9 @@ Endpoints:
 
 import json
 import uuid
+import shutil
 import threading as _threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Blueprint, request, jsonify, current_app, send_file, Response, g
 from app.services.html_renderer import render_document_html, render_precedent_html
@@ -1741,36 +1742,139 @@ def save_session_endpoint(session_id):
 @api_bp.route('/session/<session_id>', methods=['DELETE'])
 def discard_session(session_id):
     """
-    Discard a session, removing from memory and disk (NEW-01).
+    Soft-delete a session — moves files to trash, not permanent deletion (Plan 12-02).
 
-    Removes session from memory and deletes the saved JSON file
-    from disk if it exists. Enforces ownership — a user cannot discard
-    another user's session.
+    Files are moved to TRASH_FOLDER/{session_id}/ and the DB row's deleted_at
+    is stamped with the current UTC time. Sessions are automatically purged
+    from trash after 30 days by the background daemon in server.py.
+
+    Enforces ownership — a user cannot discard another user's session.
     """
+    from app.models.session import SessionRecord
+    from app.models import db as _db
+
     # Ownership check before deletion
     session = get_session(session_id, user_id=g.clerk_user_id)
     if not session:
         return jsonify({'error': 'Session not found'}), 404
 
-    found = session_id in sessions
-    if found:
-        del sessions[session_id]
-
-    # Also remove from disk
+    trash_folder = current_app.config['TRASH_FOLDER']
     session_folder = current_app.config['SESSION_FOLDER']
+    upload_folder = current_app.config['UPLOAD_FOLDER']  # data/users/
+    user_id = g.clerk_user_id
+
+    trash_dir = trash_folder / session_id
+    trash_dir.mkdir(parents=True, exist_ok=True)
+
+    # Move session JSON to trash
     session_path = session_folder / f'{session_id}.json'
     if session_path.exists():
-        session_path.unlink()
-        found = True
+        shutil.move(str(session_path), str(trash_dir / f'{session_id}.json'))
 
-    if found:
-        return jsonify({
-            'status': 'discarded',
-            'session_id': session_id,
-            'message': 'Session discarded'
-        })
+    # Move upload directory to trash (user-scoped path: users/{user_id}/{session_id}/)
+    upload_dir = upload_folder / user_id / session_id
+    if upload_dir.exists():
+        shutil.move(str(upload_dir), str(trash_dir / 'files'))
 
-    return jsonify({'error': 'Session not found'}), 404
+    # Stamp deleted_at in DB
+    try:
+        record = _db.session.get(SessionRecord, session_id)
+        if record:
+            record.deleted_at = datetime.utcnow()
+            _db.session.commit()
+    except Exception:
+        pass  # Non-fatal — files are already moved; purge daemon will clean up
+
+    # Evict from in-memory cache
+    sessions.pop(session_id, None)
+
+    return jsonify({
+        'status': 'trashed',
+        'session_id': session_id,
+        'message': 'Session moved to trash. Files retained for 30 days.'
+    })
+
+
+@api_bp.route('/sessions/trash', methods=['GET'])
+def list_trash():
+    """
+    List the authenticated user's trashed sessions with expiration dates.
+
+    Returns sessions where deleted_at IS NOT NULL, ordered by deletion date
+    (most recent first). Each entry includes expires_at = deleted_at + 30 days.
+    """
+    from app.models.session import SessionRecord
+    records = (SessionRecord.query
+               .filter(SessionRecord.user_id == g.clerk_user_id)
+               .filter(SessionRecord.deleted_at.is_not(None))
+               .order_by(SessionRecord.deleted_at.desc())
+               .all())
+    return jsonify([{
+        'session_id': r.session_id,
+        'target_filename': r.target_filename,
+        'contract_type': r.contract_type,
+        'deleted_at': r.deleted_at.isoformat() if r.deleted_at else None,
+        'expires_at': (r.deleted_at + timedelta(days=30)).isoformat() if r.deleted_at else None,
+    } for r in records])
+
+
+@api_bp.route('/session/<session_id>/restore', methods=['POST'])
+def restore_session(session_id):
+    """
+    Restore a trashed session — moves files back and clears deleted_at (Plan 12-02).
+
+    Queries the DB directly (bypassing get_session which filters out trashed sessions).
+    Verifies ownership and that the session is actually trashed before restoring.
+    """
+    from app.models.session import SessionRecord
+    from app.models import db as _db
+
+    # Query DB directly — get_session filters out trashed sessions
+    record = _db.session.get(SessionRecord, session_id)
+    if record is None or record.deleted_at is None:
+        return jsonify({'error': 'Session not found in trash'}), 404
+
+    # Ownership check
+    if record.user_id and record.user_id != g.clerk_user_id:
+        return jsonify({'error': 'Session not found in trash'}), 404
+
+    trash_folder = current_app.config['TRASH_FOLDER']
+    session_folder = current_app.config['SESSION_FOLDER']
+    upload_folder = current_app.config['UPLOAD_FOLDER']  # data/users/
+    user_id = g.clerk_user_id
+
+    trash_dir = trash_folder / session_id
+
+    # Move session JSON back
+    trashed_json = trash_dir / f'{session_id}.json'
+    if trashed_json.exists():
+        shutil.move(str(trashed_json), str(session_folder / f'{session_id}.json'))
+
+    # Move files back to user-scoped upload path
+    trashed_files = trash_dir / 'files'
+    if trashed_files.exists():
+        dest_dir = upload_folder / user_id / session_id
+        dest_dir.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(trashed_files), str(dest_dir))
+
+    # Clean up empty trash subdirectory
+    try:
+        if trash_dir.exists() and not any(trash_dir.iterdir()):
+            trash_dir.rmdir()
+    except Exception:
+        pass
+
+    # Clear deleted_at in DB
+    try:
+        record.deleted_at = None
+        _db.session.commit()
+    except Exception as e:
+        return jsonify({'error': f'Failed to restore session: {str(e)}'}), 500
+
+    return jsonify({
+        'status': 'restored',
+        'session_id': session_id,
+    })
 
 
 @api_bp.route('/session/<session_id>/load', methods=['POST'])
