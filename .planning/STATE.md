@@ -64,6 +64,10 @@ Progress: [████████████████████] 94% (v1
 | 12-02 | DELETE /session/{id} converted to soft-delete (trash) | Reuses existing route; avoids API breakage; legal docs are hard to recreate |
 | 12-02 | restore_session queries DB directly (not get_session) | get_session filters out trashed sessions; direct query needed for restore |
 | 12-02 | Startup purge wrapped in try/except | Handles first-run before flask db upgrade without crashing |
+| 13-01 | python:3.12-slim (not alpine) for backend | Alpine lacks glibc required by psycopg2-binary and scikit-learn |
+| 13-01 | BACKEND_URL (not NEXT_PUBLIC_BACKEND_URL) | rewrites() is server-side only; NEXT_PUBLIC_ prefix unnecessary and exposes URL in browser bundle |
+| 13-01 | Next.js output: standalone | Enables self-contained server.js for Docker; required for container deployment |
+| 13-01 | .env file optional in docker-compose | Keeps secrets (GEMINI_API_KEY, Clerk keys) out of version control |
 | 13-02 | preDeployCommand omitted from railway.toml | Array syntax for multi-word commands ambiguous; set in Railway dashboard instead |
 | 13-02 | Version endpoint reads env vars first, subprocess fallback | Works in Docker (no .git); preserves local dev behavior |
 
@@ -81,7 +85,7 @@ Progress: [████████████████████] 94% (v1
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: 13-02 complete — Railway config files and version endpoint env var fix
+Stopped at: 13-01 complete — Docker containerization (Dockerfiles, docker-compose, .dockerignore files)
 Resume file: None
 
 ---

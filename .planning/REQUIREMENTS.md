@@ -76,17 +76,17 @@
 
 ### Containerization (DOCK)
 
-- [ ] **DOCK-01**: Backend runs in Docker container with gunicorn gthread workers
-- [ ] **DOCK-02**: Frontend runs in Docker container with Next.js standalone output
-- [ ] **DOCK-03**: docker-compose.yml enables local integration testing of both services
-- [ ] **DOCK-04**: .dockerignore files prevent node_modules, .git, and data dirs from bloating images
+- [x] **DOCK-01**: Backend runs in Docker container with gunicorn gthread workers
+- [x] **DOCK-02**: Frontend runs in Docker container with Next.js standalone output
+- [x] **DOCK-03**: docker-compose.yml enables local integration testing of both services
+- [x] **DOCK-04**: .dockerignore files prevent node_modules, .git, and data dirs from bloating images
 
 ### Configuration (CONF)
 
 - [ ] **CONF-01**: CORS origins configurable via CORS_ORIGINS env var (falls back to localhost for dev)
 - [x] **CONF-02**: Data directory configurable via DATA_DIR env var (falls back to app/data/ for dev)
 - [ ] **CONF-03**: Backend URL configurable in frontend via env var (no hardcoded localhost)
-- [ ] **CONF-04**: Local development workflow (python run.py + npm run dev) works unchanged
+- [x] **CONF-04**: Local development workflow (python run.py + npm run dev) works unchanged
 
 ### Async Analysis (ASYNC)
 
@@ -181,11 +181,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WORK-03 | v1.1 Phase 12 | Complete |
 | WORK-04 | v1.1 Phase 12 | Complete |
 | CONF-02 | v1.1 Phase 12 | Complete |
-| DOCK-01 | v1.1 Phase 13 | Pending |
-| DOCK-02 | v1.1 Phase 13 | Pending |
-| DOCK-03 | v1.1 Phase 13 | Pending |
-| DOCK-04 | v1.1 Phase 13 | Pending |
-| CONF-04 | v1.1 Phase 13 | Pending |
+| DOCK-01 | v1.1 Phase 13 | Complete |
+| DOCK-02 | v1.1 Phase 13 | Complete |
+| DOCK-03 | v1.1 Phase 13 | Complete |
+| DOCK-04 | v1.1 Phase 13 | Complete |
+| CONF-04 | v1.1 Phase 13 | Complete |
 | RAIL-01 | v1.1 Phase 13 | Complete |
 | RAIL-02 | v1.1 Phase 13 | Complete |
 | RAIL-03 | v1.1 Phase 13 | Complete |
