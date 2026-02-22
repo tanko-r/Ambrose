@@ -95,10 +95,10 @@
 
 ### Railway Deployment (RAIL)
 
-- [ ] **RAIL-01**: railway.toml config files for both services with health checks and restart policy
-- [ ] **RAIL-02**: Backend uses persistent volume for uploads and session files
-- [ ] **RAIL-03**: Version endpoint provides git info via env vars (no .git in container)
-- [ ] **RAIL-04**: Railway PostgreSQL plugin configured with DATABASE_URL auto-injection
+- [x] **RAIL-01**: railway.toml config files for both services with health checks and restart policy
+- [x] **RAIL-02**: Backend uses persistent volume for uploads and session files
+- [x] **RAIL-03**: Version endpoint provides git info via env vars (no .git in container)
+- [x] **RAIL-04**: Railway PostgreSQL plugin configured with DATABASE_URL auto-injection
 
 ## v2 Requirements
 
@@ -186,10 +186,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DOCK-03 | v1.1 Phase 13 | Pending |
 | DOCK-04 | v1.1 Phase 13 | Pending |
 | CONF-04 | v1.1 Phase 13 | Pending |
-| RAIL-01 | v1.1 Phase 13 | Pending |
-| RAIL-02 | v1.1 Phase 13 | Pending |
-| RAIL-03 | v1.1 Phase 13 | Pending |
-| RAIL-04 | v1.1 Phase 13 | Pending |
+| RAIL-01 | v1.1 Phase 13 | Complete |
+| RAIL-02 | v1.1 Phase 13 | Complete |
+| RAIL-03 | v1.1 Phase 13 | Complete |
+| RAIL-04 | v1.1 Phase 13 | Complete |
 
 **Coverage:**
 - v1.0 requirements: 20 total (12 complete, 8 in progress)

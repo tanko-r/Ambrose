@@ -2,7 +2,7 @@
 
 **Project:** Ambrose (Contract Redlining)
 **Branch:** deployment-refactor
-**Last Updated:** 2026-02-22
+**Last Updated:** 2026-02-22 (13-02 complete)
 
 ## Project Reference
 
@@ -15,12 +15,12 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 **v1.1 -- Users and Deployment**
 
-Phase: 13 (Containerization + Railway Deployment) — Ready to plan
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-02-22 — Phase 12 complete, transitioning to Phase 13
+Phase: 13 (Containerization + Railway Deployment) — In Progress
+Plan: 02 complete (Railway config + version endpoint)
+Status: In Progress — 13-01 and 13-02 complete
+Last activity: 2026-02-22 — 13-02 complete: railway.toml files + version endpoint env var fix
 
-Progress: [██████████████████░░] 88% (v1.1) — 30/34 plans
+Progress: [████████████████████] 94% (v1.1) — 32/34 plans
 
 ## Previous Milestone (v1.0)
 
@@ -64,6 +64,8 @@ Progress: [██████████████████░░] 88% (v1
 | 12-02 | DELETE /session/{id} converted to soft-delete (trash) | Reuses existing route; avoids API breakage; legal docs are hard to recreate |
 | 12-02 | restore_session queries DB directly (not get_session) | get_session filters out trashed sessions; direct query needed for restore |
 | 12-02 | Startup purge wrapped in try/except | Handles first-run before flask db upgrade without crashing |
+| 13-02 | preDeployCommand omitted from railway.toml | Array syntax for multi-word commands ambiguous; set in Railway dashboard instead |
+| 13-02 | Version endpoint reads env vars first, subprocess fallback | Works in Docker (no .git); preserves local dev behavior |
 
 ### Blockers/Concerns
 
@@ -79,7 +81,7 @@ Progress: [██████████████████░░] 88% (v1
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Phase 12 complete, ready to plan Phase 13
+Stopped at: 13-02 complete — Railway config files and version endpoint env var fix
 Resume file: None
 
 ---
