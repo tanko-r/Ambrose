@@ -169,7 +169,7 @@ Plans:
 | 9 | DB + Async Analysis | PostgreSQL persistence, non-blocking analysis | DB-01..04, ASYNC-01..02 | Complete |
 | 10 | Clerk Frontend Auth | Sign-in/up UI, OAuth, route protection | AUTH-01..08, PROT-02 | Complete |
 | 11 | Flask Auth Middleware | JWT verification, token forwarding, CORS | PROT-01, PROT-03, CONF-01, CONF-03 | Complete |
-| 12 | 1/2 | In Progress|  | Not started |
+| 12 | 2/2 | Complete   | 2026-02-22 | Not started |
 | 13 | Containerization + Railway | Docker, env-var config, Railway deployment | DOCK-01..04, CONF-04, RAIL-01..04 | Not started |
 
 **Execution Order:** 9 and 10 can run in parallel. 11 requires both 9 and 10. 12 requires 9, 10, and 11. 13 requires all prior phases.
@@ -257,7 +257,7 @@ Plans:
   3. Deleting a session moves files to trash (30-day retention), with restore capability from UI
   4. The data directory location is changed by setting DATA_DIR environment variable (no code change required)
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 12-01-PLAN.md -- Backend isolation: DATA_DIR config, DB migration (user_id + deleted_at), get_session ownership, user-scoped paths, list_sessions filtering

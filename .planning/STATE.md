@@ -16,9 +16,9 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 **v1.1 -- Users and Deployment**
 
 Phase: 12 (Workspace Isolation + Storage Config) — In Progress
-Plan: 12-01 complete (DATA_DIR config, user_id/deleted_at migration, ownership enforcement)
-Status: In Progress (Phase 9+10+11+12-01 done, 12-02+ pending)
-Last activity: 2026-02-22 — Phase 12-01 complete (DATA_DIR env var, user_id column, all 24 get_session call sites secured)
+Plan: 12-02 complete (trash system: soft-delete endpoints, auto-purge, frontend dialog + trash list)
+Status: In Progress (Phase 9+10+11+12-01+12-02 done, awaiting human verification checkpoint)
+Last activity: 2026-02-21 — Phase 12-02 complete (trash backend + frontend; checkpoint:human-verify pending)
 
 Progress: [███████░░░] 70% (v1.1)
 
@@ -61,6 +61,9 @@ Progress: [███████░░░] 70% (v1.1)
 | 7 | next-themes with attribute=class, defaultTheme=system | Standard pattern for Tailwind CSS dark mode |
 | 12-01 | Return 404 (not 403) on ownership mismatch | Avoids leaking session existence to unauthorized callers |
 | 12-01 | Legacy sessions (user_id=None) accessible to all | Backwards compatibility for pre-Phase-12 sessions |
+| 12-02 | DELETE /session/{id} converted to soft-delete (trash) | Reuses existing route; avoids API breakage; legal docs are hard to recreate |
+| 12-02 | restore_session queries DB directly (not get_session) | get_session filters out trashed sessions; direct query needed for restore |
+| 12-02 | Startup purge wrapped in try/except | Handles first-run before flask db upgrade without crashing |
 
 ### Blockers/Concerns
 
@@ -77,8 +80,8 @@ Progress: [███████░░░] 70% (v1.1)
 
 ## Session Continuity
 
-Last session: 2026-02-22
-Last activity: 2026-02-22 — Completed 12-01 (DATA_DIR env var storage config, user_id/deleted_at migration, ownership enforcement at all 24 route-level call sites)
+Last session: 2026-02-21
+Last activity: 2026-02-21 — Completed 12-02 (trash system: soft-delete, restore, auto-purge daemon, frontend dialog + trash list); checkpoint:human-verify pending
 Resume file: None
 
 ---
