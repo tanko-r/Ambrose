@@ -1,7 +1,7 @@
 # Roadmap: Ambrose (Contract Redlining)
 
 **Created:** 2026-02-01
-**Updated:** 2026-02-22 (Phase 13 planned)
+**Updated:** 2026-02-22 (Phase 13 revised)
 **Branch:** `nextjs-migration`
 
 ## Milestones
@@ -279,11 +279,12 @@ Plans:
   4. Uploaded documents and session data survive a Railway redeploy (persistent volume confirmed)
   5. `/api/version` returns git commit information from environment variables (no .git directory required in container)
 
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 Plans:
 - [ ] 13-01-PLAN.md -- Docker containers: Dockerfiles (backend + frontend), docker-compose.yml, .dockerignore, gunicorn, Next.js standalone
 - [ ] 13-02-PLAN.md -- Railway config: railway.toml files, version endpoint env var fix
+- [ ] 13-03-PLAN.md -- Railway deployment: create project, attach PostgreSQL, mount volume, deploy services, verify public URL
 
 ---
 
@@ -351,7 +352,7 @@ Plans:
 | 10. Clerk Frontend Auth | v1.1 | 2/2 | Complete | 2026-02-19 |
 | 11. Flask Auth Middleware | v1.1 | 2/2 | Complete | 2026-02-21 |
 | 12. Workspace Isolation | v1.1 | 2/2 | Complete | 2026-02-22 |
-| 13. Containerization + Railway | v1.1 | 0/2 | Not started | - |
+| 13. Containerization + Railway | v1.1 | 0/3 | Not started | - |
 
 ---
 
