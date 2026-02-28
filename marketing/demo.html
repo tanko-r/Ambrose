@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ambrose — AI Contract Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%; background: #030712;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+}
+#stage {
+  width: 1280px; height: 720px; position: relative; overflow: hidden;
+  background: #060a14; transform-origin: center center;
+  box-shadow: 0 0 120px rgba(0,0,0,0.8);
+}
+.scene {
+  position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  transition: opacity 0.7s cubic-bezier(0.4,0,0.2,1);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;
+}
+.scene.active { opacity: 1; pointer-events: all; }
+
+.nav-dots { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 1000; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s; }
+.dot.active { background: #818cf8; width: 26px; border-radius: 4px; }
+.timer-bar { position: absolute; bottom: 0; left: 0; height: 2px; width: 0%; background: linear-gradient(90deg,#6366f1,#a855f7,#ec4899); z-index: 1000; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.6)} }
+@keyframes gridDrift { from{transform:translate(0,0)} to{transform:translate(64px,64px)} }
+
+/* ═══════════════════════════
+   SCENES 1–3 DARK CHROME
+═══════════════════════════ */
+#s1 { background: radial-gradient(ellipse 80% 70% at 40% 50%,#1c1950 0%,#060a14 65%); }
+.s1-grid { position:absolute;inset:0; background-image:linear-gradient(rgba(99,102,241,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.07) 1px,transparent 1px); background-size:64px 64px; animation:gridDrift 24s linear infinite; }
+.s1-glow { position:absolute;width:600px;height:600px;border-radius:50%; background:radial-gradient(circle,rgba(99,102,241,0.12) 0%,transparent 70%); top:50%;left:40%;transform:translate(-50%,-50%); }
+.s1-content { position:relative;z-index:1;text-align:center; }
+.s1-badge { display:inline-flex;align-items:center;gap:7px; background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.35); border-radius:24px;padding:6px 18px;font-size:12px;color:#a5b4fc;letter-spacing:0.06em; margin-bottom:28px;opacity:0;transform:translateY(12px);animation:fadeUp 0.6s 0.2s forwards; }
+.s1-badge-dot { width:7px;height:7px;border-radius:50%;background:#6366f1;animation:pulseDot 2s infinite; }
+.s1-logo { font-size:96px;font-weight:800;letter-spacing:-4px;line-height:1; background:linear-gradient(140deg,#e0e7ff 0%,#a5b4fc 45%,#818cf8 70%,#c084fc 100%); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; margin-bottom:18px;opacity:0;transform:translateY(20px);animation:fadeUp 0.9s 0.5s forwards; }
+.s1-tagline { font-size:22px;font-weight:300;color:rgba(255,255,255,0.65);letter-spacing:0.01em;margin-bottom:14px;opacity:0;animation:fadeUp 0.6s 0.9s forwards; }
+.s1-sub { font-size:15px;color:rgba(255,255,255,0.35);max-width:520px;line-height:1.65;margin:0 auto 44px;opacity:0;animation:fadeUp 0.6s 1.1s forwards; }
+.s1-pills { display:flex;gap:12px;justify-content:center;opacity:0;animation:fadeUp 0.6s 1.4s forwards; }
+.s1-pill { display:flex;align-items:center;gap:7px; background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08); border-radius:20px;padding:6px 14px;font-size:12px;color:rgba(255,255,255,0.45); }
+.s1-pill-dot { width:6px;height:6px;border-radius:50%; }
+
+#s2 { background:#060a14;flex-direction:row;align-items:stretch;justify-content:flex-start;padding:0; }
+.s2-left { flex:1;padding:64px 56px;border-right:1px solid rgba(255,255,255,0.055);display:flex;flex-direction:column;justify-content:center; }
+.s2-right { width:480px;padding:64px 48px;display:flex;flex-direction:column;justify-content:center;align-items:center; }
+.phase-lbl { font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px; }
+.s2-title { font-size:34px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:8px; }
+.s2-desc { font-size:15px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:40px; }
+.s2-qa-list { display:flex;flex-direction:column;gap:14px; }
+.s2-qa { opacity:0;transform:translateX(-20px); }
+.s2-q { font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:5px; }
+.s2-a { display:flex;align-items:center;gap:10px; background:rgba(99,102,241,0.09);border:1px solid rgba(99,102,241,0.22); border-radius:8px;padding:11px 14px;font-size:13.5px;color:#dde4ff;font-weight:500; }
+.s2-check { width:18px;height:18px;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0; }
+.s2-upload { width:340px;height:230px;border:2px dashed rgba(99,102,241,0.3);border-radius:16px; display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px; background:rgba(99,102,241,0.04);overflow:hidden;transition:border-color 0.5s,background 0.5s;position:relative; }
+.s2-upload.loaded { border-color:rgba(16,185,129,0.45);background:rgba(16,185,129,0.04); }
+.s2-upload-icon { font-size:44px;opacity:0.4; }
+.s2-upload-text { font-size:13px;color:rgba(255,255,255,0.35); }
+.s2-doc-preview { position:absolute;inset:0;background:#fff;border-radius:14px;padding:16px 18px;transform:translateY(102%);transition:transform 0.65s cubic-bezier(0.34,1.4,0.64,1); }
+.s2-upload.loaded .s2-doc-preview { transform:translateY(0); }
+.s2-doc-head { font-size:7.5px;font-weight:700;color:#1e293b;text-align:center;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;padding-bottom:7px;border-bottom:1.5px solid #e2e8f0; }
+.s2-doc-lines { display:flex;flex-direction:column;gap:4px; }
+.dl { height:5px;background:#e2e8f0;border-radius:2px; }
+.dl.w100{width:100%}.dl.w80{width:80%}.dl.w60{width:60%}.dl.w45{width:45%}
+.dl.dh { height:7px;background:#cbd5e1;width:55%;margin-top:7px; }
+.s2-doc-badge { position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;font-size:10px;font-weight:600;padding:4px 12px;border-radius:20px;white-space:nowrap;opacity:0;transition:opacity 0.4s 0.9s; }
+.s2-upload.loaded .s2-doc-badge { opacity:1; }
+
+#s3 { background:#060a14;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:36px 72px; }
+.s3-header { width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:28px; }
+.s3-count-num { font-size:52px;font-weight:800;line-height:1; background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+.s3-count-sub { font-size:11px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.12em;text-align:right; }
+.s3-doc { width:100%;flex:1;background:#fff;border-radius:12px;padding:22px 30px;position:relative;overflow:hidden; }
+.s3-doc-title { font-size:9px;font-weight:700;color:#64748b;text-align:center;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:16px;padding-bottom:10px;border-bottom:1.5px solid #e2e8f0; }
+.s3-para { margin-bottom:13px;position:relative;padding-right:220px; }
+.s3-para-num { font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px; }
+.s3-para-text { font-size:8.5px;color:#374151;line-height:1.65; }
+.s3-badge { position:absolute;right:0;top:50%;transform:translateY(-50%) translateX(18px);opacity:0;transition:opacity 0.4s,transform 0.4s; display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:0.04em;white-space:nowrap; }
+.s3-badge.show { opacity:1;transform:translateY(-50%) translateX(0); }
+.s3-badge.high { background:#fef2f2;color:#dc2626;border:1px solid #fecaca; }
+.s3-badge.med  { background:#fffbeb;color:#d97706;border:1px solid #fde68a; }
+.s3-badge.opp  { background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0; }
+.s3-beam { position:absolute;left:0;right:0;height:2px; background:linear-gradient(90deg,transparent,rgba(99,102,241,0.9),transparent); box-shadow:0 0 16px rgba(99,102,241,0.7);top:50px;pointer-events:none;transition:opacity 0.4s; }
+
+/* ═══════════════════════════
+   SHARED APP CHROME (s4 + s5)
+   Layout: nav 248 | doc 772 | sidebar 260 = 1280
+   Top 44px | Body 634px | Bottom 42px = 720px
+═══════════════════════════ */
+.app-wrap {
+  width:1280px;height:720px;flex-shrink:0;
+  transform-origin:0px 0px;
+  transition:transform 0.85s cubic-bezier(0.4,0,0.2,1);
+  display:flex;flex-direction:column;background:#f3f4f6;
+}
+.app-topbar { height:44px;background:#fff;border-bottom:1px solid #e5e7eb; display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;position:relative; }
+.app-topbar-logo { font-size:15px;font-weight:800;letter-spacing:-0.5px; background:linear-gradient(135deg,#4f46e5,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+.app-topbar-title { font-size:13px;font-weight:600;color:#111827; }
+.app-topbar-sep { width:1px;height:18px;background:#e5e7eb; }
+.app-topbar-file { position:absolute;left:50%;transform:translateX(-50%);font-size:12px;color:#9ca3af; }
+.app-topbar-right { margin-left:auto;display:flex;align-items:center;gap:8px; }
+.app-topbar-icon { font-size:15px;color:#9ca3af;cursor:pointer; }
+.app-btn-new { background:#2563eb;color:#fff;font-size:12px;font-weight:600;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;display:flex;align-items:center;gap:5px; }
+.app-body { flex:1;display:flex;overflow:hidden;position:relative; }
+
+/* ── Left Nav ── */
+.app-nav { width:248px;flex-shrink:0;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;overflow:hidden; }
+.nav-filter { padding:10px 10px 8px;border-bottom:1px solid #f3f4f6;flex-shrink:0;display:flex;align-items:center;gap:6px; }
+.nav-filter-input { flex:1;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:5px 9px;font-size:11px;color:#374151;outline:none;font-family:inherit; }
+.nav-filter-input.active { border-color:#818cf8;box-shadow:0 0 0 2px rgba(99,102,241,0.12);background:#fff; }
+.nav-filter-icons { display:flex;gap:6px; }
+.nav-filter-icon { font-size:13px;color:#9ca3af;cursor:pointer; }
+.nav-reviewed { padding:6px 10px;font-size:10px;color:#6b7280;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f3f4f6;flex-shrink:0; }
+.nav-reviewed strong { color:#374151; }
+.nav-reviewed-arrows { display:flex;gap:2px; }
+.nav-arrow-btn { font-size:11px;color:#9ca3af;cursor:pointer;padding:1px 4px;border-radius:3px; }
+.nav-tree { flex:1;overflow-y:auto;padding:4px 0; }
+.nav-tree::-webkit-scrollbar { width:3px; }
+.nav-tree::-webkit-scrollbar-thumb { background:#e5e7eb;border-radius:3px; }
+.nav-item { display:flex;align-items:center;gap:5px;padding:3px 8px 3px 10px;cursor:pointer;font-size:11px;color:#374151;line-height:1.4;transition:background 0.15s; }
+.nav-item:hover { background:#f9fafb; }
+.nav-item.active  { color:#2563eb;font-weight:500; }
+.nav-item.act-bg  { background:#eff6ff; }
+.nav-chevron { font-size:9px;color:#9ca3af;width:10px;flex-shrink:0; }
+.nav-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-right:1px; }
+.nd-risk    { background:#f59e0b; }
+.nd-high    { background:#ef4444; }
+.nd-clear   { background:#e5e7eb; }
+.nd-green   { background:#10b981; }
+.nav-indent-1 { padding-left:22px; }
+.nav-indent-2 { padding-left:34px; }
+.nav-indent-3 { padding-left:46px; }
+.nav-check { font-size:10px;color:#2563eb;margin-left:auto; }
+/* Search highlight state */
+.nav-item.search-match { background:#eff6ff;color:#1d4ed8; }
+.nav-item.search-dim { opacity:0.2; }
+.nav-search-header { padding:6px 10px;font-size:10px;color:#6366f1;font-weight:600;border-bottom:1px solid #f3f4f6;flex-shrink:0;letter-spacing:0.02em; }
+
+/* ── Center Document ── */
+.app-doc { flex:1;background:#f8f9fa;overflow-y:auto;overflow-x:hidden;position:relative;display:flex;flex-direction:column; }
+.app-doc::-webkit-scrollbar { width:6px; }
+.app-doc::-webkit-scrollbar-thumb { background:#d1d5db;border-radius:3px; }
+.doc-page-nav { height:32px;background:#fff;border-bottom:1px solid #e5e7eb; display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0; }
+.doc-page-arrows { display:flex;gap:6px; }
+.doc-page-btn { font-size:13px;color:#6b7280;cursor:pointer;padding:3px 6px;border-radius:4px;border:1px solid #e5e7eb;background:#fff; }
+.doc-page-info { font-size:11px;color:#9ca3af; }
+/* Breadcrumb bar */
+.doc-breadcrumb { padding:7px 16px;background:#fff;border-bottom:1px solid #e5e7eb; display:flex;align-items:center;gap:6px;font-size:11px;flex-shrink:0; }
+.bc-item { color:#6b7280;cursor:pointer; }
+.bc-item:hover { color:#374151; }
+.bc-item.bc-active { color:#2563eb;font-weight:600; }
+.bc-sep { color:#d1d5db;font-size:12px; }
+.doc-content { padding:28px 44px 40px;font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#111827;line-height:1.75;text-align:justify; }
+.doc-section { margin-bottom:18px;position:relative;padding-right:24px; }
+.doc-heading { text-decoration:underline; }
+.doc-defined { font-weight:700; }
+.doc-italic-filler { font-style:italic; }
+/* Active/highlighted clause — orange left border */
+.doc-section.highlighted { background:#fff7ed;border-left:3px solid #f97316;padding-left:14px;margin-left:-14px;border-radius:0 6px 6px 0; }
+.doc-section.highlighted-blue { background:#eff6ff;border-left:3px solid #3b82f6;padding-left:14px;margin-left:-14px;border-radius:0 6px 6px 0; }
+.doc-flag { position:absolute;right:4px;top:2px;font-size:13px; }
+/* Inline highlights */
+.hl-yellow { background:#fef08a;border-radius:2px;padding:0 1px; }
+.hl-blue   { color:#1d4ed8;text-decoration:underline;text-decoration-color:#93c5fd; }
+/* Track changes */
+.tc-del { color:#dc2626;text-decoration:line-through;background:#fee2e2;padding:0 2px;border-radius:2px; }
+.tc-add { color:#166534;text-decoration:underline;background:#dcfce7;padding:0 2px;border-radius:2px; }
+
+/* Cursor overlay */
+.click-cursor { position:absolute;width:20px;height:20px;border-radius:50%; background:rgba(37,99,235,0.2);border:2px solid #2563eb; pointer-events:none;opacity:0;transform:scale(0);z-index:50;transition:opacity 0.15s,transform 0.15s; }
+.click-cursor.show { opacity:1;transform:scale(1); }
+
+/* ── Right Sidebar ── */
+.app-sidebar { width:260px;flex-shrink:0;background:#fff;border-left:1px solid #e5e7eb;display:flex;flex-direction:column;overflow:hidden; }
+.sb-head { padding:12px 14px 0;border-bottom:1px solid #f3f4f6;flex-shrink:0; }
+.sb-section-num { font-size:11px;font-weight:700;color:#374151;margin-bottom:1px; }
+.sb-section-title { font-size:13px;font-weight:700;color:#111827;margin-bottom:10px; }
+.sb-tabs { display:flex;gap:0; }
+.sb-tab { padding:6px 7px;font-size:10.5px;font-weight:500;color:#6b7280; border-bottom:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.2s;white-space:nowrap; }
+.sb-tab.active { color:#2563eb;border-bottom-color:#2563eb; }
+.sb-tab-count { background:#2563eb;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px; }
+.sb-body { flex:1;overflow-y:auto;padding:10px 10px 0;display:flex;flex-direction:column;gap:6px; }
+.sb-body::-webkit-scrollbar { width:3px; }
+.sb-body::-webkit-scrollbar-thumb { background:#e5e7eb;border-radius:3px; }
+/* Risk cards */
+.risk-card { border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;transition:all 0.35s;opacity:0;transform:translateX(14px); }
+.risk-card.show { opacity:1;transform:translateX(0); }
+.risk-card:hover { border-color:#d1d5db;box-shadow:0 1px 4px rgba(0,0,0,0.07); }
+.risk-card.expanded { border-color:#e5e7eb; }
+.risk-card.pulse { border-color:#f97316;box-shadow:0 0 0 2px rgba(249,115,22,0.2); }
+.rch { display:flex;align-items:flex-start;gap:7px;padding:9px 10px; }
+.rb { font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;flex-shrink:0;letter-spacing:0.04em;margin-top:1px; }
+.rb-high   { background:#fef2f2;color:#dc2626;border:1px solid #fecaca; }
+.rb-medium { background:#fef3c7;color:#d97706;border:1px solid #fde68a; }
+.rb-info   { background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe; }
+.rc-title-row { flex:1;display:flex;align-items:flex-start;justify-content:space-between;gap:4px; }
+.rc-title { font-size:11.5px;font-weight:600;color:#111827;line-height:1.3; }
+.rc-chip { font-size:9px;color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:1px 6px;flex-shrink:0;white-space:nowrap; }
+.rc-body { padding:0 10px 9px;font-size:10.5px;color:#6b7280;line-height:1.5;display:none; }
+.risk-card.expanded .rc-body { display:block; }
+.rc-foot { padding:8px 10px;background:#f9fafb;border-top:1px solid #f3f4f6;display:none; }
+.risk-card.expanded .rc-foot { display:flex;align-items:center;gap:8px; }
+.rc-foot-link { font-size:10px;color:#2563eb;font-weight:600;cursor:pointer; }
+.sb-tally { padding:8px 10px;font-size:10.5px;color:#6b7280;flex-shrink:0;border-top:1px solid #f3f4f6; }
+.sb-tally strong { color:#374151; }
+
+/* ── Bottom Bar ── */
+.app-bottom { height:42px;background:#fff;border-top:1px solid #e5e7eb;display:flex;align-items:center;padding:0 14px;gap:8px;flex-shrink:0; }
+.bb-badge { display:flex;align-items:center;gap:5px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:600;color:#1d4ed8;cursor:pointer; }
+.bb-badge-n { background:#1d4ed8;color:#fff;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700; }
+.bb-sep { width:1px;height:20px;background:#e5e7eb; }
+.bb-chips { display:flex;gap:5px; }
+.bb-chip { display:flex;align-items:center;gap:4px;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid #e5e7eb;color:#374151;background:#fff;transition:all 0.2s; }
+.bb-chip.on { background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8; }
+.bb-right { margin-left:auto;display:flex;align-items:center;gap:7px; }
+.bb-risks-lbl { font-size:10.5px;color:#6b7280; }
+.bb-icon-btn { font-size:14px;color:#6b7280;cursor:pointer; }
+.bb-btn { padding:5px 11px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none; }
+.bb-btn-outline { background:#fff;border:1px solid #e5e7eb !important;color:#374151;display:flex;align-items:center;gap:4px; }
+.bb-btn-primary { background:#2563eb;color:#fff; }
+.bb-btn-view { background:#fff;border:1px solid #e5e7eb !important;color:#374151;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer; }
+.bb-btn-regen { background:#2563eb;border:none;color:#fff;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer; }
+.bb-page { display:flex;align-items:center;gap:4px;font-size:11px;color:#6b7280; }
+.bb-pg-btn { font-size:11px;color:#6b7280;cursor:pointer;padding:2px 5px;border-radius:4px;border:1px solid #e5e7eb; }
+
+/* ═══════════════════════════
+   SCENES 6–7 DARK CHROME
+═══════════════════════════ */
+#s7 { background:#060a14;flex-direction:row;align-items:center;padding:60px 80px;gap:64px; }
+.s6-left { flex:1; }
+.s6-title { font-size:34px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:8px; }
+.s6-desc  { font-size:15px;color:rgba(255,255,255,0.38);line-height:1.55;margin-bottom:36px; }
+.s6-items { display:flex;flex-direction:column;gap:14px; }
+.s6-item  { display:flex;align-items:center;gap:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:16px 18px;opacity:0;transform:translateX(-18px); }
+.s6-item-icon { width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0; }
+.s6-item-icon.word  { background:rgba(37,99,235,0.14); }
+.s6-item-icon.email { background:rgba(245,158,11,0.14); }
+.s6-item-text h4 { font-size:14px;font-weight:600;color:#fff;margin-bottom:2px; }
+.s6-item-text p  { font-size:12px;color:rgba(255,255,255,0.38); }
+.s6-right { width:420px; }
+.s6-word-wrap { background:#fff;border-radius:12px;padding:20px 24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.55);position:relative; }
+.s6-word-badge { position:absolute;top:10px;right:10px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:4px;padding:2px 7px;font-size:8px;font-weight:700;color:#818cf8;letter-spacing:0.06em; }
+.s6-word-head { font-size:8px;font-weight:700;color:#1e293b;text-align:center;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid #e2e8f0; }
+.s6-word-sec { margin-bottom:12px; }
+.s6-word-sec-title { font-size:8px;font-weight:700;color:#475569;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.04em; }
+.s6-word-text { font-size:7.5px;color:#374151;line-height:1.65;font-family:Georgia,serif; }
+.wdel { color:#dc2626;text-decoration:line-through;background:#fee2e2;padding:0 1px; }
+.wadd { color:#166534;text-decoration:underline;background:#dcfce7;padding:0 1px; }
+
+#s8 { background:radial-gradient(ellipse 80% 70% at 60% 50%,#1c1950 0%,#060a14 65%); }
+.s7-grid { position:absolute;inset:0; background-image:linear-gradient(rgba(99,102,241,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06) 1px,transparent 1px); background-size:64px 64px;animation:gridDrift 28s linear infinite reverse; }
+.s7-inner { position:relative;z-index:1;text-align:center; }
+.s7-stats { display:flex;align-items:center;gap:40px;justify-content:center;margin-bottom:56px; }
+.s7-stat { text-align:center; }
+.s7-before { font-size:14px;color:rgba(255,255,255,0.28);text-decoration:line-through;margin-bottom:4px; }
+.s7-after { font-size:58px;font-weight:800;line-height:1; background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+.s7-stat-label { font-size:13px;color:rgba(255,255,255,0.38);margin-top:6px; }
+.s7-arrow { font-size:36px;color:rgba(255,255,255,0.15);line-height:1; }
+.s7-logo { font-size:60px;font-weight:800;letter-spacing:-2px; background:linear-gradient(140deg,#e0e7ff 0%,#a5b4fc 40%,#818cf8 65%,#c084fc 100%); -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px; }
+.s7-tagline { font-size:18px;font-weight:300;color:rgba(255,255,255,0.45); }
+
+/* ── Flag Popover ── */
+.flag-popover { position:absolute;top:160px;right:14px;width:240px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.13);z-index:20;padding:14px; }
+.flag-pop-head { font-size:12px;font-weight:700;color:#111827;margin-bottom:3px; }
+.flag-pop-ref  { font-size:10px;color:#6b7280;margin-bottom:8px; }
+.flag-pop-textarea { width:100%;height:64px;border:1px solid #e5e7eb;border-radius:6px;padding:7px 9px;font-size:11px;color:#374151;font-family:inherit;resize:none;outline:none;line-height:1.45; }
+.flag-pop-foot { display:flex;justify-content:flex-end;gap:7px;margin-top:10px; }
+.flag-pop-cancel { padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;border:1px solid #e5e7eb;color:#6b7280; }
+.flag-pop-submit { padding:5px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#4f46e5;border:none;color:#fff;transition:box-shadow 0.2s; }
+.flag-pop-submit.active { box-shadow:0 0 0 3px rgba(99,102,241,0.35); }
+/* Flag items in sidebar */
+.flag-item { border:1px solid #fde68a;border-radius:8px;padding:10px;background:#fffbeb; }
+.flag-item-head { display:flex;align-items:center;gap:5px;margin-bottom:5px; }
+.flag-item-icon { color:#f59e0b;font-size:12px; }
+.flag-item-ref  { font-size:10px;font-weight:700;color:#374151; }
+.flag-item-title { font-size:10px;color:#6b7280; }
+.flag-item-note { font-size:11px;color:#111827;font-style:italic;margin-bottom:6px;padding:6px 8px;background:#fff;border-radius:4px;border:1px solid #f3f4f6;line-height:1.4; }
+.flag-item-foot { font-size:9.5px;color:#9ca3af; }
+.sb-flag-count { background:#f59e0b !important; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- ══ SCENE 1: HERO ══════════════════════════ -->
+<div class="scene active" id="s1">
+  <div class="s1-grid"></div><div class="s1-glow"></div>
+  <div class="s1-content">
+    <div class="s1-badge"><div class="s1-badge-dot"></div>AI-Powered Legal Assistant</div>
+    <div class="s1-logo">AMBROSE</div>
+    <div class="s1-tagline">Contract Review for Attorneys. Finally Done Right.</div>
+    <div class="s1-sub">Surgical redlines. Comprehensive risk maps. Collaborative clause-by-clause review — from intake to deliverable, in a fraction of the time.</div>
+    <div class="s1-pills">
+      <div class="s1-pill"><div class="s1-pill-dot" style="background:#6366f1"></div>Risk Analysis</div>
+      <div class="s1-pill"><div class="s1-pill-dot" style="background:#a855f7"></div>Track Changes</div>
+      <div class="s1-pill"><div class="s1-pill-dot" style="background:#10b981"></div>Transmittal Email</div>
+      <div class="s1-pill"><div class="s1-pill-dot" style="background:#f59e0b"></div>PSA Specialist</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCENE 2: INTAKE ════════════════════════ -->
+<div class="scene" id="s2">
+  <div class="s2-left">
+    <div class="phase-lbl" style="color:#6366f1">Phase 01 — Intake</div>
+    <div class="s2-title">Tell us about the deal.</div>
+    <div class="s2-desc">Ambrose gathers context upfront so every analysis is tailored to your transaction, client, and style.</div>
+    <div class="s2-qa-list">
+      <div class="s2-qa" id="qa1"><div class="s2-q">Which party do you represent?</div><div class="s2-a"><div class="s2-check">✓</div>Seller</div></div>
+      <div class="s2-qa" id="qa2"><div class="s2-q">Contract type?</div><div class="s2-a"><div class="s2-check">✓</div>Purchase &amp; Sale Agreement — Commercial Real Estate</div></div>
+      <div class="s2-qa" id="qa3"><div class="s2-q">Review approach?</div><div class="s2-a"><div class="s2-check">✓</div>Senior Partner — Aggressive (Level 4)</div></div>
+      <div class="s2-qa" id="qa4"><div class="s2-q">Include exhibits?</div><div class="s2-a"><div class="s2-check">✓</div>Main body only — skip exhibits</div></div>
+    </div>
+  </div>
+  <div class="s2-right">
+    <div class="s2-upload" id="s2upload">
+      <div class="s2-upload-icon">📄</div>
+      <div class="s2-upload-text">Drop contract here or click to upload</div>
+      <div class="s2-doc-preview">
+        <div class="s2-doc-head">Commercial PSA — Seller Side</div>
+        <div class="s2-doc-lines">
+          <div class="dl dh"></div><div class="dl w100"></div><div class="dl w80"></div><div class="dl w100"></div><div class="dl w60"></div>
+          <div class="dl dh"></div><div class="dl w100"></div><div class="dl w80"></div><div class="dl w45"></div>
+          <div class="dl dh"></div><div class="dl w100"></div><div class="dl w80"></div><div class="dl w100"></div><div class="dl w60"></div>
+          <div class="dl dh"></div><div class="dl w100"></div><div class="dl w80"></div><div class="dl w45"></div>
+        </div>
+        <div class="s2-doc-badge">✓ 105 pages loaded</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCENE 3: ANALYSIS ══════════════════════ -->
+<div class="scene" id="s3">
+  <div class="s3-header">
+    <div>
+      <div class="phase-lbl" style="color:#a855f7">Phase 02 — Risk Analysis</div>
+      <div style="font-size:26px;font-weight:700;color:#fff;margin-top:4px">Mapping every risk and opportunity</div>
+    </div>
+    <div><div class="s3-count-num" id="riskNum">0</div><div class="s3-count-sub">Issues Identified</div></div>
+  </div>
+  <div class="s3-doc">
+    <div class="s3-doc-title">Commercial Property Purchase &amp; Sale Agreement</div>
+    <div class="s3-para" id="sp1">
+      <div class="s3-para-num">§ 6.4 — Hazardous Materials</div>
+      <div class="s3-para-text">To Seller's actual knowledge, no Hazardous Materials have been released or disposed of on the Property in violation of any Environmental Law; Seller has received no <strong>written notice</strong> from any Governmental Authority of any investigation or enforcement proceeding relating to Hazardous Materials on or affecting the Property.</div>
+      <div class="s3-badge high" id="b1">⚠&nbsp; HIGH: Written Notice Trap</div>
+    </div>
+    <div class="s3-para" id="sp2">
+      <div class="s3-para-num">§ 8.2 — Indemnification</div>
+      <div class="s3-para-text">Seller shall indemnify, defend and hold harmless Buyer from and against any and all losses, costs, claims, damages, liabilities and expenses of any kind or nature whatsoever arising from or relating to Seller's breach of any representation or warranty.</div>
+      <div class="s3-badge high" id="b2">⚠&nbsp; HIGH: Uncapped Liability</div>
+    </div>
+    <div class="s3-para" id="sp3">
+      <div class="s3-para-num">§ 12.2 — Seller Default</div>
+      <div class="s3-para-text">Upon Seller's default, Buyer shall have the right to terminate and receive return of the Earnest Money, or to seek specific performance, or to pursue all remedies available at law and in equity including consequential and punitive damages.</div>
+      <div class="s3-badge high" id="b3">⚠&nbsp; HIGH: Consequential Damages</div>
+    </div>
+    <div class="s3-para" id="sp4">
+      <div class="s3-para-num">§ 6.4 — No Phase I Required</div>
+      <div class="s3-para-text">The representation regarding underground storage tanks and prior contamination is made solely on Seller's actual knowledge with no obligation to commission or deliver a Phase I or Phase II Environmental Site Assessment to Buyer at or prior to Closing.</div>
+      <div class="s3-badge med" id="b4">◆&nbsp; MEDIUM: No Phase I Obligation</div>
+    </div>
+    <div class="s3-para" id="sp5">
+      <div class="s3-para-num">§ 5.4 — Closing Conditions</div>
+      <div class="s3-para-text">Buyer's obligation to close is conditioned upon satisfaction of all conditions precedent in Buyer's sole and absolute discretion, with no stated timeline for waiver or exercise, and no obligation on Buyer to promptly notify Seller of any unsatisfied condition.</div>
+      <div class="s3-badge med" id="b5">◆&nbsp; OPPORTUNITY: Add Cure Period</div>
+    </div>
+    <div class="s3-beam" id="s3beam"></div>
+  </div>
+</div>
+
+<!-- ══ SCENE 4: COLLABORATIVE REVIEW ═════════ -->
+<div class="scene" id="s4">
+<div class="app-wrap" id="s4wrap">
+  <!-- Top Bar -->
+  <div class="app-topbar">
+    <div class="app-topbar-logo">AMBROSE</div>
+    <div class="app-topbar-sep"></div>
+    <div class="app-topbar-title">Contract Review</div>
+    <div class="app-topbar-file">Commercial PSA - Seller Side.docx</div>
+    <div class="app-topbar-right">
+      <div class="app-topbar-icon">☀</div>
+      <button class="app-btn-new">+ New</button>
+    </div>
+  </div>
+  <!-- Body -->
+  <div class="app-body">
+    <!-- Left Nav -->
+    <div class="app-nav">
+      <div class="nav-filter">
+        <input class="nav-filter-input" placeholder="Filter clauses…" readonly id="s4navInput">
+        <div class="nav-filter-icons"><span class="nav-filter-icon">△</span><span class="nav-filter-icon">⚑</span></div>
+      </div>
+      <div class="nav-reviewed"><span>Reviewed: <strong>27/62</strong></span><div class="nav-reviewed-arrows"><span class="nav-arrow-btn">‹</span><span class="nav-arrow-btn">›</span></div></div>
+      <div class="nav-tree">
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>1 Purchase and Sale.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>2 Purchase Price.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-risk"></div>3 Earnest Money.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>4 Title Matters.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-risk"></div>5 Due Diligence.</div>
+        <div class="nav-item"><span class="nav-chevron">▾</span><div class="nav-dot nd-high"></div>6 Representations.</div>
+        <div class="nav-item nav-indent-1"><span class="nav-chevron"></span><div class="nav-dot nd-clear"></div>6.1 Organization.</div>
+        <div class="nav-item nav-indent-1"><span class="nav-chevron"></span><div class="nav-dot nd-clear"></div>6.2 No Conflicts.</div>
+        <div class="nav-item nav-indent-1"><span class="nav-chevron"></span><div class="nav-dot nd-risk"></div>6.3 Litigation.</div>
+        <div class="nav-item nav-indent-1 active act-bg" id="navHazmat"><span class="nav-chevron"></span><div class="nav-dot nd-high"></div>6.4 Environmental.<span class="nav-check">✓</span></div>
+        <div class="nav-item nav-indent-1"><span class="nav-chevron"></span><div class="nav-dot nd-clear"></div>6.5 Compliance.</div>
+        <div class="nav-item"><span class="nav-chevron">▾</span><div class="nav-dot nd-high"></div>8 Operations.</div>
+        <div class="nav-item nav-indent-1"><span class="nav-chevron"></span><div class="nav-dot nd-high"></div>8.1 Property Ops.</div>
+        <div class="nav-item nav-indent-1"><span class="nav-chevron"></span><div class="nav-dot nd-high"></div>8.2 Indemnification.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-high"></div>12 Default &amp; Remedies.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>14 Miscellaneous.</div>
+      </div>
+    </div>
+    <!-- Center Document -->
+    <div class="app-doc">
+      <div class="doc-page-nav">
+        <div class="doc-page-arrows"><button class="doc-page-btn">‹</button><button class="doc-page-btn">›</button></div>
+        <div class="doc-page-info">38 of 105</div>
+      </div>
+      <div class="doc-content" id="s4docContent">
+        <!-- §6.2 -->
+        <div class="doc-section">
+          <span>6.2&nbsp;&nbsp;</span><span class="doc-heading">No Conflicts.</span>&nbsp;&nbsp;Neither the execution and delivery of this Agreement nor the performance of Seller's obligations hereunder will (i) conflict with or result in a breach of Seller's organizational documents, or (ii) violate any agreement, order, or applicable law to which Seller is a party or bound.
+        </div>
+        <!-- §6.3 -->
+        <div class="doc-section">
+          <span>6.3&nbsp;&nbsp;</span><span class="doc-heading">Litigation.</span>&nbsp;&nbsp;To Seller's actual knowledge, there are no actions, suits, or proceedings pending or threatened against Seller or the Property before any court or governmental authority that would materially affect the Property or Seller's ability to perform its obligations under this Agreement.
+        </div>
+        <!-- §6.4 HIGHLIGHTED — original -->
+        <div class="doc-section highlighted" id="s4sec64orig">
+          <span>6.4&nbsp;&nbsp;</span><span class="doc-heading">Hazardous Materials.</span>&nbsp;&nbsp;To Seller's actual knowledge, (i) no Hazardous Materials have been released, discharged, disposed of, transported, generated, or stored in, on, under, or about the Property in violation of any applicable Environmental Law; (ii) no underground storage tanks are located on or under the Property; (iii) Seller has received no <span class="hl-yellow" id="s4hlWritten">written notice from any Governmental Authority of any investigation, request for information, notice of violation, or enforcement proceeding relating to Hazardous Materials</span> on or affecting the Property; and (iv) to Seller's knowledge, the Property is currently in material compliance with all applicable Environmental Laws. As used herein, <span class="doc-defined">"Hazardous Materials"</span> means any substance defined or regulated as hazardous, toxic, or a pollutant under applicable Environmental Laws.
+          <div class="doc-flag" style="color:#f59e0b">⚑</div>
+        </div>
+        <!-- §6.4 TRACK CHANGE version (hidden until revision) -->
+        <div class="doc-section highlighted" id="s4sec64tc" style="display:none">
+          <span>6.4&nbsp;&nbsp;</span><span class="doc-heading">Hazardous Materials.</span>&nbsp;&nbsp;To Seller's actual knowledge, (i) no Hazardous Materials have been released, discharged, disposed of, transported, generated, or stored in, on, under, or about the Property in violation of any applicable Environmental Law; (ii) no underground storage tanks are located on or under the Property; (iii) Seller has received no <span class="tc-del">written notice from any Governmental Authority</span><span class="tc-add">written notice from, and has no actual knowledge of any oral or informal communication from, any Governmental Authority</span> of any investigation, <span class="tc-add">notice of non-compliance,</span> request for information, or enforcement proceeding relating to Hazardous Materials on or affecting the Property<span class="tc-add">, nor is Seller aware of any facts or circumstances that would reasonably be expected to give rise to any such investigation or proceeding</span>; and (iv) to Seller's knowledge, the Property is currently in material compliance with all applicable Environmental Laws.
+          <div class="doc-flag" style="color:#f59e0b">⚑</div>
+        </div>
+        <!-- §6.5 -->
+        <div class="doc-section">
+          <span>6.5&nbsp;&nbsp;</span><span class="doc-heading">Compliance with Laws.</span>&nbsp;&nbsp;To Seller's actual knowledge, Seller has not received written notice that the Property is in material violation of any applicable federal, state, or local law, ordinance, or regulation.
+        </div>
+      </div>
+      <div class="click-cursor" id="s4cursor"></div>
+    </div>
+    <!-- Right Sidebar -->
+    <div class="app-sidebar">
+      <div class="sb-head">
+        <div class="sb-section-num">6.4</div>
+        <div class="sb-section-title">Environmental Matters.</div>
+        <div class="sb-tabs">
+          <div class="sb-tab active">△ RISKS <span class="sb-tab-count">3</span></div>
+          <div class="sb-tab">↔ RELATED</div>
+          <div class="sb-tab">Ⅱ DEFS</div>
+          <div class="sb-tab">⚑ FLAGS</div>
+        </div>
+      </div>
+      <div class="sb-body" id="s4sbBody">
+        <!-- Risk 1: Actual Knowledge -->
+        <div class="risk-card" id="rc1">
+          <div class="rch">
+            <div class="rb rb-high">HIGH</div>
+            <div class="rc-title-row">
+              <div class="rc-title">"Actual Knowledge" — Constructive Knowledge Excluded</div>
+              <div class="rc-chip">Risk ›</div>
+            </div>
+          </div>
+        </div>
+        <!-- Risk 2: Written Notice Trap — GOTCHA (expanded) -->
+        <div class="risk-card expanded" id="rc2">
+          <div class="rch">
+            <div class="rb rb-high">HIGH</div>
+            <div class="rc-title-row">
+              <div class="rc-title">"Written Notice Only" — Oral Contacts Excluded</div>
+              <div class="rc-chip">Risk ⌄</div>
+            </div>
+          </div>
+          <div class="rc-body">§6.4(iii) limits Seller's rep to formal <strong>written notice</strong> from regulators. Seller may have received oral regulatory contacts, attended informal site visits, or have direct knowledge of a pending enforcement action — all without formal written notice — and still technically satisfy this representation. A classic drafter's trap that leaves Buyer exposed.</div>
+          <div class="rc-foot"><span class="rc-foot-link" id="s4viewRev">View suggestion →</span></div>
+        </div>
+        <!-- Risk 3: No Phase I -->
+        <div class="risk-card" id="rc3">
+          <div class="rch">
+            <div class="rb rb-medium">MEDIUM</div>
+            <div class="rc-title-row">
+              <div class="rc-title">No Phase I Environmental Report Required</div>
+              <div class="rc-chip">Risk ›</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sb-tally"><strong>3 of 3 risks</strong> selected for revision</div>
+    </div>
+  </div>
+  <!-- Bottom Bar -->
+  <div class="app-bottom">
+    <div class="bb-badge"><div class="bb-badge-n">N</div>2 Issues ×</div>
+    <div class="bb-sep"></div>
+    <div class="bb-chips">
+      <div class="bb-chip on">△ Risks</div>
+      <div class="bb-chip on">✏ Revisions</div>
+      <div class="bb-chip">⚑ Flags</div>
+    </div>
+    <div class="bb-right">
+      <div class="bb-risks-lbl">3 risks identified</div>
+      <div class="bb-sep"></div>
+      <span class="bb-icon-btn">⚑</span>
+      <button class="bb-btn-view" id="s4viewBtn">👁 View Revision</button>
+      <button class="bb-btn-regen">↺ Regenerate</button>
+      <div class="bb-sep"></div>
+      <div class="bb-page"><button class="bb-pg-btn">◄</button><span>38 of 105</span><button class="bb-pg-btn">►</button></div>
+      <div class="bb-sep"></div>
+      <button class="bb-btn bb-btn-outline">Show Precedent</button>
+      <button class="bb-btn bb-btn-outline">✉ Generate Transmittal</button>
+      <button class="bb-btn bb-btn-primary">✏ Finalize Redline</button>
+    </div>
+  </div>
+</div><!-- end s4wrap -->
+</div>
+
+<!-- ══ SCENE 5: FLAGS ════════════════════════ -->
+<div class="scene" id="s5">
+<div class="app-wrap" id="s5wrap">
+  <div class="app-topbar">
+    <div class="app-topbar-logo">AMBROSE</div>
+    <div class="app-topbar-sep"></div>
+    <div class="app-topbar-title">Contract Review</div>
+    <div class="app-topbar-file">Commercial PSA - Seller Side.docx</div>
+    <div class="app-topbar-right">
+      <div class="app-topbar-icon">☀</div>
+      <button class="app-btn-new">+ New</button>
+    </div>
+  </div>
+  <div class="app-body">
+    <!-- Left Nav -->
+    <div class="app-nav">
+      <div class="nav-filter">
+        <input class="nav-filter-input" value="" readonly placeholder="Filter clauses…">
+        <div class="nav-filter-icons"><span class="nav-filter-icon" style="color:#6366f1">△</span><span class="nav-filter-icon">⚑</span></div>
+      </div>
+      <div class="nav-reviewed"><span>Reviewed: <strong>27/62</strong></span><div class="nav-reviewed-arrows"><span class="nav-arrow-btn">‹</span><span class="nav-arrow-btn">›</span></div></div>
+      <div class="nav-tree">
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>1 Purchase and Sale.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>2 Purchase Price.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-risk"></div>3 Earnest Money.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>4 Title Matters.</div>
+        <div class="nav-item"><span class="nav-chevron">▾</span><div class="nav-dot nd-high"></div>6 Representations.</div>
+        <div class="nav-item nav-indent-1 active act-bg"><span class="nav-chevron"></span><div class="nav-dot nd-high"></div>6.4 Environmental.<span class="nav-check" style="margin-left:auto;color:#f59e0b">⚑</span></div>
+        <div class="nav-item nav-indent-1"><span class="nav-chevron"></span><div class="nav-dot nd-clear"></div>6.5 Compliance.</div>
+        <div class="nav-item"><span class="nav-chevron">▸</span><div class="nav-dot nd-high"></div>12 Default &amp; Remedies.</div>
+      </div>
+    </div>
+    <!-- Center Document -->
+    <div class="app-doc" style="position:relative">
+      <div class="doc-page-nav">
+        <div class="doc-page-arrows"><button class="doc-page-btn">‹</button><button class="doc-page-btn">›</button></div>
+        <div class="doc-page-info">38 of 105</div>
+      </div>
+      <div class="doc-content">
+        <div class="doc-section">
+          <span>6.3&nbsp;&nbsp;</span><span class="doc-heading">Litigation.</span>&nbsp;&nbsp;To Seller's actual knowledge, there are no actions, suits, or proceedings pending or threatened against Seller or the Property before any court or governmental authority that would materially affect the Property or Seller's ability to perform its obligations hereunder.
+        </div>
+        <!-- §6.4 with clickable flag icon -->
+        <div class="doc-section highlighted" id="s5fl64">
+          <span>6.4&nbsp;&nbsp;</span><span class="doc-heading">Hazardous Materials.</span>&nbsp;&nbsp;To Seller's actual knowledge, (i) no Hazardous Materials have been released, discharged, disposed of, transported, generated, or stored in, on, under, or about the Property in violation of any applicable Environmental Law; (ii) no underground storage tanks are located on or under the Property; (iii) Seller has received no written notice from any Governmental Authority of any investigation, request for information, notice of violation, or enforcement proceeding relating to Hazardous Materials on or affecting the Property; and (iv) to Seller's knowledge, the Property is currently in material compliance with all applicable Environmental Laws.
+          <div class="doc-flag" id="s5flagIcon" style="color:#f59e0b;cursor:pointer;font-size:14px">⚑</div>
+        </div>
+        <div class="doc-section">
+          <span>6.5&nbsp;&nbsp;</span><span class="doc-heading">Compliance with Laws.</span>&nbsp;&nbsp;To Seller's actual knowledge, Seller has not received written notice that the Property is in material violation of any applicable federal, state, or local law, ordinance, or regulation.
+        </div>
+      </div>
+      <!-- Flag Popover (positioned absolutely inside .app-doc) -->
+      <div class="flag-popover" id="s5popover" style="display:none">
+        <div class="flag-pop-head">⚑ Flag for Client Review</div>
+        <div class="flag-pop-ref">§ 6.4 Environmental Matters</div>
+        <textarea class="flag-pop-textarea" id="s5flagNote" readonly placeholder="Add a note for client transmittal…"></textarea>
+        <div class="flag-pop-foot">
+          <button class="flag-pop-cancel">Cancel</button>
+          <button class="flag-pop-submit" id="s5submitFlag">Add Flag</button>
+        </div>
+      </div>
+      <div class="click-cursor" id="s5cursor"></div>
+    </div>
+    <!-- Right Sidebar -->
+    <div class="app-sidebar">
+      <div class="sb-head">
+        <div class="sb-section-num">6.4</div>
+        <div class="sb-section-title">Environmental Matters.</div>
+        <div class="sb-tabs">
+          <div class="sb-tab" id="s5tabRisks">△ RISKS <span class="sb-tab-count">3</span></div>
+          <div class="sb-tab">↔ RELATED</div>
+          <div class="sb-tab">Ⅱ DEFS</div>
+          <div class="sb-tab" id="s5tabFlags">⚑ FLAGS <span class="sb-tab-count sb-flag-count" id="s5flagCount" style="display:none">1</span></div>
+        </div>
+      </div>
+      <!-- RISKS view (shown initially) -->
+      <div class="sb-body" id="s5risksView">
+        <div class="risk-card show" style="opacity:1;transform:none">
+          <div class="rch"><div class="rb rb-high">HIGH</div><div class="rc-title-row"><div class="rc-title">"Actual Knowledge" — Constructive Knowledge Excluded</div><div class="rc-chip">Risk ›</div></div></div>
+        </div>
+        <div class="risk-card expanded show" style="opacity:1;transform:none">
+          <div class="rch"><div class="rb rb-high">HIGH</div><div class="rc-title-row"><div class="rc-title">"Written Notice Only" — Oral Contacts Excluded</div><div class="rc-chip">Risk ⌄</div></div></div>
+          <div class="rc-body">§6.4(iii) limits Seller's rep to formal <strong>written notice</strong> from regulators only — oral contacts and direct knowledge are excluded.</div>
+          <div class="rc-foot"><span class="rc-foot-link">View suggestion →</span></div>
+        </div>
+        <div class="risk-card show" style="opacity:1;transform:none">
+          <div class="rch"><div class="rb rb-medium">MEDIUM</div><div class="rc-title-row"><div class="rc-title">No Phase I Environmental Report Required</div><div class="rc-chip">Risk ›</div></div></div>
+        </div>
+      </div>
+      <!-- FLAGS view (shown after flag is added) -->
+      <div class="sb-body" id="s5flagsView" style="display:none">
+        <div class="flag-item">
+          <div class="flag-item-head">
+            <span class="flag-item-icon">⚑</span>
+            <span class="flag-item-ref">§ 6.4</span>
+            <span class="flag-item-title">Environmental Matters</span>
+          </div>
+          <div class="flag-item-note">"Discuss with client — potential environmental exposure"</div>
+          <div class="flag-item-foot">For transmittal · Added just now</div>
+        </div>
+      </div>
+      <div class="sb-tally" id="s5tally"><strong>3 of 3 risks</strong> selected for revision</div>
+    </div>
+  </div>
+  <!-- Bottom Bar -->
+  <div class="app-bottom">
+    <div class="bb-badge"><div class="bb-badge-n">N</div>2 Issues ×</div>
+    <div class="bb-sep"></div>
+    <div class="bb-chips">
+      <div class="bb-chip on">△ Risks</div>
+      <div class="bb-chip on">✏ Revisions</div>
+      <div class="bb-chip" id="s5flagsChip">⚑ Flags</div>
+    </div>
+    <div class="bb-right">
+      <div class="bb-risks-lbl">3 risks identified</div>
+      <div class="bb-sep"></div>
+      <button class="bb-btn bb-btn-view">👁 View Revision</button>
+      <button class="bb-btn-regen">↺ Regenerate</button>
+      <div class="bb-sep"></div>
+      <div class="bb-page"><button class="bb-pg-btn">◄</button><span>38 of 105</span><button class="bb-pg-btn">►</button></div>
+      <div class="bb-sep"></div>
+      <button class="bb-btn bb-btn-outline">Show Precedent</button>
+      <button class="bb-btn bb-btn-outline">✉ Generate Transmittal</button>
+      <button class="bb-btn bb-btn-primary">✏ Finalize Redline</button>
+    </div>
+  </div>
+</div><!-- end s5wrap -->
+</div>
+
+<!-- ══ SCENE 6: NAVIGATION FEATURES ══════════ -->
+<div class="scene" id="s6">
+<div class="app-wrap" id="s6wrap">
+  <div class="app-topbar">
+    <div class="app-topbar-logo">AMBROSE</div>
+    <div class="app-topbar-sep"></div>
+    <div class="app-topbar-title">Contract Review</div>
+    <div class="app-topbar-file">Commercial PSA - Seller Side.docx</div>
+    <div class="app-topbar-right">
+      <div class="app-topbar-icon">☀</div>
+      <button class="app-btn-new">+ New</button>
+    </div>
+  </div>
+  <div class="app-body">
+    <!-- Left Nav — search state -->
+    <div class="app-nav">
+      <div class="nav-filter">
+        <input class="nav-filter-input active" id="s6navInput" value="" readonly placeholder="Filter clauses…">
+        <div class="nav-filter-icons"><span class="nav-filter-icon" style="color:#6366f1">△</span><span class="nav-filter-icon">⚑</span></div>
+      </div>
+      <div class="nav-search-header" id="s6searchHeader" style="display:none">3 results for "<strong id="s6searchTerm"></strong>"</div>
+      <div class="nav-reviewed" id="s6reviewedBar"><span>Reviewed: <strong>27/62</strong></span><div class="nav-reviewed-arrows"><span class="nav-arrow-btn">‹</span><span class="nav-arrow-btn">›</span></div></div>
+      <div class="nav-tree" id="s6navTree">
+        <!-- Full tree, items will get search-dim / search-match classes -->
+        <div class="nav-item" id="sn1"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>1 Purchase and Sale.</div>
+        <div class="nav-item" id="sn2"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>2 Purchase Price.</div>
+        <div class="nav-item" id="sn3"><span class="nav-chevron">▸</span><div class="nav-dot nd-risk"></div>3 Earnest Money.</div>
+        <div class="nav-item" id="sn4"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>4 Title Matters.</div>
+        <div class="nav-item" id="sn5"><span class="nav-chevron">▸</span><div class="nav-dot nd-risk"></div>5 Due Diligence.</div>
+        <div class="nav-item" id="sn6"><span class="nav-chevron">▾</span><div class="nav-dot nd-high"></div>6 Representations.</div>
+        <div class="nav-item nav-indent-1" id="sn61"><span class="nav-chevron"></span><div class="nav-dot nd-clear"></div>6.1 Organization.</div>
+        <div class="nav-item nav-indent-1" id="sn62"><span class="nav-chevron"></span><div class="nav-dot nd-clear"></div>6.2 No Conflicts.</div>
+        <div class="nav-item nav-indent-1" id="sn63"><span class="nav-chevron"></span><div class="nav-dot nd-risk"></div>6.3 Litigation.</div>
+        <div class="nav-item nav-indent-1" id="sn64"><span class="nav-chevron"></span><div class="nav-dot nd-high"></div>6.4 Environmental.</div>
+        <div class="nav-item nav-indent-1" id="sn65"><span class="nav-chevron"></span><div class="nav-dot nd-clear"></div>6.5 Compliance.</div>
+        <div class="nav-item" id="sn8"><span class="nav-chevron">▾</span><div class="nav-dot nd-high"></div>8 Operations.</div>
+        <div class="nav-item nav-indent-1" id="sn81"><span class="nav-chevron"></span><div class="nav-dot nd-high"></div>8.1 Property Ops.</div>
+        <div class="nav-item nav-indent-1" id="sn83"><span class="nav-chevron"></span><div class="nav-dot nd-high"></div>8.3 Env. Warranty.</div>
+        <div class="nav-item" id="sn10"><span class="nav-chevron">▸</span><div class="nav-dot nd-risk"></div>10 Closing Conditions.</div>
+        <div class="nav-item nav-indent-1" id="sn102"><span class="nav-chevron"></span><div class="nav-dot nd-risk"></div>10.2 Env. Conditions.</div>
+        <div class="nav-item" id="sn12"><span class="nav-chevron">▸</span><div class="nav-dot nd-high"></div>12 Default &amp; Remedies.</div>
+        <div class="nav-item" id="sn14"><span class="nav-chevron">▸</span><div class="nav-dot nd-clear"></div>14 Miscellaneous.</div>
+      </div>
+    </div>
+    <!-- Center Document — breadcrumb + §6.4 -->
+    <div class="app-doc">
+      <div class="doc-page-nav">
+        <div class="doc-page-arrows"><button class="doc-page-btn">‹</button><button class="doc-page-btn">›</button></div>
+        <div class="doc-page-info">38 of 105</div>
+      </div>
+      <!-- Breadcrumb bar -->
+      <div class="doc-breadcrumb" id="s6breadcrumb">
+        <span class="bc-item">Ambrose</span>
+        <span class="bc-sep">›</span>
+        <span class="bc-item">Article 6: Representations &amp; Warranties</span>
+        <span class="bc-sep">›</span>
+        <span class="bc-item bc-active">§ 6.4 Environmental Matters</span>
+      </div>
+      <div class="doc-content">
+        <div class="doc-section">
+          <span>6.2&nbsp;&nbsp;</span><span class="doc-heading">No Conflicts.</span>&nbsp;&nbsp;Neither the execution and delivery of this Agreement nor the performance of Seller's obligations hereunder will conflict with or result in a breach of Seller's organizational documents, or violate any agreement, order, or applicable law to which Seller is a party or bound.
+        </div>
+        <div class="doc-section">
+          <span>6.3&nbsp;&nbsp;</span><span class="doc-heading">Litigation.</span>&nbsp;&nbsp;To Seller's actual knowledge, there are no actions, suits, or proceedings pending or threatened against Seller or the Property before any court or governmental authority that would materially affect the Property or Seller's ability to perform its obligations hereunder.
+        </div>
+        <div class="doc-section highlighted-blue" id="s6sec64">
+          <span>6.4&nbsp;&nbsp;</span><span class="doc-heading">Hazardous Materials.</span>&nbsp;&nbsp;To Seller's actual knowledge, (i) no Hazardous Materials have been released, discharged, disposed of, transported, generated, or stored in, on, under, or about the Property in violation of any applicable Environmental Law; (ii) no underground storage tanks are located on or under the Property; (iii) Seller has received no <span class="hl-yellow">written notice from any Governmental Authority of any investigation, request for information, notice of violation, or enforcement proceeding relating to Hazardous Materials</span> on or affecting the Property; and (iv) to Seller's knowledge, the Property is currently in material compliance with all applicable Environmental Laws.
+          <div class="doc-flag" style="color:#6366f1">⚑</div>
+        </div>
+        <div class="doc-section">
+          <span>6.5&nbsp;&nbsp;</span><span class="doc-heading">Compliance with Laws.</span>&nbsp;&nbsp;To Seller's actual knowledge, Seller has not received written notice that the Property is in material violation of any applicable federal, state, or local law, ordinance, or regulation.
+        </div>
+      </div>
+      <div class="click-cursor" id="s6cursor"></div>
+    </div>
+    <!-- Sidebar -->
+    <div class="app-sidebar">
+      <div class="sb-head">
+        <div class="sb-section-num">6.4</div>
+        <div class="sb-section-title">Environmental Matters.</div>
+        <div class="sb-tabs">
+          <div class="sb-tab active">△ RISKS <span class="sb-tab-count">3</span></div>
+          <div class="sb-tab">↔ RELATED</div>
+          <div class="sb-tab">Ⅱ DEFS</div>
+          <div class="sb-tab">⚑ FLAGS</div>
+        </div>
+      </div>
+      <div class="sb-body">
+        <div class="risk-card show" style="opacity:1;transform:none">
+          <div class="rch"><div class="rb rb-high">HIGH</div><div class="rc-title-row"><div class="rc-title">"Actual Knowledge" — Constructive Knowledge Excluded</div><div class="rc-chip">Risk ›</div></div></div>
+        </div>
+        <div class="risk-card expanded show" style="opacity:1;transform:none">
+          <div class="rch"><div class="rb rb-high">HIGH</div><div class="rc-title-row"><div class="rc-title">"Written Notice Only" — Oral Contacts Excluded</div><div class="rc-chip">Risk ⌄</div></div></div>
+          <div class="rc-body">§6.4(iii) limits Seller's rep to formal <strong>written notice</strong> from regulators. Seller may have received oral contacts or have direct knowledge of a pending enforcement action — and still technically satisfy this representation.</div>
+          <div class="rc-foot"><span class="rc-foot-link">View suggestion →</span></div>
+        </div>
+        <div class="risk-card show" style="opacity:1;transform:none">
+          <div class="rch"><div class="rb rb-medium">MEDIUM</div><div class="rc-title-row"><div class="rc-title">No Phase I Environmental Report Required</div><div class="rc-chip">Risk ›</div></div></div>
+        </div>
+      </div>
+      <div class="sb-tally"><strong>3 of 3 risks</strong> selected for revision</div>
+    </div>
+  </div>
+  <div class="app-bottom">
+    <div class="bb-badge"><div class="bb-badge-n">N</div>2 Issues ×</div>
+    <div class="bb-sep"></div>
+    <div class="bb-chips">
+      <div class="bb-chip on">△ Risks</div>
+      <div class="bb-chip">✏ Revisions</div>
+      <div class="bb-chip">⚑ Flags</div>
+    </div>
+    <div class="bb-right">
+      <div class="bb-risks-lbl">3 risks identified</div>
+      <div class="bb-sep"></div>
+      <span class="bb-icon-btn">⚑</span>
+      <button class="bb-btn-view">👁 View Revision</button>
+      <button class="bb-btn-regen">↺ Regenerate</button>
+      <div class="bb-sep"></div>
+      <div class="bb-page"><button class="bb-pg-btn">◄</button><span>38 of 105</span><button class="bb-pg-btn">►</button></div>
+      <div class="bb-sep"></div>
+      <button class="bb-btn bb-btn-outline">Show Precedent</button>
+      <button class="bb-btn bb-btn-outline">✉ Generate Transmittal</button>
+      <button class="bb-btn bb-btn-primary">✏ Finalize Redline</button>
+    </div>
+  </div>
+</div><!-- end s6wrap -->
+</div>
+
+<!-- ══ SCENE 7: FINALIZATION ══════════════════ -->
+<div class="scene" id="s7">
+  <div class="s6-left">
+    <div class="phase-lbl" style="color:#10b981">Phase 04 — Finalization</div>
+    <div class="s6-title">Ready for delivery.</div>
+    <div class="s6-desc">Approved revisions are assembled into a polished output package — no copying and pasting required.</div>
+    <div class="s6-items">
+      <div class="s6-item" id="o1"><div class="s6-item-icon word">📝</div><div class="s6-item-text"><h4>Redlined Word Document</h4><p>All approved revisions in Track Changes, preserving original formatting &amp; numbering</p></div></div>
+      <div class="s6-item" id="o2"><div class="s6-item-icon email">✉</div><div class="s6-item-text"><h4>Client Transmittal Email</h4><p>High-level summary of key issues addressed and items flagged for client attention</p></div></div>
+    </div>
+  </div>
+  <div class="s6-right">
+    <div class="s6-word-wrap">
+      <div class="s6-word-badge">TRACK CHANGES</div>
+      <div class="s6-word-head">Commercial PSA — Seller's Redline v1</div>
+      <div class="s6-word-sec">
+        <div class="s6-word-sec-title">6.4(iii) Hazardous Materials — Written Notice Rep</div>
+        <div class="s6-word-text">...Seller has received no <span class="wdel">written notice from any Governmental Authority</span><span class="wadd">written notice from, and has no actual knowledge of any oral or informal communication from, any Governmental Authority</span> of any investigation, <span class="wadd">notice of non-compliance,</span> request for information, or enforcement proceeding relating to Hazardous Materials<span class="wadd">, nor is Seller aware of any facts or circumstances reasonably expected to give rise to any such action</span>...</div>
+      </div>
+      <div class="s6-word-sec">
+        <div class="s6-word-sec-title">8.2 Indemnification — Liability Cap</div>
+        <div class="s6-word-text">Seller shall indemnify Buyer from <span class="wdel">any and all losses, costs, claims, damages, liabilities and expenses of any kind or nature whatsoever</span><span class="wadd">Losses not to exceed, in the aggregate, ten percent (10%) of the Purchase Price</span> arising from Seller's breach...</div>
+      </div>
+      <div class="s6-word-sec">
+        <div class="s6-word-sec-title">12.2 Seller Default — Remedies</div>
+        <div class="s6-word-text">...Buyer's remedies shall include return of the Earnest Money <span class="wdel">and all remedies at law and in equity including consequential and punitive damages</span><span class="wadd">as Buyer's sole and exclusive remedy, with no liability for consequential or punitive damages</span>.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCENE 8: OUTRO ════════════════════════ -->
+<div class="scene" id="s8">
+  <div class="s7-grid"></div>
+  <div class="s7-inner">
+    <div class="s7-stats">
+      <div class="s7-stat" id="st1"><div class="s7-before">8+ hours</div><div class="s7-after">45<span style="font-size:26px;font-weight:400">min</span></div><div class="s7-stat-label">Review Time</div></div>
+      <div class="s7-arrow" id="starr1">→</div>
+      <div class="s7-stat" id="st2"><div class="s7-before">Missed issues</div><div class="s7-after">0</div><div class="s7-stat-label">Risks Overlooked</div></div>
+      <div class="s7-arrow" id="starr2">→</div>
+      <div class="s7-stat" id="st3"><div class="s7-before">Generic rewrites</div><div class="s7-after" style="font-size:44px">Surgical</div><div class="s7-stat-label">Revision Quality</div></div>
+    </div>
+    <div class="s7-logo" id="s8logo">AMBROSE</div>
+    <div class="s7-tagline" id="s8tag">Your AI legal partner. Powered by Gemini.</div>
+  </div>
+</div>
+
+</div><!-- end stage -->
+<div class="nav-dots" id="navDots"></div>
+<div class="timer-bar" id="timerBar"></div>
+
+<script>
+/* ── Stage scaling ─────────────────────────── */
+function scaleStage() {
+  const s = document.getElementById('stage');
+  const r = Math.min(window.innerWidth/1280, window.innerHeight/720);
+  s.style.transform = `scale(${r})`;
+}
+scaleStage(); window.addEventListener('resize', scaleStage);
+
+/* ── Zoom helper ───────────────────────────── */
+// App layout: nav 0-248, doc 248-1020, sidebar 1020-1280
+// topbar 0-44, body 44-678, bottom 678-720
+// With transform-origin:0px 0px and scale s:
+//   point (cx,cy) → screen center (640,360) when
+//   tx = 640 - cx*s,  ty = 360 - cy*s
+function zoomTo(el, cx, cy, s) {
+  el.style.transform = `translate(${(640 - cx*s).toFixed(1)}px,${(360 - cy*s).toFixed(1)}px) scale(${s})`;
+}
+function zoomReset(el) { el.style.transform = 'translate(0px,0px) scale(1)'; }
+
+/* ── Scene management ──────────────────────── */
+const SCENES    = ['s1','s2','s3','s4','s5','s6','s7','s8'];
+const DURATIONS = [4200, 5800, 7000, 11500, 10000, 9000, 5500, 5500];
+let cur = 0, advTimer = null;
+
+const dotsEl = document.getElementById('navDots');
+SCENES.forEach((_,i) => {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i===0?' active':'');
+  d.onclick = () => goTo(i);
+  dotsEl.appendChild(d);
+});
+function updateDots() {
+  dotsEl.querySelectorAll('.dot').forEach((d,i)=>d.className='dot'+(i===cur?' active':''));
+}
+function goTo(idx) {
+  clearTimeout(advTimer);
+  document.getElementById(SCENES[cur]).classList.remove('active');
+  cur = ((idx%SCENES.length)+SCENES.length)%SCENES.length;
+  document.getElementById(SCENES[cur]).classList.add('active');
+  updateDots(); runAnim(cur); startBar();
+  advTimer = setTimeout(()=>goTo(cur+1), DURATIONS[cur]);
+}
+function startBar() {
+  const bar = document.getElementById('timerBar');
+  bar.style.transition='none'; bar.style.width='0%';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    bar.style.transition=`width ${DURATIONS[cur]}ms linear`;
+    bar.style.width='100%';
+  }));
+}
+function runAnim(i) {
+  ({1:anim2,2:anim3,3:anim4,4:anim5,5:anim6,6:anim7,7:anim8}[i]||(()=>{}))();
+}
+
+/* ── Animation helpers ─────────────────────── */
+function countTo(el, from, to, dur) {
+  const t0 = Date.now();
+  (function tick(){ const p=Math.min((Date.now()-t0)/dur,1); el.textContent=Math.round(from+(to-from)*p); if(p<1)requestAnimationFrame(tick); })();
+}
+function setTransition(el, val) { el.style.transition = val; }
+
+/* ── Scene 2: Intake ───────────────────────── */
+function anim2() {
+  ['qa1','qa2','qa3','qa4'].forEach(id=>{const e=document.getElementById(id);e.style.opacity='0';e.style.transform='translateX(-20px)';e.style.transition='';});
+  document.getElementById('s2upload').classList.remove('loaded');
+  [[400,'qa1'],[950,'qa2'],[1500,'qa3'],[2050,'qa4']].forEach(([d,id])=>{
+    setTimeout(()=>{const e=document.getElementById(id);e.style.transition='opacity 0.4s,transform 0.4s';e.style.opacity='1';e.style.transform='translateX(0)';},d);
+  });
+  setTimeout(()=>document.getElementById('s2upload').classList.add('loaded'),2800);
+}
+
+/* ── Scene 3: Analysis ─────────────────────── */
+function anim3() {
+  ['b1','b2','b3','b4','b5'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  const num=document.getElementById('riskNum'); num.textContent='0';
+  const beam=document.getElementById('s3beam');
+  beam.style.transition='none'; beam.style.top='52px'; beam.style.opacity='1';
+  setTimeout(()=>{beam.style.transition='top 5.5s linear';beam.style.top='400px';},200);
+  [[700,'b1',7],[1600,'b2',18],[2500,'b3',28],[3300,'b4',37],[4200,'b5',44]].forEach(([delay,id,n])=>{
+    setTimeout(()=>{document.getElementById(id).classList.add('show');countTo(num,parseInt(num.textContent),n,250);},delay);
+  });
+  setTimeout(()=>{countTo(num,parseInt(num.textContent),47,400);beam.style.transition='opacity 0.5s';beam.style.opacity='0';},5200);
+}
+
+/* ── Scene 4: Collaborative Review ────────── */
+// Layout:  sidebar center cx=1150, risk cards at cy≈200
+//   → zoom(1150, 200, 2.0):  tx=640-1150*2=-1660,  ty=360-200*2=-40  → sidebar fills right half ✓
+// Doc §6.4 hazmat: in body, page-nav(32)+padding(28)=60px after topbar(44)
+//   §6.4 is 3rd section ≈ 44+32+28+120=224 top, center ≈ 280
+//   doc center x=634
+//   → zoom(634, 280, 1.9):  tx=640-634*1.9=-564,  ty=360-280*1.9=-172  ✓
+
+function anim4() {
+  const wrap = document.getElementById('s4wrap');
+  const cursor = document.getElementById('s4cursor');
+  const rc1 = document.getElementById('rc1');
+  const rc2 = document.getElementById('rc2');
+  const rc3 = document.getElementById('rc3');
+  const orig = document.getElementById('s4sec64orig');
+  const tc   = document.getElementById('s4sec64tc');
+  const viewBtn = document.getElementById('s4viewBtn');
+
+  // Reset
+  wrap.style.transition = 'none'; zoomReset(wrap);
+  cursor.classList.remove('show');
+  [rc1,rc2,rc3].forEach(c=>{c.style.transition='none';c.classList.remove('show','pulse');void c.offsetWidth;c.style.transition='';});
+  orig.style.display=''; tc.style.display='none';
+  viewBtn.style.background=''; viewBtn.style.borderColor=''; viewBtn.style.color='';
+
+  // t=0.7s — cursor clicks on §6.4 (in doc, approx y=300 in stage, x=600)
+  setTimeout(()=>{
+    cursor.style.top='300px'; cursor.style.left='590px';
+    cursor.classList.add('show');
+    setTimeout(()=>cursor.classList.remove('show'),400);
+  }, 700);
+
+  // t=1.3s — risk cards appear
+  const cardDelay = [[1300,rc1],[1750,rc2],[2200,rc3]];
+  cardDelay.forEach(([d,c])=>setTimeout(()=>{
+    c.classList.add('show');
+  }, d));
+
+  // t=2.7s — ZOOM into sidebar (cx=1150, cy=200, scale=2.0)
+  setTimeout(()=>{
+    wrap.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+    zoomTo(wrap, 1150, 200, 2.0);
+  }, 2700);
+
+  // t=4.5s — pulse gotcha card (rc2)
+  setTimeout(()=>rc2.classList.add('pulse'), 4500);
+
+  // t=5.3s — highlight View Revision button
+  setTimeout(()=>{
+    viewBtn.style.background='#eff6ff';
+    viewBtn.style.borderColor='#93c5fd';
+    viewBtn.style.color='#1d4ed8';
+  }, 5300);
+
+  // t=6.0s — ZOOM into doc (cx=634, cy=280, scale=1.9)
+  setTimeout(()=>{
+    wrap.style.transform=''; // will be overridden below
+    wrap.style.transition = 'transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+    zoomTo(wrap, 634, 280, 1.9);
+    // swap in track changes after zoom lands
+    setTimeout(()=>{orig.style.display='none'; tc.style.display='';}, 700);
+  }, 6000);
+
+  // t=9.2s — zoom back out
+  setTimeout(()=>{
+    wrap.style.transition = 'transform 0.8s cubic-bezier(0.4,0,0.2,1)';
+    zoomReset(wrap);
+  }, 9200);
+}
+
+/* ── Scene 5: Flags ────────────────────────── */
+function anim5() {
+  const wrap      = document.getElementById('s5wrap');
+  const cursor    = document.getElementById('s5cursor');
+  const popover   = document.getElementById('s5popover');
+  const flagIcon  = document.getElementById('s5flagIcon');
+  const flagNote  = document.getElementById('s5flagNote');
+  const submitBtn = document.getElementById('s5submitFlag');
+  const risksView = document.getElementById('s5risksView');
+  const flagsView = document.getElementById('s5flagsView');
+  const tabRisks  = document.getElementById('s5tabRisks');
+  const tabFlags  = document.getElementById('s5tabFlags');
+  const flagCount = document.getElementById('s5flagCount');
+  const flagsChip = document.getElementById('s5flagsChip');
+
+  // Reset
+  wrap.style.transition='none'; zoomReset(wrap);
+  cursor.classList.remove('show');
+  popover.style.display='none'; popover.style.opacity=''; popover.style.transform=''; popover.style.transition='';
+  flagIcon.style.color='#f59e0b'; flagIcon.style.transition='';
+  flagNote.value='';
+  submitBtn.classList.remove('active');
+  risksView.style.display='flex'; flagsView.style.display='none';
+  tabRisks.classList.add('active'); tabFlags.classList.remove('active');
+  flagCount.style.display='none';
+  flagsChip.classList.remove('on');
+
+  // t=0.7s — cursor clicks flag icon (§6.4 flag, approx stage x=972, y=179)
+  setTimeout(()=>{
+    cursor.style.left='972px'; cursor.style.top='179px';
+    cursor.classList.add('show');
+    setTimeout(()=>cursor.classList.remove('show'),400);
+  }, 700);
+
+  // t=1.1s — popover appears
+  setTimeout(()=>{
+    popover.style.display='block';
+    popover.style.opacity='0';
+    popover.style.transform='translateY(-8px) scale(0.97)';
+    void popover.offsetWidth;
+    popover.style.transition='opacity 0.3s,transform 0.3s';
+    popover.style.opacity='1';
+    popover.style.transform='translateY(0) scale(1)';
+  }, 1100);
+
+  // t=1.8s — type note letter by letter (54 chars × 45ms = 2430ms)
+  const noteText = 'Discuss with client \u2014 potential environmental exposure';
+  noteText.split('').forEach((ch,i)=>{
+    setTimeout(()=>{ flagNote.value = noteText.slice(0,i+1); }, 1800 + i*45);
+  });
+
+  // t=4.5s — submit button pulses
+  setTimeout(()=>submitBtn.classList.add('active'), 4500);
+
+  // t=4.9s — cursor clicks submit button (approx stage x=956, y=349)
+  setTimeout(()=>{
+    cursor.style.left='956px'; cursor.style.top='349px';
+    cursor.classList.add('show');
+    setTimeout(()=>cursor.classList.remove('show'),400);
+  }, 4900);
+
+  // t=5.1s — popover closes; flag icon turns indigo
+  setTimeout(()=>{
+    popover.style.transition='opacity 0.2s,transform 0.2s';
+    popover.style.opacity='0';
+    popover.style.transform='translateY(-6px) scale(0.97)';
+    setTimeout(()=>{ popover.style.display='none'; }, 220);
+    flagIcon.style.transition='color 0.35s';
+    flagIcon.style.color='#4f46e5';
+  }, 5100);
+
+  // t=5.5s — FLAGS tab count badge appears
+  setTimeout(()=>{ flagCount.style.display=''; }, 5500);
+
+  // t=5.9s — switch sidebar to FLAGS view
+  setTimeout(()=>{
+    tabRisks.classList.remove('active'); tabFlags.classList.add('active');
+    risksView.style.display='none'; flagsView.style.display='flex';
+    flagsChip.classList.add('on');
+  }, 5900);
+
+  // t=6.5s — zoom into sidebar FLAGS view (cx=1150, cy=200, scale=2.0)
+  setTimeout(()=>{
+    wrap.style.transition='transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+    zoomTo(wrap, 1150, 200, 2.0);
+  }, 6500);
+
+  // t=9.2s — zoom back out
+  setTimeout(()=>{
+    wrap.style.transition='transform 0.8s cubic-bezier(0.4,0,0.2,1)';
+    zoomReset(wrap);
+  }, 9200);
+}
+
+/* ── Scene 6: Navigation Features ─────────── */
+// Nav zoom:  cx=124, cy=200, scale=1.8
+//   tx=640-124*1.8=640-223=417,  ty=360-200*1.8=360-360=0
+// Breadcrumb zoom: cx=634, cy=90, scale=1.6
+//   tx=640-634*1.6=640-1014=-374,  ty=360-90*1.6=360-144=216
+
+const NAV_SEARCH_MATCHES = ['sn64','sn83','sn102'];
+const NAV_ALL = ['sn1','sn2','sn3','sn4','sn5','sn6','sn61','sn62','sn63','sn64','sn65','sn8','sn81','sn83','sn10','sn102','sn12','sn14'];
+
+function anim6() {
+  const wrap = document.getElementById('s6wrap');
+  const input = document.getElementById('s6navInput');
+  const searchHeader = document.getElementById('s6searchHeader');
+  const reviewedBar  = document.getElementById('s6reviewedBar');
+  const searchTerm   = document.getElementById('s6searchTerm');
+
+  // Reset
+  wrap.style.transition='none'; zoomReset(wrap);
+  input.value='';
+  searchHeader.style.display='none';
+  reviewedBar.style.display='flex';
+  NAV_ALL.forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove('search-match','search-dim');}});
+
+  // t=0.7s — ZOOM into left nav
+  setTimeout(()=>{
+    wrap.style.transition='transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+    zoomTo(wrap, 124, 200, 1.8);
+  }, 700);
+
+  // t=1.6s — type "environ" letter by letter
+  const searchStr = 'environ';
+  searchStr.split('').forEach((ch,i)=>{
+    setTimeout(()=>{
+      input.value = searchStr.slice(0, i+1);
+    }, 1600 + i*130);
+  });
+
+  // t=2.6s — filter nav tree: dim non-matches, highlight matches
+  setTimeout(()=>{
+    NAV_ALL.forEach(id=>{
+      const e=document.getElementById(id); if(!e) return;
+      if(NAV_SEARCH_MATCHES.includes(id)) e.classList.add('search-match');
+      else e.classList.add('search-dim');
+    });
+    reviewedBar.style.display='none';
+    searchTerm.textContent='environ';
+    searchHeader.style.display='block';
+  }, 2600);
+
+  // t=4.3s — cursor clicks on §6.4 match in nav
+  setTimeout(()=>{
+    // §6.4 in nav is roughly at y=205 in the nav panel stage coords
+    // At zoom 1.8 centered on (124,200): screen pos of nav item at y=205 is 205*1.8+0=369 ≈ 369px
+    const cursor=document.getElementById('s6cursor');
+    cursor.style.top='369px'; cursor.style.left='250px';
+    cursor.classList.add('show');
+    setTimeout(()=>cursor.classList.remove('show'),400);
+  }, 4300);
+
+  // t=5.0s — ZOOM to breadcrumb (cx=634, cy=90, scale=1.6)
+  setTimeout(()=>{
+    wrap.style.transition='transform 0.9s cubic-bezier(0.4,0,0.2,1)';
+    zoomTo(wrap, 634, 90, 1.6);
+  }, 5000);
+
+  // t=7.0s — ZOOM back to full
+  setTimeout(()=>{
+    wrap.style.transition='transform 0.8s cubic-bezier(0.4,0,0.2,1)';
+    zoomReset(wrap);
+  }, 7000);
+
+  // t=7.8s — show Risk filter chip toggling
+  setTimeout(()=>{
+    const chips = document.querySelectorAll('#s6 .bb-chip');
+    chips.forEach(c=>c.classList.remove('on'));
+    if(chips[0]) chips[0].classList.add('on'); // Risks only
+  }, 7800);
+}
+
+/* ── Scene 7: Finalization ─────────────────── */
+function anim7() {
+  ['o1','o2'].forEach(id=>{const e=document.getElementById(id);e.style.opacity='0';e.style.transform='translateX(-18px)';e.style.transition='';});
+  setTimeout(()=>{const e=document.getElementById('o1');e.style.transition='opacity 0.45s,transform 0.45s';e.style.opacity='1';e.style.transform='translateX(0)';},500);
+  setTimeout(()=>{const e=document.getElementById('o2');e.style.transition='opacity 0.45s,transform 0.45s';e.style.opacity='1';e.style.transform='translateX(0)';},1050);
+}
+
+/* ── Scene 8: Outro ────────────────────────── */
+function anim8() {
+  ['st1','starr1','st2','starr2','st3','s8logo','s8tag'].forEach(id=>{const e=document.getElementById(id);if(!e)return;e.style.opacity='0';e.style.transform='translateY(18px)';e.style.transition='';});
+  ({st1:300,starr1:550,st2:700,starr2:850,st3:1000,s8logo:1400,s8tag:1750}).entries && Object.entries({st1:300,starr1:550,st2:700,starr2:850,st3:1000,s8logo:1400,s8tag:1750}).forEach(([id,d])=>{
+    setTimeout(()=>{const e=document.getElementById(id);if(!e)return;e.style.transition='opacity 0.55s,transform 0.55s';e.style.opacity='1';e.style.transform='translateY(0)';},d);
+  });
+}
+
+/* ── Keyboard nav ──────────────────────────── */
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')goTo(cur+1);
+  if(e.key==='ArrowLeft')goTo(cur-1);
+});
+
+/* ── Start ─────────────────────────────────── */
+startBar();
+advTimer = setTimeout(()=>goTo(1), DURATIONS[0]);
+</script>
+</body>
+</html>
