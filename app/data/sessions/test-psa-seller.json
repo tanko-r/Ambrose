@@ -1,0 +1,957 @@
+{
+  "session_id": "test-psa-seller",
+  "created_at": "2026-02-07T16:20:26.348788",
+  "status": "analyzed",
+  "representation": "buyer",
+  "contract_type": "psa",
+  "approach": "relationship",
+  "aggressiveness": 3,
+  "deal_context": "Test session: Buyer reviewing Seller-form PSA for commercial property acquisition in Washington state.",
+  "include_exhibits": false,
+  "target_filename": "Sample PSA - Seller Side.docx",
+  "target_path": "C:\\Users\\david\\Documents\\claude-redlining\\app\\data\\uploads\\test-psa-seller\\target.docx",
+  "parsed_doc_path": "C:\\Users\\david\\Documents\\claude-redlining\\app\\data\\uploads\\test-psa-seller\\target_parsed.json",
+  "precedent_path": null,
+  "analysis": {
+    "representation": "buyer",
+    "contract_type": "psa",
+    "aggressiveness": 3,
+    "summary": {
+      "total_risks": 12,
+      "critical": 1,
+      "high": 4,
+      "medium": 6,
+      "low": 1,
+      "info": 0
+    },
+    "risk_inventory": [
+      {
+        "risk_id": "R1",
+        "para_id": "p_36",
+        "section_ref": "5B(iii)",
+        "title": "Uncapped Buyer Indemnification for Inspections",
+        "description": "Buyer's indemnification of Seller for inspection-related costs, expenses, damages, and liabilities is uncapped and survives termination. This creates open-ended liability exposure for Buyer with no time or dollar limitation.",
+        "severity": "critical",
+        "type": "risk",
+        "category": "Indemnification",
+        "highlight_text": "Buyer shall indemnify and hold Seller harmless from and against all costs, expenses, damages, liabilities",
+        "related_para_ids": "p_35,p_38",
+        "mitigated_by": [],
+        "amplified_by": [
+          {
+            "ref": "5B(v)",
+            "effect": "Survival provision ensures this indemnity outlasts the agreement"
+          }
+        ],
+        "triggers": [
+          "inspection_entry",
+          "third_party_claims"
+        ]
+      },
+      {
+        "risk_id": "R2",
+        "para_id": "p_59",
+        "section_ref": "7A(vi)",
+        "title": "Knowledge Qualifier Limited to Actual Knowledge",
+        "description": "Seller's knowledge is defined as the 'actual knowledge' of a single individual with no duty of inquiry or investigation. This allows Seller to disclaim knowledge of material defects that a reasonable investigation would reveal.",
+        "severity": "high",
+        "type": "risk",
+        "category": "Representations & Warranties",
+        "highlight_text": "to Seller\u2019s Actual Knowledge",
+        "related_para_ids": "p_54,p_55,p_56,p_57,p_58",
+        "mitigated_by": [],
+        "amplified_by": [
+          {
+            "ref": "7A(ii)-(vi)",
+            "effect": "All substantive seller reps are qualified by this narrow knowledge standard"
+          }
+        ],
+        "triggers": [
+          "environmental_issues",
+          "tenant_disputes",
+          "code_violations"
+        ]
+      },
+      {
+        "risk_id": "R3",
+        "para_id": "p_72",
+        "section_ref": "9",
+        "title": "Broad AS-IS Waiver of Implied Warranties",
+        "description": "Buyer accepts the property entirely AS-IS with no representations or warranties beyond those expressly stated. Combined with the narrow knowledge qualifier, this significantly limits Buyer's post-closing remedies for property defects.",
+        "severity": "high",
+        "type": "risk",
+        "category": "Property Condition",
+        "highlight_text": "BUYER ACKNOWLEDGES AND AGREES THAT, EXCEPT FOR SELLER\u2019S EXPRESS REPRESENTATIONS AND WARRANTIES",
+        "related_para_ids": "p_74",
+        "mitigated_by": [
+          {
+            "ref": "7A",
+            "effect": "Express representations provide limited carve-outs from AS-IS"
+          }
+        ],
+        "amplified_by": [
+          {
+            "ref": "10",
+            "effect": "Release provision further limits post-closing recourse"
+          }
+        ],
+        "triggers": [
+          "environmental_contamination",
+          "structural_defects"
+        ]
+      },
+      {
+        "risk_id": "R4",
+        "para_id": "p_74",
+        "section_ref": "10",
+        "title": "Broad Release of Seller Claims Upon Deed Acceptance",
+        "description": "By accepting the deed, Buyer releases Seller from virtually all claims related to the property. While there is a carve-out for express representations, the breadth of the release substantially limits Buyer's post-closing remedies.",
+        "severity": "high",
+        "type": "risk",
+        "category": "Liability & Release",
+        "highlight_text": "By accepting the Deed to the Property, Buyer, on behalf of itself, its officers, directors",
+        "related_para_ids": "p_72,p_76",
+        "mitigated_by": [
+          {
+            "ref": "10(a)",
+            "effect": "Carve-out preserves claims under express representations"
+          }
+        ],
+        "amplified_by": [
+          {
+            "ref": "9",
+            "effect": "AS-IS clause compounds the release by eliminating implied warranty claims"
+          }
+        ],
+        "triggers": [
+          "post_closing_defects",
+          "environmental_remediation"
+        ]
+      },
+      {
+        "risk_id": "R5",
+        "para_id": "p_65",
+        "section_ref": "7C",
+        "title": "Short Survival Period for Representations",
+        "description": "Seller's representations and warranties survive closing for a limited period. If defects are discovered after the survival period expires, Buyer has no contractual recourse regardless of the defect's nature or severity.",
+        "severity": "high",
+        "type": "risk",
+        "category": "Representations & Warranties",
+        "highlight_text": "Any cause of action of a party for a breach of the representations and warranties",
+        "related_para_ids": "p_52,p_60,p_61",
+        "mitigated_by": [],
+        "amplified_by": [
+          {
+            "ref": "7A(vi)",
+            "effect": "Narrow knowledge qualifier means fewer discoverable breaches within the survival window"
+          }
+        ],
+        "triggers": [
+          "latent_defects",
+          "delayed_discovery"
+        ]
+      },
+      {
+        "risk_id": "R6",
+        "para_id": "p_26",
+        "section_ref": "4B",
+        "title": "Title Review Period May Be Insufficient",
+        "description": "Buyer has only ten (10) days from the Effective Date to review title. For complex commercial properties with multiple encumbrances, easements, or CC&Rs, this may not provide adequate time for thorough title analysis.",
+        "severity": "medium",
+        "type": "risk",
+        "category": "Title & Survey",
+        "highlight_text": "Buyer shall have ten (10) days from the Effective Date",
+        "related_para_ids": "p_23,p_24,p_25",
+        "mitigated_by": [
+          {
+            "ref": "4A",
+            "effect": "Seller must deliver title documents within seven days, giving partial overlap"
+          }
+        ],
+        "amplified_by": [],
+        "triggers": [
+          "complex_title_history",
+          "multiple_encumbrances"
+        ]
+      },
+      {
+        "risk_id": "R7",
+        "para_id": "p_68",
+        "section_ref": "8A",
+        "title": "Ordinary Course Covenant Limited to Due Diligence Period",
+        "description": "Seller's covenant to maintain and operate the property in the ordinary course applies only during the Due Diligence Period, not through Closing. This creates a gap period where Seller has reduced obligations regarding property management.",
+        "severity": "medium",
+        "type": "risk",
+        "category": "Seller Covenants",
+        "highlight_text": "During the Due Diligence Period, Seller shall continue to maintain, operate, and lease the Property",
+        "related_para_ids": "p_67,p_69,p_70",
+        "mitigated_by": [],
+        "amplified_by": [
+          {
+            "ref": "8B",
+            "effect": "Service contract restrictions also have limited temporal scope"
+          }
+        ],
+        "triggers": [
+          "deferred_maintenance",
+          "lease_modifications"
+        ]
+      },
+      {
+        "risk_id": "R8",
+        "para_id": "p_18",
+        "section_ref": "3A",
+        "title": "Earnest Money Deposit at Risk Before Due Diligence Complete",
+        "description": "Buyer must deliver the initial deposit within business days of the Effective Date, before completing due diligence. If Buyer fails to timely approve due diligence, the deposit refund mechanism and any conditions should be clearly defined.",
+        "severity": "medium",
+        "type": "risk",
+        "category": "Financial Terms",
+        "highlight_text": "Within ______ (__) business day(s) after the Effective Date, Buyer shall deliver",
+        "related_para_ids": "p_19,p_50",
+        "mitigated_by": [
+          {
+            "ref": "5A",
+            "effect": "Due diligence contingency provides a refund path if Buyer disapproves"
+          }
+        ],
+        "amplified_by": [
+          {
+            "ref": "3B",
+            "effect": "Additional deposit further increases exposure before closing"
+          }
+        ],
+        "triggers": [
+          "due_diligence_failure",
+          "financing_issues"
+        ]
+      },
+      {
+        "risk_id": "R9",
+        "para_id": "p_49",
+        "section_ref": "5F",
+        "title": "Conditions Precedent May Be Waived by Conduct",
+        "description": "The waiver provision for conditions precedent should be reviewed to ensure conditions cannot be inadvertently waived by conduct or silence, which could force a party to close without all contractual protections being satisfied.",
+        "severity": "medium",
+        "type": "risk",
+        "category": "Closing Conditions",
+        "highlight_text": "The conditions set forth in Sections 5.1 through 5.4",
+        "related_para_ids": "p_40,p_45",
+        "mitigated_by": [],
+        "amplified_by": [],
+        "triggers": [
+          "inadvertent_waiver",
+          "closing_disputes"
+        ]
+      },
+      {
+        "risk_id": "R10",
+        "para_id": "p_56",
+        "section_ref": "7A(iv)",
+        "title": "Litigation Representation Qualified by Knowledge",
+        "description": "Seller's representation regarding pending or threatened litigation is qualified by Seller's Actual Knowledge. Litigation is a factual matter that should not require a knowledge qualifier \u2014 Seller either has or has not been served with process.",
+        "severity": "medium",
+        "type": "opportunity",
+        "category": "Representations & Warranties",
+        "highlight_text": "To Seller\u2019s Actual Knowledge, there is no litigation pending or threatened against Seller",
+        "related_para_ids": "p_59",
+        "mitigated_by": [],
+        "amplified_by": [
+          {
+            "ref": "7A(vi)",
+            "effect": "Narrow knowledge definition compounds the weakness of this representation"
+          }
+        ],
+        "triggers": [
+          "undisclosed_lawsuits"
+        ]
+      },
+      {
+        "risk_id": "R11",
+        "para_id": "p_69",
+        "section_ref": "8B",
+        "title": "Opportunity: Require Buyer Consent for All Contract Modifications",
+        "description": "Seller is prohibited from entering into, materially modifying, or terminating service contracts. However, the 'materiality' qualifier leaves room for minor modifications that could cumulatively impact the property's operation. Consider requiring Buyer consent for all modifications, not just material ones.",
+        "severity": "low",
+        "type": "opportunity",
+        "category": "Seller Covenants",
+        "highlight_text": "Seller shall not enter into, materially modify or terminate any Service Contracts",
+        "related_para_ids": "p_67,p_68",
+        "mitigated_by": [],
+        "amplified_by": [],
+        "triggers": [
+          "new_service_contracts"
+        ]
+      },
+      {
+        "risk_id": "R12",
+        "para_id": "p_60",
+        "section_ref": "7A(vi)",
+        "title": "Post-Closing Knowledge Limitation Reduces Buyer Remedies",
+        "description": "If Buyer learns of a breach of Seller's representations before closing and proceeds anyway, Buyer may be deemed to have waived the breach. This creates a perverse incentive for Buyer not to investigate too thoroughly before closing.",
+        "severity": "medium",
+        "type": "risk",
+        "category": "Representations & Warranties",
+        "highlight_text": "Notwithstanding anything contained in this Agreement to the contrary, in the event the Closing occurs",
+        "related_para_ids": "p_61,p_65",
+        "mitigated_by": [],
+        "amplified_by": [
+          {
+            "ref": "7C",
+            "effect": "Short survival period further limits window for discovering and asserting breaches"
+          }
+        ],
+        "triggers": [
+          "pre_closing_discovery",
+          "constructive_knowledge"
+        ]
+      }
+    ],
+    "concept_map": {
+      "Transaction Structure": {
+        "deal_type": {
+          "value": "Purchase and Sale of Commercial Real Property",
+          "section": "1"
+        },
+        "purchase_price": {
+          "value": "To be determined (blanks in agreement)",
+          "section": "2"
+        },
+        "deposit_structure": {
+          "value": "Initial Deposit + Additional Deposit",
+          "section": "3"
+        },
+        "closing_mechanism": {
+          "value": "Escrow closing through Title Company",
+          "section": "11"
+        }
+      },
+      "Due Diligence": {
+        "dd_period": {
+          "value": "Defined period from Effective Date",
+          "section": "5A"
+        },
+        "inspection_rights": {
+          "value": "Buyer access with insurance and indemnification requirements",
+          "section": "5B"
+        },
+        "approval_mechanism": {
+          "value": "Buyer may approve or disapprove in sole discretion",
+          "section": "5C"
+        }
+      },
+      "Title & Survey": {
+        "title_review_period": {
+          "value": "10 days from Effective Date",
+          "section": "4B"
+        },
+        "title_standard": {
+          "value": "Fee simple via Special Warranty Deed",
+          "section": "4C"
+        },
+        "title_insurance": {
+          "value": "ALTA Owner's Policy",
+          "section": "4D"
+        }
+      },
+      "Representations & Warranties": {
+        "seller_reps_scope": {
+          "value": "Authority, rent roll, compliance, litigation, condemnation, leases",
+          "section": "7A"
+        },
+        "knowledge_standard": {
+          "value": "Actual knowledge of designated individual only",
+          "section": "7A(vi)"
+        },
+        "survival_period": {
+          "value": "Limited period post-closing",
+          "section": "7C"
+        }
+      },
+      "Property Condition": {
+        "as_is_provision": {
+          "value": "Buyer accepts property AS-IS except for express representations",
+          "section": "9"
+        },
+        "release_scope": {
+          "value": "Broad release upon deed acceptance with rep carve-out",
+          "section": "10"
+        }
+      },
+      "Seller Covenants": {
+        "operations": {
+          "value": "Maintain in ordinary course during DD period",
+          "section": "8A"
+        },
+        "contracts": {
+          "value": "No material modification without consent",
+          "section": "8B"
+        },
+        "insurance": {
+          "value": "Maintain existing casualty and liability insurance",
+          "section": "8C"
+        }
+      }
+    },
+    "risk_map": {
+      "p_36": [
+        {
+          "risk_id": "R1",
+          "clause": "5B(iii)",
+          "para_id": "p_36",
+          "title": "Uncapped Buyer Indemnification for Inspections",
+          "description": "Buyer's indemnification of Seller for inspection-related costs, expenses, damages, and liabilities is uncapped and survives termination. This creates open-ended liability exposure for Buyer with no time or dollar limitation.",
+          "base_severity": "critical",
+          "effective_severity": "critical",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "5B(v)",
+              "effect": "Survival provision ensures this indemnity outlasts the agreement"
+            }
+          ],
+          "triggers": [
+            "inspection_entry",
+            "third_party_claims"
+          ]
+        }
+      ],
+      "p_59": [
+        {
+          "risk_id": "R2",
+          "clause": "7A(vi)",
+          "para_id": "p_59",
+          "title": "Knowledge Qualifier Limited to Actual Knowledge",
+          "description": "Seller's knowledge is defined as the 'actual knowledge' of a single individual with no duty of inquiry or investigation. This allows Seller to disclaim knowledge of material defects that a reasonable investigation would reveal.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7A(ii)-(vi)",
+              "effect": "All substantive seller reps are qualified by this narrow knowledge standard"
+            }
+          ],
+          "triggers": [
+            "environmental_issues",
+            "tenant_disputes",
+            "code_violations"
+          ]
+        }
+      ],
+      "p_72": [
+        {
+          "risk_id": "R3",
+          "clause": "9",
+          "para_id": "p_72",
+          "title": "Broad AS-IS Waiver of Implied Warranties",
+          "description": "Buyer accepts the property entirely AS-IS with no representations or warranties beyond those expressly stated. Combined with the narrow knowledge qualifier, this significantly limits Buyer's post-closing remedies for property defects.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [
+            {
+              "ref": "7A",
+              "effect": "Express representations provide limited carve-outs from AS-IS"
+            }
+          ],
+          "amplified_by": [
+            {
+              "ref": "10",
+              "effect": "Release provision further limits post-closing recourse"
+            }
+          ],
+          "triggers": [
+            "environmental_contamination",
+            "structural_defects"
+          ]
+        }
+      ],
+      "p_74": [
+        {
+          "risk_id": "R4",
+          "clause": "10",
+          "para_id": "p_74",
+          "title": "Broad Release of Seller Claims Upon Deed Acceptance",
+          "description": "By accepting the deed, Buyer releases Seller from virtually all claims related to the property. While there is a carve-out for express representations, the breadth of the release substantially limits Buyer's post-closing remedies.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [
+            {
+              "ref": "10(a)",
+              "effect": "Carve-out preserves claims under express representations"
+            }
+          ],
+          "amplified_by": [
+            {
+              "ref": "9",
+              "effect": "AS-IS clause compounds the release by eliminating implied warranty claims"
+            }
+          ],
+          "triggers": [
+            "post_closing_defects",
+            "environmental_remediation"
+          ]
+        }
+      ],
+      "p_65": [
+        {
+          "risk_id": "R5",
+          "clause": "7C",
+          "para_id": "p_65",
+          "title": "Short Survival Period for Representations",
+          "description": "Seller's representations and warranties survive closing for a limited period. If defects are discovered after the survival period expires, Buyer has no contractual recourse regardless of the defect's nature or severity.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7A(vi)",
+              "effect": "Narrow knowledge qualifier means fewer discoverable breaches within the survival window"
+            }
+          ],
+          "triggers": [
+            "latent_defects",
+            "delayed_discovery"
+          ]
+        }
+      ],
+      "p_26": [
+        {
+          "risk_id": "R6",
+          "clause": "4B",
+          "para_id": "p_26",
+          "title": "Title Review Period May Be Insufficient",
+          "description": "Buyer has only ten (10) days from the Effective Date to review title. For complex commercial properties with multiple encumbrances, easements, or CC&Rs, this may not provide adequate time for thorough title analysis.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [
+            {
+              "ref": "4A",
+              "effect": "Seller must deliver title documents within seven days, giving partial overlap"
+            }
+          ],
+          "amplified_by": [],
+          "triggers": [
+            "complex_title_history",
+            "multiple_encumbrances"
+          ]
+        }
+      ],
+      "p_68": [
+        {
+          "risk_id": "R7",
+          "clause": "8A",
+          "para_id": "p_68",
+          "title": "Ordinary Course Covenant Limited to Due Diligence Period",
+          "description": "Seller's covenant to maintain and operate the property in the ordinary course applies only during the Due Diligence Period, not through Closing. This creates a gap period where Seller has reduced obligations regarding property management.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "8B",
+              "effect": "Service contract restrictions also have limited temporal scope"
+            }
+          ],
+          "triggers": [
+            "deferred_maintenance",
+            "lease_modifications"
+          ]
+        }
+      ],
+      "p_18": [
+        {
+          "risk_id": "R8",
+          "clause": "3A",
+          "para_id": "p_18",
+          "title": "Earnest Money Deposit at Risk Before Due Diligence Complete",
+          "description": "Buyer must deliver the initial deposit within business days of the Effective Date, before completing due diligence. If Buyer fails to timely approve due diligence, the deposit refund mechanism and any conditions should be clearly defined.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [
+            {
+              "ref": "5A",
+              "effect": "Due diligence contingency provides a refund path if Buyer disapproves"
+            }
+          ],
+          "amplified_by": [
+            {
+              "ref": "3B",
+              "effect": "Additional deposit further increases exposure before closing"
+            }
+          ],
+          "triggers": [
+            "due_diligence_failure",
+            "financing_issues"
+          ]
+        }
+      ],
+      "p_49": [
+        {
+          "risk_id": "R9",
+          "clause": "5F",
+          "para_id": "p_49",
+          "title": "Conditions Precedent May Be Waived by Conduct",
+          "description": "The waiver provision for conditions precedent should be reviewed to ensure conditions cannot be inadvertently waived by conduct or silence, which could force a party to close without all contractual protections being satisfied.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [],
+          "triggers": [
+            "inadvertent_waiver",
+            "closing_disputes"
+          ]
+        }
+      ],
+      "p_56": [
+        {
+          "risk_id": "R10",
+          "clause": "7A(iv)",
+          "para_id": "p_56",
+          "title": "Litigation Representation Qualified by Knowledge",
+          "description": "Seller's representation regarding pending or threatened litigation is qualified by Seller's Actual Knowledge. Litigation is a factual matter that should not require a knowledge qualifier \u2014 Seller either has or has not been served with process.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7A(vi)",
+              "effect": "Narrow knowledge definition compounds the weakness of this representation"
+            }
+          ],
+          "triggers": [
+            "undisclosed_lawsuits"
+          ]
+        }
+      ],
+      "p_69": [
+        {
+          "risk_id": "R11",
+          "clause": "8B",
+          "para_id": "p_69",
+          "title": "Opportunity: Require Buyer Consent for All Contract Modifications",
+          "description": "Seller is prohibited from entering into, materially modifying, or terminating service contracts. However, the 'materiality' qualifier leaves room for minor modifications that could cumulatively impact the property's operation. Consider requiring Buyer consent for all modifications, not just material ones.",
+          "base_severity": "low",
+          "effective_severity": "low",
+          "mitigated_by": [],
+          "amplified_by": [],
+          "triggers": [
+            "new_service_contracts"
+          ]
+        }
+      ],
+      "p_60": [
+        {
+          "risk_id": "R12",
+          "clause": "7A(vi)",
+          "para_id": "p_60",
+          "title": "Post-Closing Knowledge Limitation Reduces Buyer Remedies",
+          "description": "If Buyer learns of a breach of Seller's representations before closing and proceeds anyway, Buyer may be deemed to have waived the breach. This creates a perverse incentive for Buyer not to investigate too thoroughly before closing.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7C",
+              "effect": "Short survival period further limits window for discovering and asserting breaches"
+            }
+          ],
+          "triggers": [
+            "pre_closing_discovery",
+            "constructive_knowledge"
+          ]
+        }
+      ]
+    },
+    "risk_by_paragraph": {
+      "p_36": [
+        {
+          "risk_id": "R1",
+          "clause": "5B(iii)",
+          "para_id": "p_36",
+          "title": "Uncapped Buyer Indemnification for Inspections",
+          "description": "Buyer's indemnification of Seller for inspection-related costs, expenses, damages, and liabilities is uncapped and survives termination. This creates open-ended liability exposure for Buyer with no time or dollar limitation.",
+          "base_severity": "critical",
+          "effective_severity": "critical",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "5B(v)",
+              "effect": "Survival provision ensures this indemnity outlasts the agreement"
+            }
+          ],
+          "triggers": [
+            "inspection_entry",
+            "third_party_claims"
+          ]
+        }
+      ],
+      "p_59": [
+        {
+          "risk_id": "R2",
+          "clause": "7A(vi)",
+          "para_id": "p_59",
+          "title": "Knowledge Qualifier Limited to Actual Knowledge",
+          "description": "Seller's knowledge is defined as the 'actual knowledge' of a single individual with no duty of inquiry or investigation. This allows Seller to disclaim knowledge of material defects that a reasonable investigation would reveal.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7A(ii)-(vi)",
+              "effect": "All substantive seller reps are qualified by this narrow knowledge standard"
+            }
+          ],
+          "triggers": [
+            "environmental_issues",
+            "tenant_disputes",
+            "code_violations"
+          ]
+        }
+      ],
+      "p_72": [
+        {
+          "risk_id": "R3",
+          "clause": "9",
+          "para_id": "p_72",
+          "title": "Broad AS-IS Waiver of Implied Warranties",
+          "description": "Buyer accepts the property entirely AS-IS with no representations or warranties beyond those expressly stated. Combined with the narrow knowledge qualifier, this significantly limits Buyer's post-closing remedies for property defects.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [
+            {
+              "ref": "7A",
+              "effect": "Express representations provide limited carve-outs from AS-IS"
+            }
+          ],
+          "amplified_by": [
+            {
+              "ref": "10",
+              "effect": "Release provision further limits post-closing recourse"
+            }
+          ],
+          "triggers": [
+            "environmental_contamination",
+            "structural_defects"
+          ]
+        }
+      ],
+      "p_74": [
+        {
+          "risk_id": "R4",
+          "clause": "10",
+          "para_id": "p_74",
+          "title": "Broad Release of Seller Claims Upon Deed Acceptance",
+          "description": "By accepting the deed, Buyer releases Seller from virtually all claims related to the property. While there is a carve-out for express representations, the breadth of the release substantially limits Buyer's post-closing remedies.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [
+            {
+              "ref": "10(a)",
+              "effect": "Carve-out preserves claims under express representations"
+            }
+          ],
+          "amplified_by": [
+            {
+              "ref": "9",
+              "effect": "AS-IS clause compounds the release by eliminating implied warranty claims"
+            }
+          ],
+          "triggers": [
+            "post_closing_defects",
+            "environmental_remediation"
+          ]
+        }
+      ],
+      "p_65": [
+        {
+          "risk_id": "R5",
+          "clause": "7C",
+          "para_id": "p_65",
+          "title": "Short Survival Period for Representations",
+          "description": "Seller's representations and warranties survive closing for a limited period. If defects are discovered after the survival period expires, Buyer has no contractual recourse regardless of the defect's nature or severity.",
+          "base_severity": "high",
+          "effective_severity": "high",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7A(vi)",
+              "effect": "Narrow knowledge qualifier means fewer discoverable breaches within the survival window"
+            }
+          ],
+          "triggers": [
+            "latent_defects",
+            "delayed_discovery"
+          ]
+        }
+      ],
+      "p_26": [
+        {
+          "risk_id": "R6",
+          "clause": "4B",
+          "para_id": "p_26",
+          "title": "Title Review Period May Be Insufficient",
+          "description": "Buyer has only ten (10) days from the Effective Date to review title. For complex commercial properties with multiple encumbrances, easements, or CC&Rs, this may not provide adequate time for thorough title analysis.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [
+            {
+              "ref": "4A",
+              "effect": "Seller must deliver title documents within seven days, giving partial overlap"
+            }
+          ],
+          "amplified_by": [],
+          "triggers": [
+            "complex_title_history",
+            "multiple_encumbrances"
+          ]
+        }
+      ],
+      "p_68": [
+        {
+          "risk_id": "R7",
+          "clause": "8A",
+          "para_id": "p_68",
+          "title": "Ordinary Course Covenant Limited to Due Diligence Period",
+          "description": "Seller's covenant to maintain and operate the property in the ordinary course applies only during the Due Diligence Period, not through Closing. This creates a gap period where Seller has reduced obligations regarding property management.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "8B",
+              "effect": "Service contract restrictions also have limited temporal scope"
+            }
+          ],
+          "triggers": [
+            "deferred_maintenance",
+            "lease_modifications"
+          ]
+        }
+      ],
+      "p_18": [
+        {
+          "risk_id": "R8",
+          "clause": "3A",
+          "para_id": "p_18",
+          "title": "Earnest Money Deposit at Risk Before Due Diligence Complete",
+          "description": "Buyer must deliver the initial deposit within business days of the Effective Date, before completing due diligence. If Buyer fails to timely approve due diligence, the deposit refund mechanism and any conditions should be clearly defined.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [
+            {
+              "ref": "5A",
+              "effect": "Due diligence contingency provides a refund path if Buyer disapproves"
+            }
+          ],
+          "amplified_by": [
+            {
+              "ref": "3B",
+              "effect": "Additional deposit further increases exposure before closing"
+            }
+          ],
+          "triggers": [
+            "due_diligence_failure",
+            "financing_issues"
+          ]
+        }
+      ],
+      "p_49": [
+        {
+          "risk_id": "R9",
+          "clause": "5F",
+          "para_id": "p_49",
+          "title": "Conditions Precedent May Be Waived by Conduct",
+          "description": "The waiver provision for conditions precedent should be reviewed to ensure conditions cannot be inadvertently waived by conduct or silence, which could force a party to close without all contractual protections being satisfied.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [],
+          "triggers": [
+            "inadvertent_waiver",
+            "closing_disputes"
+          ]
+        }
+      ],
+      "p_56": [
+        {
+          "risk_id": "R10",
+          "clause": "7A(iv)",
+          "para_id": "p_56",
+          "title": "Litigation Representation Qualified by Knowledge",
+          "description": "Seller's representation regarding pending or threatened litigation is qualified by Seller's Actual Knowledge. Litigation is a factual matter that should not require a knowledge qualifier \u2014 Seller either has or has not been served with process.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7A(vi)",
+              "effect": "Narrow knowledge definition compounds the weakness of this representation"
+            }
+          ],
+          "triggers": [
+            "undisclosed_lawsuits"
+          ]
+        }
+      ],
+      "p_69": [
+        {
+          "risk_id": "R11",
+          "clause": "8B",
+          "para_id": "p_69",
+          "title": "Opportunity: Require Buyer Consent for All Contract Modifications",
+          "description": "Seller is prohibited from entering into, materially modifying, or terminating service contracts. However, the 'materiality' qualifier leaves room for minor modifications that could cumulatively impact the property's operation. Consider requiring Buyer consent for all modifications, not just material ones.",
+          "base_severity": "low",
+          "effective_severity": "low",
+          "mitigated_by": [],
+          "amplified_by": [],
+          "triggers": [
+            "new_service_contracts"
+          ]
+        }
+      ],
+      "p_60": [
+        {
+          "risk_id": "R12",
+          "clause": "7A(vi)",
+          "para_id": "p_60",
+          "title": "Post-Closing Knowledge Limitation Reduces Buyer Remedies",
+          "description": "If Buyer learns of a breach of Seller's representations before closing and proceeds anyway, Buyer may be deemed to have waived the breach. This creates a perverse incentive for Buyer not to investigate too thoroughly before closing.",
+          "base_severity": "medium",
+          "effective_severity": "medium",
+          "mitigated_by": [],
+          "amplified_by": [
+            {
+              "ref": "7C",
+              "effect": "Short survival period further limits window for discovering and asserting breaches"
+            }
+          ],
+          "triggers": [
+            "pre_closing_discovery",
+            "constructive_knowledge"
+          ]
+        }
+      ]
+    }
+  },
+  "revisions": {},
+  "flags": [
+    {
+      "para_id": "p_59",
+      "section_ref": "7A(vi)",
+      "text_excerpt": "For the purposes of this Agreement, whenever the phrase \u2018to Seller\u2019s Actual Knowledge\u2019 is used...",
+      "note": "Consider pushing for constructive knowledge standard",
+      "flag_type": "attorney",
+      "timestamp": "2026-02-07T16:20:26.348788"
+    },
+    {
+      "para_id": "p_59",
+      "section_ref": "7A(vi)",
+      "text_excerpt": "For the purposes of this Agreement, whenever the phrase \u201cto Seller's Actual Knowledge\u201d is used, then it shall be deemed to refer to the actual knowledge of _____________________,  without such person ",
+      "note": "QA Test: Potential liability exposure",
+      "flag_type": "client",
+      "category": "risk-alert",
+      "timestamp": "2026-02-12T15:51:34.351760"
+    }
+  ],
+  "is_test_session": true
+}

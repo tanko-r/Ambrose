@@ -10,6 +10,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.38.0",
+    "@clerk/themes": "^2.4.54",
     "@floating-ui/react-dom": "^2.1.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
