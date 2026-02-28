@@ -8,6 +8,10 @@ backup_*/
 *.docx
 *.doc
 *.pdf
+# Allow docx files in named test upload dirs
+!app/data/uploads/test-*/*.docx
+# Allow docx files in testdocs (the test document source files)
+!testdocs/*.docx
 
 # Python
 __pycache__/
@@ -30,9 +34,12 @@ anthropic_api.txt
 output/
 Other Files/
 
-# Session and upload data
+# Session and upload data (exclude live session data but allow named test sessions)
 app/data/sessions/
+!app/data/sessions/test-*.json
 app/data/uploads/
+!app/data/uploads/test-*/
+!app/data/uploads/test-*/**
 
 # Logs
 *.log
@@ -60,5 +67,10 @@ test documents/.agents/
 test documents/.claude/
 test documents/.codex/
 test documents/.gemini/
+testdocs/.agents/
+testdocs/.claude/
+testdocs/.codex/
+testdocs/.gemini/
+testdocs/.venv/
 
 gha-creds-*.json
