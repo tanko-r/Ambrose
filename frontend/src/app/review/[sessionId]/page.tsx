@@ -9,7 +9,7 @@ import { NavigationPanel } from "@/components/review/navigation-panel";
 import { DocumentViewer } from "@/components/review/document-viewer";
 import { Sidebar } from "@/components/review/sidebar";
 import { BottomBar } from "@/components/review/bottom-bar";
-import { RevisionSheet } from "@/components/review/revision-sheet";
+import { RevisionPopover } from "@/components/review/revision-popover";
 import { Header } from "@/components/layout/header";
 import { AnalysisOverlay } from "@/components/review/analysis-overlay";
 import { SplitLayout } from "@/components/review/split-layout";
@@ -205,8 +205,8 @@ export default function ReviewPage({
         <Sidebar width={sidebarWidth} />
       </div>
 
-      {/* Revision bottom sheet (non-modal, renders over document area) */}
-      <RevisionSheet />
+      {/* Revision popover (anchored near paragraph in document) */}
+      <RevisionPopover />
 
       {/* Bottom toolbar */}
       <BottomBar />
