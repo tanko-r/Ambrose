@@ -15,14 +15,17 @@ import { Button } from "@/components/ui/button";
 import {
   Menu,
   Plus,
+  User,
   FolderOpen,
   FileText,
   Settings,
   HelpCircle,
+  UserCircle,
+  SlidersHorizontal,
+  LogOut,
   Sun,
   Moon,
 } from "lucide-react";
-import { UserButton, SignedIn } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { SettingsDialog } from "@/components/settings-dialog";
 
@@ -141,17 +144,29 @@ export function Header({ onNewProject, onExportRiskReport }: HeaderProps) {
             New
           </Button>
 
-          <SignedIn>
-            <UserButton
-              showName={false}
-              userProfileMode="modal"
-              appearance={{
-                elements: {
-                  avatarBox: 'h-8 w-8',
-                },
-              }}
-            />
-          </SignedIn>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="User menu">
+                <User className="h-4 w-4" />
+                <span className="sr-only">User menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => toast.info("Coming soon")}>
+                <UserCircle className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => toast.info("Coming soon")}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
