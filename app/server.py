@@ -27,7 +27,7 @@ def create_app():
     app = Flask(__name__)
 
     # CORS origins from env var (comma-separated), defaults to Next.js dev server
-    cors_origins_raw = os.environ.get('CORS_ORIGINS', 'http://localhost:3000')
+    cors_origins_raw = os.environ.get('CORS_ORIGINS', 'http://localhost:3100')
     cors_origins = [o.strip() for o in cors_origins_raw.split(',') if o.strip()]
     CORS(app, origins=cors_origins)
 

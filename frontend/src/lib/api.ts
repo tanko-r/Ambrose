@@ -1,11 +1,11 @@
 // =============================================================================
 // Typed API client for Flask backend
-// Fast endpoints: Next.js rewrite proxy (/api/* -> Flask :5000)
+// Fast endpoints: Next.js rewrite proxy (/api/* -> Flask :5002)
 // Long-running endpoints (revise, accept, reject): direct to Flask to avoid
 // proxy timeout (Next.js rewrite proxy drops connections after ~30s)
 // =============================================================================
 
-const FLASK_DIRECT = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const FLASK_DIRECT = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5002';
 
 import type {
   IntakeResponse,
